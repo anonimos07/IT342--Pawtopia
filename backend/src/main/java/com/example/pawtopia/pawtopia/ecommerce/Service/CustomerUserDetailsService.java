@@ -45,7 +45,7 @@ public class CustomerUserDetailsService implements UserDetailsService {
             return new org.springframework.security.core.userdetails.User(
                     admin.getUsername(),
                     admin.getPassword(),
-                    Collections.singletonList(new SimpleGrantedAuthority(admin.getRole()))
+                    Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + admin.getRole()))
             );
         } else {
             // Default to USER auth type
