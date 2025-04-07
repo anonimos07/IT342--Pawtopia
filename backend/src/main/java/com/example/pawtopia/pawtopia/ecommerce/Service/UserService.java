@@ -1,7 +1,9 @@
 package com.example.pawtopia.pawtopia.ecommerce.Service;
 
+import com.example.pawtopia.pawtopia.ecommerce.Entity.Address;
 import com.example.pawtopia.pawtopia.ecommerce.Entity.User;
 import com.example.pawtopia.pawtopia.ecommerce.Repository.UserRepo;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -26,6 +28,7 @@ public class UserService {
     @Autowired
     AuthenticationManager authenticationManager;
 
+    // register bago na user
     public String signUp(User user) {
         Optional<User> existingUser = userRepo.findByUsername(user.getUsername());
         if (existingUser.isPresent()) {
@@ -40,13 +43,7 @@ public class UserService {
         return "User registered successfully!";
     }
 
-//    public Optional<User> login(String username, String password) {
-//        Optional<User> optionalUser = userRepo.findByUsername(username);
-//        if (optionalUser.isPresent() && passwordEncoder.matches(password, optionalUser.get().getPassword())) {
-//            return optionalUser;
-//        }
-//        return Optional.empty();
-//    }
+    // verify user nya generate token after verification
     public String verify(User user){
         Authentication authentication =
                 authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
@@ -59,5 +56,32 @@ public class UserService {
     //find userid
     public Optional<User> findById(Long id) {
         return userRepo.findById(id);
+    }
+
+    // update address kay walay setup address ang register
+    public void updateAddress(Long userId, Address address) {
+        // Fetch sa database
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with ID: " + userId));
+
+        // check if nanay address ang user
+        Address existingAddress = user.getAddress();
+
+        if (existingAddress != null) {
+            // if naay address update ang adress
+            existingAddress.setRegion(address.getRegion());
+            existingAddress.setProvince(address.getProvince());
+            existingAddress.setCity(address.getCity());
+            existingAddress.setBarangay(address.getBarangay());
+            existingAddress.setPostalCode(address.getPostalCode());
+            existingAddress.setStreetBuildingHouseNo(address.getStreetBuildingHouseNo());
+        } else {
+            // if walay address set address user
+            address.setUser(user);
+            user.setAddress(address);
+        }
+
+
+        userRepo.save(user);
     }
 }

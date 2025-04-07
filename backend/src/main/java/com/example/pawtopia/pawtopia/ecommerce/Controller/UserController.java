@@ -1,8 +1,10 @@
 package com.example.pawtopia.pawtopia.ecommerce.Controller;
 
+import com.example.pawtopia.pawtopia.ecommerce.Entity.Address;
 import com.example.pawtopia.pawtopia.ecommerce.Entity.User;
 import com.example.pawtopia.pawtopia.ecommerce.Repository.UserRepo;
 import com.example.pawtopia.pawtopia.ecommerce.Service.UserService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -54,45 +56,27 @@ public class UserController {
         }
     }
 
-//    @PostMapping("/login")
-//    public ResponseEntity<?> login(@RequestBody User user) {
-//        Optional<User> existingUser = userService.login(user.getUsername(), user.getPassword());
-//
-//        if (existingUser.isEmpty()) {
-//            return ResponseEntity.status(401).body(Map.of("message", "Invalid user or password."));
-//        }
-//
-//        String role = existingUser.get().getRole();
-//        String message;
-//        if ("ADMIN".equalsIgnoreCase(role)) {
-//            message = "Admin login successful!";
-//        } else if ("CUSTOMER".equalsIgnoreCase(role)) {
-//            message = "Customer login successful!";
-//        } else {
-//            return ResponseEntity.status(403).body(Map.of("message", "Role not recognized."));
-//        }
-//
-//        return ResponseEntity.ok(Map.of(
-//                "id", existingUser.get().getUserId().toString(),
-//                "message", message,
-//                "username", existingUser.get().getUsername(),
-//                "role", role,
-//                "email", existingUser.get().getEmail()
-//        ));
-//    }
-
-
-
-//    @PostMapping("/login")
-//    public String login(User user){
-//        return userService.verify(user);
-//    }
-@PostMapping("/login")
-public ResponseEntity<String> login(@RequestBody User user) {
-    String result = userService.verify(user);
-    if (result.equals("failed")) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(result);
+    @PostMapping("/login")
+    public ResponseEntity<String> login(@RequestBody User user) {
+        String result = userService.verify(user);
+        if (result.equals("failed")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(result);
+        }
+        return ResponseEntity.ok(result);
     }
-    return ResponseEntity.ok(result);
-}
+
+    @PutMapping("user/{id}/address")
+    public ResponseEntity<String> updateUserAddress(
+            @PathVariable Long id,
+            @RequestBody Address address
+    ) {
+        try {
+            userService.updateAddress(id, address);
+            return ResponseEntity.ok("Address updated successfully.");
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to update address.");
+        }
+    }
 }

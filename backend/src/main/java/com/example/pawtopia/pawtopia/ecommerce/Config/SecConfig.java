@@ -34,13 +34,15 @@ public class SecConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/users/signup", "/users/login", "/admin/login").permitAll()
-                                .requestMatchers("/users/**").permitAll()
-                                .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/users/**").hasRole("CUSTOMER")
+                        .requestMatchers("/admin/**","/adresses/getAllAddress").hasRole("ADMIN")
+//                        .requestMatchers("/adresses/getAllAddress").hasAuthority("ADMIN")
 
-//                        .requestMatchers("/admin/login").permitAll()
                         .anyRequest().authenticated()
                 )
-                .authenticationProvider(authenticationProvider());
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+        ;
         return http.build();
     }
 

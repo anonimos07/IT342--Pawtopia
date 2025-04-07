@@ -1,5 +1,6 @@
 package com.example.pawtopia.pawtopia.ecommerce.Entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -28,4 +29,10 @@ public class User {
     private String email;
 
     private String role;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    @JsonManagedReference("user-address")
+    private Address address;
+
+
 }
