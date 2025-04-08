@@ -10,53 +10,60 @@ export default function SignupPage() {
   // State for form inputs
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [username, setUsername] = useState(""); 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [agreeTerms, setAgreeTerms] = useState(false);
   
-  // State for form validation
+
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [signupSuccess, setSignupSuccess] = useState(false);
   const [signupError, setSignupError] = useState("");
 
-  // Form validation
+  const API_URL = "http://localhost:8080/users";
+
+
   const validateForm = () => {
     let formErrors = {};
     
-    // First name validation
+
     if (!firstName.trim()) {
       formErrors.firstName = "First name is required";
     }
     
-    // Last name validation
+
     if (!lastName.trim()) {
       formErrors.lastName = "Last name is required";
     }
     
-    // Email validation
-    if (!email) {
+
+    if (!username.trim()) {
+      formErrors.username = "Username is required";
+    }
+
+    if (!email.trim()) {
       formErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(email)) {
       formErrors.email = "Email is invalid";
     }
     
-    // Password validation
+
     if (!password) {
       formErrors.password = "Password is required";
     } else if (password.length < 6) {
       formErrors.password = "Password must be at least 6 characters";
     }
     
-    // Confirm password validation
+
     if (!confirmPassword) {
       formErrors.confirmPassword = "Please confirm your password";
     } else if (confirmPassword !== password) {
       formErrors.confirmPassword = "Passwords do not match";
     }
     
-    // Terms agreement validation
+
     if (!agreeTerms) {
       formErrors.agreeTerms = "You must agree to the terms and conditions";
     }
@@ -64,52 +71,71 @@ export default function SignupPage() {
     return formErrors;
   };
 
-  // Form submission
-  const handleSubmit = (e) => {
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate form
+
     const formErrors = validateForm();
     setErrors(formErrors);
-    
-    // If no errors, submit form
+
     if (Object.keys(formErrors).length === 0) {
       setIsSubmitting(true);
       
-      // Mock API call - in a real app, this would be an actual API call
-      setTimeout(() => {
-        // Check if email is already in use (mock check)
-        if (email === "user@example.com") {
-          setSignupSuccess(false);
-          setSignupError("Email is already in use");
-        } else {
+      try {
+    
+        const userData = {
+          firstName,
+          lastName,
+          email,
+          username,
+          password,
+          role: "CUSTOMER" 
+        };
+
+        console.log("Sending user data:", userData);
+        
+    
+        const response = await fetch(`${API_URL}/signup`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(userData),
+        });
+        
+        const data = await response.text();
+        
+        if (response.ok) {
+       
           setSignupSuccess(true);
           setSignupError("");
-          
-          // Store user info (in a real app, this would be handled by the backend)
-          const userData = {
-            firstName,
-            lastName,
-            email,
-          };
           
           // Clear form
           setFirstName("");
           setLastName("");
           setEmail("");
+          setUsername("");
           setPassword("");
           setConfirmPassword("");
           setAgreeTerms(false);
           
-          // Redirect to login page after successful signup
-          // In a real app, you might use a router for this
+  
           setTimeout(() => {
             window.location.href = "/login";
           }, 2000);
+        } else {
+    
+          setSignupSuccess(false);
+          setSignupError(data || "Registration failed. Please try again.");
         }
-        
+      } catch (error) {
+        console.error("Error during signup:", error);
+        setSignupSuccess(false);
+        setSignupError("Network error. Please check your connection and try again.");
+      } finally {
         setIsSubmitting(false);
-      }, 1000);
+      }
     }
   };
 
@@ -145,14 +171,14 @@ export default function SignupPage() {
                 <p className="text-gray-500 text-sm">Fill in your details to join our pet-loving community</p>
               </div>
 
-              {/* Show success message */}
+        
               {signupSuccess && (
                 <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
                   <span className="block sm:inline">Account created successfully! Redirecting to login...</span>
                 </div>
               )}
 
-              {/* Show error message */}
+     
               {signupError && (
                 <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
                   <span className="block sm:inline">{signupError}</span>
@@ -185,6 +211,19 @@ export default function SignupPage() {
                     {errors.lastName && <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>}
                   </div>
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="username">Username</Label>
+                  <Input 
+                    id="username" 
+                    type="username" 
+                    placeholder="Enter your username" 
+                    className={`rounded-lg ${errors.username ? 'border-red-500' : ''}`}
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                  />
+                  {errors.username  && <p className="text-red-500 text-xs mt-1">{errors.username}</p>}
+                </div>
+
 
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>

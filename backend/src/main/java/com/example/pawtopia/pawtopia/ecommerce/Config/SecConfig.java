@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -26,6 +27,11 @@ public class SecConfig {
     private final UserDetailsService adminUserDetailsService;
 
     @Autowired
+    @Lazy
+    private OAuth2SuccessHandler oAuth2SuccessHandler;
+
+    @Autowired
+    @Lazy
     private JwtFilter jwtFilter;
 
     @Bean
@@ -33,13 +39,15 @@ public class SecConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+
                         .requestMatchers("/users/signup", "/users/login", "/admin/login").permitAll()
                         .requestMatchers("/users/**").hasRole("CUSTOMER")
                         .requestMatchers("/admin/**","/adresses/getAllAddress").hasRole("ADMIN")
 //                        .requestMatchers("/adresses/getAllAddress").hasAuthority("ADMIN")
-
                         .anyRequest().authenticated()
                 )
+                .oauth2Login(oauth2login -> oauth2login
+                        .successHandler(oAuth2SuccessHandler))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
         ;
@@ -53,14 +61,6 @@ public class SecConfig {
         provider.setUserDetailsService(userDetailsService);
         return provider;
     }
-
-//    @Bean
-//    public AuthenticationProvider adminAuthenticationProvider() {
-//        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-//        provider.setPasswordEncoder(passwordEncoder());
-//        provider.setUserDetailsService(adminUserDetailsService);
-//        return provider;
-//    }
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)throws Exception{

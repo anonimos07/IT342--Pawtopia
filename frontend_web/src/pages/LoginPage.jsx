@@ -8,7 +8,7 @@ import { PawPrint } from 'lucide-react';
 
 export default function LoginPage() {
   // State for form inputs
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   
@@ -18,18 +18,21 @@ export default function LoginPage() {
   const [loginSuccess, setLoginSuccess] = useState(false);
   const [loginError, setLoginError] = useState("");
 
-  // Form validation
+  const googleLogin = () => {
+    window.location.href = "http://localhost:8080/oauth2/authorization/google";
+  };
+
+  const API_URL = "http://localhost:8080/users";
+
+
   const validateForm = () => {
     let formErrors = {};
     
-    // Email validation
-    if (!email) {
-      formErrors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      formErrors.email = "Email is invalid";
+
+    if (!username.trim()) {
+      formErrors.username = "Username is required";
     }
     
-    // Password validation
     if (!password) {
       formErrors.password = "Password is required";
     } else if (password.length < 6) {
@@ -39,42 +42,55 @@ export default function LoginPage() {
     return formErrors;
   };
 
-  // Form submission
-  const handleSubmit = (e) => {
+  
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validate form
+  
     const formErrors = validateForm();
     setErrors(formErrors);
-    
-    // If no errors, submit form
+  
     if (Object.keys(formErrors).length === 0) {
       setIsSubmitting(true);
+    
+      try {
+        const response = await fetch(`${API_URL}/login`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ username, password }),
+        });
+    
       
-      // Mock API call - in a real app, this would be an actual API call
-      setTimeout(() => {
-        // Check if credentials are valid (mock check)
-        if (email === "user@example.com" && password === "password123") {
+        if (response.ok) {
+          const token = await response.text(); 
+    
+          console.log("Login success, token:", token);
+    
           setLoginSuccess(true);
           setLoginError("");
-          
-          // Store user info in localStorage if rememberMe is checked
+    
+         
           if (rememberMe) {
-            localStorage.setItem("user", JSON.stringify({ email }));
+            localStorage.setItem("authToken", token); 
           }
+    
           
-          // Redirect to home page after successful login
-          // In a real app, you might use a router for this
           window.location.href = "/";
         } else {
+          const errorData = await response.json(); 
           setLoginSuccess(false);
-          setLoginError("Invalid email or password");
+          setLoginError(errorData.detail || "Invalid username or password");
         }
-        
+      } catch (error) {
+        console.error("Unexpected error during login:", error); 
+        setLoginError("An unexpected error occurred.");
+      } finally {
         setIsSubmitting(false);
-      }, 1000);
+      }
     }
   };
+  
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -108,14 +124,14 @@ export default function LoginPage() {
                 <p className="text-gray-500 text-sm">Enter your credentials to access your account</p>
               </div>
 
-              {/* Show success message */}
+              
               {loginSuccess && (
                 <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
                   <span className="block sm:inline">Login successful!</span>
                 </div>
               )}
 
-              {/* Show error message */}
+            
               {loginError && (
                 <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
                   <span className="block sm:inline">{loginError}</span>
@@ -124,16 +140,16 @@ export default function LoginPage() {
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="username">Username</Label>
                   <Input 
-                    id="email" 
-                    type="email" 
-                    placeholder="Enter your email" 
-                    className={`rounded-lg ${errors.email ? 'border-red-500' : ''}`}
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    id="username" 
+                    type="username" 
+                    placeholder="Enter your username" 
+                    className={`rounded-lg ${errors.user ? 'border-red-500' : ''}`}
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
                   />
-                  {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                  {errors.username && <p className="text-red-500 text-xs mt-1">{errors.username}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -195,7 +211,7 @@ export default function LoginPage() {
                   type="button"
                   variant="outline" 
                   className="rounded-lg"
-                  onClick={() => alert("Google login would be implemented here")}
+                  onClick={googleLogin}
                 >
                   <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                     <path

@@ -12,7 +12,7 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbS
 import { Calendar, Clock } from 'lucide-react';
 
 export default function AppointmentPage() {
-  // State for form inputs
+
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -26,12 +26,12 @@ export default function AppointmentPage() {
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   
-  // State for form validation
+
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(false);
 
-  // Form validation
+
   const validateForm = () => {
     let formErrors = {};
     
@@ -51,24 +51,24 @@ export default function AppointmentPage() {
     return formErrors;
   };
 
-  // Form submission
+
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // Validate form
+
     const formErrors = validateForm();
     setErrors(formErrors);
     
-    // If no errors, submit form
+   
     if (Object.keys(formErrors).length === 0) {
       setIsSubmitting(true);
       
-      // Mock API call - in a real app, this would be an actual API call
+ 
       setTimeout(() => {
         setBookingSuccess(true);
         setIsSubmitting(false);
         
-        // Reset form after successful submission
+n
         setTimeout(() => {
           window.scrollTo(0, 0);
         }, 500);
@@ -81,7 +81,7 @@ export default function AppointmentPage() {
       <Header activePage="services" />
 
       <main className="flex-1">
-        {/* Page Header */}
+
         <section className="bg-gradient-to-r from-primary/10 to-primary/5 py-8 md:py-12">
           <div className="container mx-auto px-4">
             <h1 className="text-3xl md:text-4xl font-bold text-center">Book an Appointment</h1>
@@ -111,7 +111,7 @@ export default function AppointmentPage() {
           </div>
         </section>
 
-        {/* Success Message */}
+
         {bookingSuccess && (
           <div className="container mx-auto px-4 py-4 max-w-5xl">
             <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-xl relative">
@@ -121,7 +121,7 @@ export default function AppointmentPage() {
           </div>
         )}
 
-        {/* Appointment Form */}
+    
         <form onSubmit={handleSubmit}>
           <section className="py-12">
             <div className="container mx-auto px-4">

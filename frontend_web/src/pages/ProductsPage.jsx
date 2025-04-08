@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Filter, ChevronDown, Search } from 'lucide-react';
 
 export default function ProductsPage() {
-  // Sample product data
+
   const products = [
     {
       id: 1,
@@ -66,7 +66,7 @@ export default function ProductsPage() {
       <Header activePage="products" />
 
       <main className="flex-1">
-        {/* Page Header */}
+     
         <section className="bg-gradient-to-r from-primary/10 to-primary/5 py-8 md:py-12">
           <div className="container mx-auto px-4">
             <h1 className="text-3xl md:text-4xl font-bold text-center">Our Products</h1>
@@ -92,7 +92,7 @@ export default function ProductsPage() {
           </div>
         </section>
 
-        {/* Filters and Search */}
+      
         <section className="py-6 border-b">
           <div className="container mx-auto px-4">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -143,7 +143,7 @@ export default function ProductsPage() {
           </div>
         </section>
 
-        {/* Products Grid */}
+     
         <section className="py-12 bg-gray-50">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -175,7 +175,7 @@ export default function ProductsPage() {
               ))}
             </div>
 
-            {/* Pagination */}
+         
             <div className="flex justify-center mt-12">
               <nav className="flex items-center gap-1">
                 <Button variant="outline" size="icon" className="rounded-full">
@@ -201,7 +201,7 @@ export default function ProductsPage() {
           </div>
         </section>
 
-        {/* Newsletter */}
+  
         <section className="py-16 bg-primary/10">
           <div className="container mx-auto px-4 max-w-4xl">
             <div className="text-center mb-8">

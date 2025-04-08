@@ -11,7 +11,7 @@ export default function ProductDetailPage() {
   const { id } = useParams();
   const [quantity, setQuantity] = useState(1);
 
-  // This would normally come from a database or API
+  
   const product = {
     id: 1,
     name: "Premium Dog Food",
@@ -57,7 +57,7 @@ export default function ProductDetailPage() {
       <Header activePage="products" />
 
       <main className="flex-1">
-        {/* Breadcrumb */}
+     
         <div className="bg-gray-50 py-4">
           <div className="container mx-auto px-4">
             <Breadcrumb>
@@ -80,7 +80,7 @@ export default function ProductDetailPage() {
           </div>
         </div>
 
-        {/* Product Detail */}
+     
         <section className="py-12">
           <div className="container mx-auto px-4">
             <div className="grid md:grid-cols-2 gap-12 max-w-5xl mx-auto">
@@ -140,7 +140,7 @@ export default function ProductDetailPage() {
           </div>
         </section>
 
-        {/* Reviews */}
+       
         <section className="py-12 bg-gray-50">
           <div className="container mx-auto px-4 max-w-5xl">
             <h2 className="text-2xl font-bold mb-6">Product Reviews</h2>
@@ -175,7 +175,7 @@ export default function ProductDetailPage() {
           </div>
         </section>
 
-        {/* Related Products */}
+       
         <section className="py-12">
           <div className="container mx-auto px-4">
             <h2 className="text-2xl font-bold mb-6">You May Also Like</h2>

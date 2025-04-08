@@ -9,7 +9,7 @@ export default function HomePage() {
       <Header activePage="home" />
 
       <main className="flex-1">
-        {/* Hero Section */}
+  
         <section className="relative bg-gradient-to-r from-primary/10 to-primary/5 overflow-hidden">
           <div className="container mx-auto px-4 py-16 md:py-24 flex flex-col md:flex-row items-center">
             <div className="md:w-1/2 space-y-6 text-center md:text-left mb-10 md:mb-0">
@@ -40,7 +40,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Featured Products */}
+
         <section className="py-16 bg-white">
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
@@ -49,7 +49,7 @@ export default function HomePage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {/* Dog Food */}
+     
               <div className="bg-white rounded-xl shadow-sm border p-6 transition-all hover:shadow-md">
                 <div className="aspect-square mb-4 bg-gray-100 rounded-lg overflow-hidden">
                   <img
@@ -67,7 +67,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Cat Food */}
+       
               <div className="bg-white rounded-xl shadow-sm border p-6 transition-all hover:shadow-md">
                 <div className="aspect-square mb-4 bg-gray-100 rounded-lg overflow-hidden">
                   <img
@@ -85,7 +85,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Cat Treats */}
+
               <div className="bg-white rounded-xl shadow-sm border p-6 transition-all hover:shadow-md">
                 <div className="aspect-square mb-4 bg-gray-100 rounded-lg overflow-hidden">
                   <img
@@ -103,7 +103,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Dog Treats */}
+          
               <div className="bg-white rounded-xl shadow-sm border p-6 transition-all hover:shadow-md">
                 <div className="aspect-square mb-4 bg-gray-100 rounded-lg overflow-hidden">
                   <img
@@ -130,7 +130,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Services Section */}
+
         <section className="py-16 bg-gray-50">
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
@@ -139,7 +139,7 @@ export default function HomePage() {
             </div>
 
             <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-              {/* Pet Grooming */}
+   
               <div className="bg-white rounded-xl shadow-md overflow-hidden">
                 <div className="aspect-video relative">
                   <img
@@ -157,7 +157,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Pet Boarding */}
+       
               <div className="bg-white rounded-xl shadow-md overflow-hidden">
                 <div className="aspect-video relative">
                   <img
@@ -178,7 +178,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Testimonials */}
+
         <section className="py-16 bg-white">
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
@@ -213,7 +213,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Newsletter */}
+
         <section className="py-16 bg-primary/10">
           <div className="container mx-auto px-4 max-w-4xl">
             <div className="text-center mb-8">

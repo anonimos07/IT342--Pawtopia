@@ -35,7 +35,7 @@ export default function AboutPage() {
       <Header activePage="about" />
 
       <main className="flex-1">
-        {/* Page Header */}
+   
         <section className="bg-gradient-to-r from-primary/10 to-primary/5 py-8 md:py-12">
           <div className="container mx-auto px-4">
             <h1 className="text-3xl md:text-4xl font-bold text-center">About Us</h1>
@@ -59,7 +59,7 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* Mission Section */}
+ 
         <section className="py-16 bg-white">
           <div className="container mx-auto px-4">
             <div className="grid md:grid-cols-2 gap-12 items-center max-w-5xl mx-auto">
@@ -95,7 +95,7 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* Team Section */}
+   
         <section className="py-16 bg-gray-50">
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
@@ -138,7 +138,7 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* Values Section */}
+   
         <section className="py-16 bg-white">
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
@@ -182,7 +182,7 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* Newsletter */}
+ 
         <section className="py-16 bg-primary/10">
           <div className="container mx-auto px-4 max-w-4xl">
             <div className="text-center mb-8">

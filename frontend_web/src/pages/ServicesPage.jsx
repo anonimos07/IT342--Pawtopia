@@ -47,7 +47,7 @@ export default function ServicesPage() {
       <Header activePage="services" />
 
       <main className="flex-1">
-        {/* Page Header */}
+    
         <section className="bg-gradient-to-r from-primary/10 to-primary/5 py-8 md:py-12">
           <div className="container mx-auto px-4">
             <h1 className="text-3xl md:text-4xl font-bold text-center">Our Services</h1>
@@ -71,7 +71,7 @@ export default function ServicesPage() {
           </div>
         </section>
 
-        {/* Services Introduction */}
+     
         <section className="py-12 bg-white">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center">
@@ -90,7 +90,7 @@ export default function ServicesPage() {
           </div>
         </section>
 
-        {/* Services Cards */}
+   
         <section className="py-12 bg-gray-50">
           <div className="container mx-auto px-4">
             <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
@@ -134,7 +134,7 @@ export default function ServicesPage() {
           </div>
         </section>
 
-        {/* Testimonials */}
+ 
         <section className="py-16 bg-white">
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
@@ -169,7 +169,7 @@ export default function ServicesPage() {
           </div>
         </section>
 
-        {/* CTA */}
+    
         <section className="py-16 bg-primary/10">
           <div className="container mx-auto px-4 max-w-4xl">
             <div className="text-center mb-8">
