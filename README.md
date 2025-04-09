@@ -68,7 +68,20 @@ Open the frontend_mobile folder to access the mobile frontend application.
 Run the application together with the backend for fetching data from database
 
 # Dependencies
-![alt text](image.png)
+1.) Lombok
+
+2.) OAuth2Client
+
+3.) Spring Security
+
+4.) Spring Web
+
+5.) Spring Data Jpa
+
+6.) Postgre Sql Driver
+
+7.) Json Web Token version 0.11.5
+
 
 # Links
 
