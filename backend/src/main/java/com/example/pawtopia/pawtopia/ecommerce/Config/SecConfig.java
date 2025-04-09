@@ -41,11 +41,13 @@ public class SecConfig {
                 .authorizeHttpRequests(auth -> auth
 
                         .requestMatchers("/users/signup", "/users/login", "/admin/login").permitAll()
-                        .requestMatchers("/users/**").hasRole("CUSTOMER")
-                        .requestMatchers("/admin/**","/adresses/getAllAddress").hasRole("ADMIN")
+                        .requestMatchers("/users/**","/appointments/postAppointment").hasRole("CUSTOMER")
+                        .requestMatchers("/admin/**","/adresses/getAllAddress",
+                                "/appointments/confirm/{appid}","/appointments/getAppointment").hasRole("ADMIN")
 //                        .requestMatchers("/adresses/getAllAddress").hasAuthority("ADMIN")
                         .anyRequest().authenticated()
                 )
+                //uncomment if mag gamit na sa frontend
                 .oauth2Login(oauth2login -> oauth2login
                         .successHandler(oAuth2SuccessHandler))
                 .authenticationProvider(authenticationProvider())

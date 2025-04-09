@@ -33,39 +33,73 @@ public class JwtFilter extends OncePerRequestFilter {
     ApplicationContext applicationContext;
 
 
-    @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        String authHeader = request.getHeader("Authorization");
-        String token = null;
-        String username = null;
+//    @Override
+//    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+//        String authHeader = request.getHeader("Authorization");
+//        String token = null;
+//        String username = null;
+//
+//        if(authHeader != null && authHeader.startsWith("Bearer ")){
+//            token = authHeader.substring(7);
+//            username = jwtService.extractUserName(token);
+//            //added if else can be removed
+//            if (request.getServletPath().startsWith("/admin")) {
+//                customerUserDetailsService.setAuthType("ADMIN");
+//            } else {
+//                customerUserDetailsService.setAuthType("CUSTOMER");
+//            }
+//        }
+//
+//        if(username != null && SecurityContextHolder.getContext().getAuthentication() == null){
+//            UserDetails userDetails = applicationContext.getBean(CustomerUserDetailsService.class).loadUserByUsername(username);
+//            if(jwtService.validateToken(token, userDetails)){
+//                UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
+//                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+//                usernamePasswordAuthenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+//                SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+//            }
+//        }
+//        //can be removed
+//        try {
+//            filterChain.doFilter(request, response);
+//        } finally {
+//            // Clear auth type after request processing
+//            customerUserDetailsService.setAuthType(null);
+//        }
+////        filterChain.doFilter(request, response);
+//    }
 
-        if(authHeader != null && authHeader.startsWith("Bearer ")){
-            token = authHeader.substring(7);
-            username = jwtService.extractUserName(token);
-            //added if else can be removed
-            if (request.getServletPath().startsWith("/admin")) {
-                customerUserDetailsService.setAuthType("ADMIN");
-            } else {
-                customerUserDetailsService.setAuthType("CUSTOMER");
-            }
-        }
+@Override
+protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    String authHeader = request.getHeader("Authorization");
+    String token = null;
+    String username = null;
 
-        if(username != null && SecurityContextHolder.getContext().getAuthentication() == null){
-            UserDetails userDetails = applicationContext.getBean(CustomerUserDetailsService.class).loadUserByUsername(username);
-            if(jwtService.validateToken(token, userDetails)){
-                UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
-                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                usernamePasswordAuthenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
-            }
+    if(authHeader != null && authHeader.startsWith("Bearer ")){
+        token = authHeader.substring(7);
+        username = jwtService.extractUserName(token);
+
+        // Extract role from token
+        String role = jwtService.extractRole(token);
+
+        // Set auth type based on role in token, not just URL path
+        if (role != null && role.equals("ROLE_ADMIN")) {
+            customerUserDetailsService.setAuthType("ADMIN");
+        } else {
+            customerUserDetailsService.setAuthType("CUSTOMER");
         }
-        //can be removed
-        try {
-            filterChain.doFilter(request, response);
-        } finally {
-            // Clear auth type after request processing
-            customerUserDetailsService.setAuthType(null);
-        }
-//        filterChain.doFilter(request, response);
     }
+
+    if(username != null && SecurityContextHolder.getContext().getAuthentication() == null){
+        UserDetails userDetails = customerUserDetailsService.loadUserByUsername(username);
+        if(jwtService.validateToken(token, userDetails)){
+            UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
+                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+            usernamePasswordAuthenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+        }
+    }
+
+    filterChain.doFilter(request, response);
+}
 }

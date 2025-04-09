@@ -1,9 +1,15 @@
 package com.example.pawtopia.pawtopia.ecommerce.Service;
 
+import com.example.pawtopia.pawtopia.ecommerce.Entity.Admin;
+import com.example.pawtopia.pawtopia.ecommerce.Entity.User;
+import com.example.pawtopia.pawtopia.ecommerce.Repository.AdminRepo;
+import com.example.pawtopia.pawtopia.ecommerce.Repository.UserRepo;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +22,10 @@ import java.util.function.Function;
 
 @Service
 public class JwtService {
+
+    @Autowired
+    private AdminRepo adminRepo;
+    private UserRepo userRepo;
 
     private String secretkey = "";
 
@@ -32,6 +42,26 @@ public class JwtService {
     public String generateToken(String username) {
         Map<String, Object> claims = new HashMap<>();
 
+        //added try catch and bool can be removed
+        boolean isAdmin = false;
+        try {
+            // Try to find admin first
+            Optional<Admin> admin = adminRepo.findByUsername(username);
+            if (admin.isPresent()) {
+                isAdmin = true;
+                claims.put("role", "ROLE_ADMIN");
+            } else {
+                // If not admin, must be customer
+                Optional<User> user = userRepo.findByUsername(username);
+                if (user.isPresent()) {
+                    claims.put("role", "ROLE_CUSTOMER");
+                }
+            }
+        } catch (Exception e) {
+            // Log error
+            System.out.println("Error determining user role: " + e.getMessage());
+        }
+
         return Jwts.builder()
                 .setClaims(claims)
                 .addClaims(claims)
@@ -46,6 +76,8 @@ public class JwtService {
     public String extractRole(String token) {
         return extractClaims(token, claims -> claims.get("role", String.class));
     }
+
+
 
     private Key getKey(){
         byte[] keyBytes = Decoders.BASE64.decode(secretkey);
