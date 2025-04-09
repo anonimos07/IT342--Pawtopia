@@ -29,6 +29,47 @@ This website acts as a one-stop solution for pet owners and shop managers alike.
 
 8.) Cart
 
+# Download Instructions
+
+Tools needed/preferred:
+
+1.) Postgre Neon
+
+2.) Intellij - Preferred for Springboot
+
+3.)VS Code - Preferred for React
+
+4.)Postman - Preferred for creating records in the database
+
+Database Postgre:
+
+Make an online connection of Postgre Neon name it pawtopia.
+
+Connect the database to your backend code to application properties with the link provided by Neon.
+
+Intellij for backend Java Springboot:
+
+Open your Intellij and import the project and modify the application properties for your database connection.
+
+VsCode for frontend web Reactjs:
+
+Open the frontend_web folder for accessing the web frontend of the application.
+
+Run the application together with the backend for fetching data from database
+
+1.) Terminal: 'npm install'
+
+2.) Terminal: 'npm run dev'
+
+Android Studio for frontend mobile Kotlin:
+
+Open the frontend_mobile folder to access the mobile frontend application.
+
+Run the application together with the backend for fetching data from database
+
+# Dependencies
+![alt text](image.png)
+
 # Links
 
 # Contributors
