@@ -6,11 +6,15 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import com.example.pawtopia.LoginRequiredActivity
+import com.example.pawtopia.MainActivity
 import com.example.pawtopia.databinding.FragmentProductsBinding
+import com.example.pawtopia.util.SessionManager
 
 class ProductsFragment : Fragment() {
     private var _binding: FragmentProductsBinding? = null
     private val binding get() = _binding!!
+    private lateinit var sessionManager: SessionManager
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -24,21 +28,23 @@ class ProductsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        sessionManager = SessionManager(requireContext())
+
         // Set up add to cart buttons
         binding.btnAddToCart1.setOnClickListener {
-            Toast.makeText(requireContext(), "Added to cart", Toast.LENGTH_SHORT).show()
+            handleAddToCart()
         }
 
         binding.btnAddToCart2.setOnClickListener {
-            Toast.makeText(requireContext(), "Added to cart", Toast.LENGTH_SHORT).show()
+            handleAddToCart()
         }
 
         binding.btnAddToCart3.setOnClickListener {
-            Toast.makeText(requireContext(), "Added to cart", Toast.LENGTH_SHORT).show()
+            handleAddToCart()
         }
 
         binding.btnAddToCart4.setOnClickListener {
-            Toast.makeText(requireContext(), "Added to cart", Toast.LENGTH_SHORT).show()
+            handleAddToCart()
         }
 
         // Set up pagination
@@ -60,6 +66,16 @@ class ProductsFragment : Fragment() {
         binding.page4.setOnClickListener {
             // Highlight page 4
             updatePagination(4)
+        }
+    }
+
+    private fun handleAddToCart() {
+        // Check if user is logged in
+        if (sessionManager.isLoggedIn()) {
+            Toast.makeText(requireContext(), "Added to cart", Toast.LENGTH_SHORT).show()
+        } else {
+            // Show login required screen
+            LoginRequiredActivity.startForAddToCart(requireContext())
         }
     }
 

@@ -36,6 +36,11 @@
             android:name=".SignupActivity"
             android:exported="false"
             android:theme="@style/Theme.Pawtopia" />
+
+        <activity
+            android:name=".LoginRequiredActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Pawtopia" />
     </application>
 
 </manifest>

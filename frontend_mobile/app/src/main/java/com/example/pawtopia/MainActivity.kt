@@ -69,17 +69,46 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.ivCart.setOnClickListener {
-            // TODO: Navigate to cart
-            Toast.makeText(this, "Cart functionality coming soon", Toast.LENGTH_SHORT).show()
+            // Check if user is logged in before accessing cart
+            if (sessionManager.isLoggedIn()) {
+                // TODO: Navigate to cart
+                Toast.makeText(this, "Cart functionality coming soon", Toast.LENGTH_SHORT).show()
+            } else {
+                // Show login required screen
+                LoginRequiredActivity.startForCart(this)
+            }
         }
 
         binding.btnLogin.setOnClickListener {
-            startActivity(Intent(this, LoginActivity::class.java))
+            if (sessionManager.isLoggedIn()) {
+                // If already logged in, show profile or logout option
+                Toast.makeText(this, "You are already logged in", Toast.LENGTH_SHORT).show()
+                // TODO: Show profile or logout dialog
+            } else {
+                startActivity(Intent(this, LoginActivity::class.java))
+            }
         }
 
         // Set home as default fragment
         if (savedInstanceState == null) {
             binding.bottomNavigation.selectedItemId = R.id.nav_home
+        }
+
+        // Update login button text if user is logged in
+        updateLoginButtonState()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Update login button state when returning to the activity
+        updateLoginButtonState()
+    }
+
+    private fun updateLoginButtonState() {
+        if (sessionManager.isLoggedIn()) {
+            binding.btnLogin.text = "Profile"
+        } else {
+            binding.btnLogin.text = "Login"
         }
     }
 
@@ -87,5 +116,17 @@ class MainActivity : AppCompatActivity() {
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, fragment)
             .commit()
+    }
+
+    /**
+     * Helper method to check if login is required for a feature
+     * This can be called from any fragment or activity
+     */
+    fun checkLoginRequired(): Boolean {
+        if (!sessionManager.isLoggedIn()) {
+            LoginRequiredActivity.start(this)
+            return true
+        }
+        return false
     }
 }

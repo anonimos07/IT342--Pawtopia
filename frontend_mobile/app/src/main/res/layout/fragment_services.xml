@@ -117,7 +117,7 @@
                     android:layout_width="100dp"
                     android:layout_height="100dp"
                     android:scaleType="centerCrop"
-                    android:src="@drawable/placeholder_grooming" />
+                    android:src="@drawable/petgrooming" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -166,7 +166,7 @@
                     android:layout_width="100dp"
                     android:layout_height="100dp"
                     android:scaleType="centerCrop"
-                    android:src="@drawable/placeholder_boarding" />
+                    android:src="@drawable/petboarding" />
 
                 <LinearLayout
                     android:layout_width="match_parent"

@@ -19,6 +19,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var sessionManager: SessionManager
     private val userRepository = UserRepository()
     private val TAG = "LoginActivity"
+    private var redirectAction = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,6 +27,9 @@ class LoginActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         sessionManager = SessionManager(this)
+
+        // Get redirect action if any
+        redirectAction = intent.getStringExtra(LoginRequiredActivity.EXTRA_REDIRECT_ACTION) ?: ""
 
         // Check if user is already logged in
         if (sessionManager.isLoggedIn()) {
@@ -44,7 +48,11 @@ class LoginActivity : AppCompatActivity() {
 
         // Sign up text click listener
         binding.tvSignUp.setOnClickListener {
-            startActivity(Intent(this, SignupActivity::class.java))
+            val intent = Intent(this, SignupActivity::class.java)
+            if (redirectAction.isNotEmpty()) {
+                intent.putExtra(LoginRequiredActivity.EXTRA_REDIRECT_ACTION, redirectAction)
+            }
+            startActivity(intent)
         }
 
         // Google login button click listener

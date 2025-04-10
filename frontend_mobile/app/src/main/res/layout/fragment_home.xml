@@ -57,7 +57,7 @@
                     android:layout_width="120dp"
                     android:layout_height="120dp"
                     android:scaleType="centerCrop"
-                    android:src="@drawable/placeholder_pets"
+                    android:src="@drawable/dogcathome"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
@@ -323,7 +323,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="100dp"
                         android:scaleType="centerCrop"
-                        android:src="@drawable/placeholder_grooming" />
+                        android:src="@drawable/petgrooming" />
 
                     <TextView
                         android:layout_width="match_parent"
@@ -374,7 +374,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="100dp"
                         android:scaleType="centerCrop"
-                        android:src="@drawable/placeholder_boarding" />
+                        android:src="@drawable/petboarding" />
 
                     <TextView
                         android:layout_width="match_parent"

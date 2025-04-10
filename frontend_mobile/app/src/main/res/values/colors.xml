@@ -11,6 +11,7 @@
     <!-- Custom colors for Pawtopia -->
     <color name="purple">#6200EE</color>
     <color name="light_purple">#F2EAFF</color>
+    <color name="very_light_purple">#F8F5FF</color>
     <color name="light_gray">#E0E0E0</color>
     <color name="dark_gray">#757575</color>
 </resources>

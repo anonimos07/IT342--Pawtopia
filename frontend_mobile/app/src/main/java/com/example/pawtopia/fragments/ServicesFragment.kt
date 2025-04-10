@@ -6,11 +6,14 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import com.example.pawtopia.LoginRequiredActivity
 import com.example.pawtopia.databinding.FragmentServicesBinding
+import com.example.pawtopia.util.SessionManager
 
 class ServicesFragment : Fragment() {
     private var _binding: FragmentServicesBinding? = null
     private val binding get() = _binding!!
+    private lateinit var sessionManager: SessionManager
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -24,9 +27,16 @@ class ServicesFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        sessionManager = SessionManager(requireContext())
+
         // Set up book appointment button
         binding.btnBookAppointment.setOnClickListener {
-            Toast.makeText(requireContext(), "Booking appointment...", Toast.LENGTH_SHORT).show()
+            if (sessionManager.isLoggedIn()) {
+                Toast.makeText(requireContext(), "Booking appointment...", Toast.LENGTH_SHORT).show()
+            } else {
+                // Show login required screen
+                LoginRequiredActivity.startForBooking(requireContext())
+            }
         }
     }
 
