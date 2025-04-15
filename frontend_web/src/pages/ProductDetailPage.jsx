@@ -54,7 +54,7 @@ export default function ProductDetailPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header activePage="products" />
+    
 
       <main className="flex-1">
      

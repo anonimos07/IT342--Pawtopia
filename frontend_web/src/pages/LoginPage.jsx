@@ -1,22 +1,22 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Label } from '../components/ui/Label';
-import { Checkbox } from '../components/ui/Checkbox';
 import { PawPrint } from 'lucide-react';
 
 export default function LoginPage() {
   // State for form inputs
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
-  
+
   // State for form validation
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
   const [loginError, setLoginError] = useState("");
+  
+  const navigate = useNavigate();
 
   const googleLogin = () => {
     window.location.href = "http://localhost:8080/oauth2/authorization/google";
@@ -24,11 +24,9 @@ export default function LoginPage() {
 
   const API_URL = "http://localhost:8080/users";
 
-
   const validateForm = () => {
     let formErrors = {};
     
-
     if (!username.trim()) {
       formErrors.username = "Username is required";
     }
@@ -42,13 +40,12 @@ export default function LoginPage() {
     return formErrors;
   };
 
-  
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     const formErrors = validateForm();
     setErrors(formErrors);
-  
+
     if (Object.keys(formErrors).length === 0) {
       setIsSubmitting(true);
     
@@ -61,26 +58,41 @@ export default function LoginPage() {
           body: JSON.stringify({ username, password }),
         });
     
-      
         if (response.ok) {
           const token = await response.text(); 
-    
           console.log("Login success, token:", token);
-    
+          
+          // Save token in localStorage
+          localStorage.setItem("token", token);
+          
+          // Save basic user info in localStorage
+          const userData = {
+            name: username,
+            avatar: '/default-avatar.png' // You can replace with actual avatar URL if available
+          };
+          localStorage.setItem("user", JSON.stringify(userData));
+          
+          // Dispatch events to inform other components
+          window.dispatchEvent(new Event("storage"));
+          window.dispatchEvent(new CustomEvent("loginSuccess"));
+          
           setLoginSuccess(true);
           setLoginError("");
-    
-         
-          if (rememberMe) {
-            localStorage.setItem("authToken", token); 
-          }
-    
-          
-          window.location.href = "/";
+
+          // Short delay before redirecting
+          setTimeout(() => {
+            navigate('/');
+          }, 500);
         } else {
-          const errorData = await response.json(); 
-          setLoginSuccess(false);
-          setLoginError(errorData.detail || "Invalid username or password");
+          const errorText = await response.text();
+          let errorMessage;
+          try {
+            const errorData = JSON.parse(errorText);
+            errorMessage = errorData.detail || "Invalid username or password";
+          } catch {
+            errorMessage = errorText || "Invalid username or password";
+          }
+          setLoginError(errorMessage);
         }
       } catch (error) {
         console.error("Unexpected error during login:", error); 
@@ -90,7 +102,6 @@ export default function LoginPage() {
       }
     }
   };
-  
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -124,14 +135,12 @@ export default function LoginPage() {
                 <p className="text-gray-500 text-sm">Enter your credentials to access your account</p>
               </div>
 
-              
               {loginSuccess && (
                 <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
-                  <span className="block sm:inline">Login successful!</span>
+                  <span className="block sm:inline">Login successful! Redirecting...</span>
                 </div>
               )}
 
-            
               {loginError && (
                 <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
                   <span className="block sm:inline">{loginError}</span>
@@ -143,9 +152,9 @@ export default function LoginPage() {
                   <Label htmlFor="username">Username</Label>
                   <Input 
                     id="username" 
-                    type="username" 
+                    type="text" 
                     placeholder="Enter your username" 
-                    className={`rounded-lg ${errors.user ? 'border-red-500' : ''}`}
+                    className={`rounded-lg ${errors.username ? 'border-red-500' : ''}`}
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                   />
@@ -155,9 +164,6 @@ export default function LoginPage() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="password">Password</Label>
-                    <Link to="/forgot-password" className="text-sm text-primary hover:underline">
-                      Forgot password?
-                    </Link>
                   </div>
                   <Input 
                     id="password" 
@@ -168,17 +174,6 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                   />
                   {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="remember" 
-                    checked={rememberMe}
-                    onCheckedChange={setRememberMe}
-                  />
-                  <Label htmlFor="remember" className="text-sm font-normal">
-                    Remember me
-                  </Label>
                 </div>
 
                 <Button 
@@ -232,17 +227,6 @@ export default function LoginPage() {
                     />
                   </svg>
                   Google
-                </Button>
-                <Button 
-                  type="button"
-                  variant="outline" 
-                  className="rounded-lg"
-                  onClick={() => alert("Facebook login would be implemented here")}
-                >
-                  <svg className="w-5 h-5 mr-2" fill="#1877F2" viewBox="0 0 24 24">
-                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                  </svg>
-                  Facebook
                 </Button>
               </div>
             </div>

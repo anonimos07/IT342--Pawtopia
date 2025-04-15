@@ -44,7 +44,7 @@ export default function ServicesPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header activePage="services" />
+    
 
       <main className="flex-1">
     

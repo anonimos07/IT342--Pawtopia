@@ -63,7 +63,7 @@ export default function ProductsPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header activePage="products" />
+      
 
       <main className="flex-1">
      
@@ -202,25 +202,7 @@ export default function ProductsPage() {
         </section>
 
   
-        <section className="py-16 bg-primary/10">
-          <div className="container mx-auto px-4 max-w-4xl">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900">Join Our Pack</h2>
-              <p className="text-gray-600 mt-2">
-                Subscribe to get updates on new products, special offers, and pet care tips
-              </p>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-4 max-w-xl mx-auto">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="flex-1 px-4 py-3 rounded-full border focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-              <Button className="rounded-full">Subscribe</Button>
-            </div>
-          </div>
-        </section>
+        
       </main>
 
       <Footer />
