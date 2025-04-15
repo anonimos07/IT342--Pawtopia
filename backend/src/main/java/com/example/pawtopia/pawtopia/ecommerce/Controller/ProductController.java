@@ -15,17 +15,20 @@ public class ProductController {
     @Autowired
     ProductService pserv;
 
+    //create prod
     @PostMapping("/postProduct")
     public Product postProductRecord(@RequestBody Product product) {
         System.out.println("Received product data: " + product);
         return pserv.postProductRecord(product);
     }
 
+    //fetch prod admin,user view
     @GetMapping("/getProduct")
     public List<Product> getAllProduct(){
         return pserv.getAllProduct();
     }
 
+    //fetch id admin,user buy
     @GetMapping("/getProduct/{id}")
     public ResponseEntity<Product> getProductById(@PathVariable("id") int productID) {
         Product product = pserv.getProductById(productID);
@@ -36,18 +39,19 @@ public class ProductController {
         }
     }
 
-
+    //update admin
     @PutMapping("/putProduct/{id}")
     public Product updateProduct(@PathVariable int id, @RequestBody Product productRecord) {
         return pserv.updateProduct(id,productRecord);
     }
 
-
+    //admin
     @DeleteMapping("/deleteProduct/{id}")
     public String deleteProduct(@PathVariable int id) {
         return pserv.deleteProduct(id);
     }
 
+    //admin
     @GetMapping("/getTotalQuantitySold")
     public int getTotalQuantitySold() {
         return pserv.calculateTotalQuantitySold();

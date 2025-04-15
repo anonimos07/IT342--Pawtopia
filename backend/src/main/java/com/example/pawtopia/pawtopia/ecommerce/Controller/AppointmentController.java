@@ -16,27 +16,32 @@ public class AppointmentController {
     @Autowired
     private AppointmentService appointmentService;
 
+    //get all
     @GetMapping("/getAppointment")
     public List<Appointment> getAllAppointments() {
         return appointmentService.getAllAppointments();
     }
 
+    //crate app user
     @PostMapping("/postAppointment")
     public Appointment addAppointment(@RequestBody Appointment appointment) {
         return appointmentService.addAppointment(appointment);
     }
 
+    //edit user
     @PutMapping("/putAppointment/{appid}")
     public Appointment updateAppointment(@PathVariable Long appId,@RequestBody Appointment appointment) {
         return appointmentService.updateAppointment(appId, appointment);
     }
 
+    //del user
     @DeleteMapping("/deleteAppointment/{appid}")
     public String deleteCourse(@PathVariable Long appId) {
         return appointmentService.deleteAppointment(appId);
     }
 
 
+    //cancel, user-adm
     @PutMapping("/cancel/{appid}")
     public ResponseEntity<String> cancelAppointment(@PathVariable Long appId) {
         // Find the appointment by appid
@@ -58,6 +63,7 @@ public class AppointmentController {
         }
     }
 
+    //confirm adm
     @PutMapping("/confirm/{appid}")
     public ResponseEntity<String> confirmAppointment(@PathVariable Long appId) {
         // Find the appointment by appid
@@ -84,6 +90,7 @@ public class AppointmentController {
         }
     }
 
+    //get by email - admin
     @GetMapping("/byUserEmail/{email}")
     public List<Appointment> getAppointmentsByUserEmail(@PathVariable String email) {
         return appointmentService.getAppointmentsByUserEmail(email);

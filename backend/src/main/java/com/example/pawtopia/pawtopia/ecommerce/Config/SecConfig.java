@@ -40,10 +40,17 @@ public class SecConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
 
-                        .requestMatchers("/users/signup", "/users/login", "/admin/login").permitAll()
-                        .requestMatchers("/users/**","/appointments/postAppointment").hasRole("CUSTOMER")
+                        .requestMatchers("/users/signup", "/users/login", "/admin/login",
+                                "/api/product/getProduct","/api/product/getProduct/{id}","/api/review/**").permitAll()
+                        .requestMatchers("/users/**","/appointments/postAppointment",
+                                "/adresses/get-users/{userId}","/adresses/del-users/{userId}","/api/cartItem/**","/api/cart/**",
+                                "/api/order/postOrderRecord","/api/order/putOrderDetails","/api/order/deleteOrderDetails/{id}").hasRole("CUSTOMER")
+
                         .requestMatchers("/admin/**","/adresses/getAllAddress",
-                                "/appointments/confirm/{appid}","/appointments/getAppointment").hasRole("ADMIN")
+                                "/appointments/confirm/{appid}","/appointments/getAppointment",
+                                "/api/product/putProduct/{id}","/api/product/deleteProduct/{id}","/api/product/getTotalQuantitySold",
+                                "/api/order/getAllOrders","/api/order/getOrderDetails/{orderID}","/api/order/getAllOrdersByUserId",
+                                "/api/order/get-total-income").hasRole("ADMIN")
 //                        .requestMatchers("/adresses/getAllAddress").hasAuthority("ADMIN")
                         .anyRequest().authenticated()
                 )

@@ -23,7 +23,7 @@ public class AddressController {
     }
 
     // Get the address for a user
-    @GetMapping("/users/{userId}")
+    @GetMapping("/get-users/{userId}")
     public ResponseEntity<Address> getAddress(@PathVariable Long userId) {
         Address address = addressService.getAddressByUserId(userId);
         if (address != null) {
@@ -39,7 +39,7 @@ public class AddressController {
     }
 
     // Delete the address for a user
-    @DeleteMapping("/users/{userId}")
+    @DeleteMapping("/del-users/{userId}")
     public ResponseEntity<Void> deleteAddress(@PathVariable Long userId) {
         addressService.deleteAddressForUser(userId);
         return ResponseEntity.noContent().build();
