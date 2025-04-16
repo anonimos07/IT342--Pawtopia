@@ -41,25 +41,6 @@ public class AdminController {
         return ResponseEntity.ok("Admin added successfully!");
     }
 
-//    @PostMapping("/login")
-//    public ResponseEntity<String> loginAdmin(@RequestBody String username, @RequestBody String password){
-//        Optional<Admin> admin = adminService.findByUsernameAndPassword(username, password);
-//        if(admin.isPresent()){
-//            return  ResponseEntity.ok("Admin Loggedin Successfully!");
-//        }else{
-//            return ResponseEntity.status(401).body("Invalid Credentials!");
-//        }
-//    }
-
-//    @PostMapping("/login")
-//    public ResponseEntity<String> login(@RequestBody Admin admin) {
-//        String result = adminService.verify(admin);
-//        if (result.equals("failed")) {
-//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(result);
-//        }
-//        return ResponseEntity.ok(result);
-//    }
-
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody Admin admin) {
         try {

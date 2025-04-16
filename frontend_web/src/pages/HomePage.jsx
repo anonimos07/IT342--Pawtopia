@@ -3,6 +3,10 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { Button } from '../components/ui/Button';
 
+import petgrooming from '../assets/petgrooming.jpg';
+import petboarding from '../assets/petboarding.png';
+import happypets from '../assets/happypets.webp';
+
 export default function HomePage() {
   return (
     <div className="min-h-screen flex flex-col">
@@ -21,17 +25,17 @@ export default function HomePage() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
                 <Button size="lg" className="rounded-full">
-                  Shop Now
+                <Link to="/products">Shop Now</Link>
                 </Button>
                 <Button size="lg" variant="outline" className="rounded-full">
-                  Our Services
+                <Link to="/services">Our Services</Link>
                 </Button>
               </div>
             </div>
             <div className="md:w-1/2 relative">
-              <div className="aspect-[4/3] w-full max-w-lg mx-auto overflow-hidden rounded-2xl shadow-xl">
+              <div className="aspect-[5/3] w-full max-w-lg mx-auto overflow-hidden rounded-2xl shadow-xl">
                 <img
-                  src="/placeholder.svg?height=600&width=800"
+                  src={happypets}
                   alt="Happy pets"
                   className="object-cover w-full h-full"
                 />
@@ -143,7 +147,7 @@ export default function HomePage() {
               <div className="bg-white rounded-xl shadow-md overflow-hidden">
                 <div className="aspect-video relative">
                   <img
-                    src="/placeholder.svg?height=400&width=600"
+                    src={petgrooming}
                     alt="Pet Grooming"
                     className="object-cover w-full h-full"
                   />
@@ -153,7 +157,7 @@ export default function HomePage() {
                   <p className="text-gray-600 mb-4">
                     Professional grooming services to keep your pet clean, healthy, and looking their best.
                   </p>
-                  <Button className="w-full rounded-full">Book Now</Button>
+                  <Button><Link to="/services/appointment">Book Now</Link></Button>
                 </div>
               </div>
 
@@ -161,7 +165,7 @@ export default function HomePage() {
               <div className="bg-white rounded-xl shadow-md overflow-hidden">
                 <div className="aspect-video relative">
                   <img
-                    src="/placeholder.svg?height=400&width=600"
+                    src={petboarding}
                     alt="Pet Boarding"
                     className="object-cover w-full h-full"
                   />
@@ -171,7 +175,7 @@ export default function HomePage() {
                   <p className="text-gray-600 mb-4">
                     A safe and comfortable home away from home for your pets when you're away.
                   </p>
-                  <Button className="w-full rounded-full">Book Now</Button>
+                  <Button><Link to="/services/appointment">Book Now</Link></Button>
                 </div>
               </div>
             </div>

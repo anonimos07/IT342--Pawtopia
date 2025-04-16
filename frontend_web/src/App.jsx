@@ -9,6 +9,10 @@ import LoginPage from "./pages/LoginPage"
 import SignupPage from "./pages/SignupPage"
 import Header from "./components/Header"
 import ProfilePage from "./pages/ProfilePage";
+import AdminLogin from "./pages/AdminLogin"
+import AdminDashboard from "./pages/AdminDashboard"
+import AdminUsers from './pages/AdminUsers';
+import AdminProducts from "./pages/AdminProducts"
 
 
 function Layout({ children, username, role }) {
@@ -31,6 +35,12 @@ function App() {
 
   return (
     <Routes>
+  
+  <Route path="/admin" element={<AdminLogin />} />
+<Route path="/adminDashboard" element={<AdminDashboard />} />
+<Route path="/adminUsers" element={<AdminUsers />} />
+<Route path="/adminProducts" element={<AdminProducts />} />
+
       <Route
         path="/"
         element={

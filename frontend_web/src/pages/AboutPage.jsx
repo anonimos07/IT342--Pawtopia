@@ -5,6 +5,12 @@ import { Button } from '../components/ui/Button';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '../components/ui/Breadcrumb';
 import { Mail, Phone, PawPrint } from 'lucide-react';
 
+import charles from '../assets/charles.png';
+import jared from '../assets/jared.png';
+import kyrie from '../assets/kyrie.jpg';
+import aboutusbg from '../assets/aboutusbg.jpg';
+
+
 export default function AboutPage() {
   const teamMembers = [
     {
@@ -12,21 +18,21 @@ export default function AboutPage() {
       name: "Charles William Sevenial",
       email: "charles@pawtopia.com",
       phone: "223-360-762",
-      image: "/placeholder.svg?height=300&width=300",
+      image: charles,
     },
     {
       id: 2,
       name: "Jared Chester Canasa",
       email: "jared@pawtopia.com",
       phone: "455-9887-273",
-      image: "/placeholder.svg?height=300&width=300",
+      image: jared,
     },
     {
       id: 3,
       name: "Vince Kyrie Seville",
       email: "vince@pawtopia.com",
       phone: "2009-40032",
-      image: "/placeholder.svg?height=300&width=300",
+      image: kyrie,
     },
   ];
 
@@ -65,7 +71,7 @@ export default function AboutPage() {
             <div className="grid md:grid-cols-2 gap-12 items-center max-w-5xl mx-auto">
               <div className="rounded-2xl overflow-hidden shadow-lg">
                 <img
-                  src="/placeholder.svg?height=600&width=600"
+                  src={aboutusbg}
                   alt="Puppy and kitten"
                   className="w-full h-full object-cover"
                 />

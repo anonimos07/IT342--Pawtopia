@@ -6,6 +6,9 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbS
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/Card';
 import { Scissors, Home, PawPrint } from 'lucide-react';
 
+import petgrooming from '../assets/petgrooming.jpg';
+import petboarding from '../assets/petboarding.png';
+
 export default function ServicesPage() {
   const services = [
     {
@@ -21,7 +24,7 @@ export default function ServicesPage() {
         "Specialized skin treatments",
       ],
       price: "From ₱500",
-      image: "/placeholder.svg?height=400&width=600",
+      image: petgrooming,
       icon: Scissors,
     },
     {
@@ -37,7 +40,7 @@ export default function ServicesPage() {
         "Daily updates and photos",
       ],
       price: "From ₱800/night",
-      image: "/placeholder.svg?height=400&width=600",
+      image: petboarding,
       icon: Home,
     },
   ];
