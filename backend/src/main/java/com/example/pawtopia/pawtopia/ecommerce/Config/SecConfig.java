@@ -1,6 +1,7 @@
 package com.example.pawtopia.pawtopia.ecommerce.Config;
 
 import com.example.pawtopia.pawtopia.ecommerce.Service.UserService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -45,33 +46,38 @@ public class SecConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Enable CORS
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // Allow OPTIONS requests for all endpoints
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-                        // Your existing permissions
                         .requestMatchers("/users/signup", "/users/login", "/admin/login",
-                                "/api/product/getProduct","/api/product/getProduct/{id}","/api/review/**","/oauth-success",
-                                "/oauth2/authorization/google", // Allow OAuth2 initiation
-                                "/login/oauth2/code/google").permitAll()
-                        .requestMatchers("/users/**","/appointments/postAppointment",
-                                "/adresses/get-users/{userId}","/adresses/del-users/{userId}","/api/cartItem/**","/api/cart/**",
-                                "/api/order/postOrderRecord","/api/order/putOrderDetails","/api/order/deleteOrderDetails/{id}").hasRole("CUSTOMER")
-                        .requestMatchers("/admin/**","/adresses/getAllAddress",
-                                "/appointments/confirm/{appid}","/appointments/getAppointment",
-                                "/api/product/putProduct/{id}","/api/product/deleteProduct/{id}","/api/product/getTotalQuantitySold",
-                                "/api/order/getAllOrders","/api/order/getOrderDetails/{orderID}","/api/order/getAllOrdersByUserId",
+                                "/api/product/getProduct", "/api/product/getProduct/{id}", "/api/review/**", "/oauth-success",
+                                "/oauth2/authorization/google", "/login/oauth2/code/google").permitAll()
+                        .requestMatchers("/users/**", "/appointments/postAppointment",
+                                "/adresses/get-users/{userId}", "/adresses/del-users/{userId}", "/api/cartItem/**", "/api/cart/**",
+                                "/api/order/postOrderRecord", "/api/order/putOrderDetails", "/api/order/deleteOrderDetails/{id}").hasRole("CUSTOMER")
+                        .requestMatchers("/admin/**", "/adresses/getAllAddress",
+                                "/appointments/confirm/{appid}", "/appointments/getAppointment",
+                                "/api/product/putProduct/{id}", "/api/product/deleteProduct/{id}", "/api/product/getTotalQuantitySold",
+                                "/api/order/getAllOrders", "/api/order/getOrderDetails/{orderID}", "/api/order/getAllOrdersByUserId",
                                 "/api/order/get-total-income").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
+
+                // 🔐 This prevents redirects to OAuth2 login for API requests
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+                        })
+                )
+
                 .oauth2Login(oauth2login -> oauth2login
                         .successHandler(oAuth2SuccessHandler))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
+
 
     // Add this method to configure CORS
     @Bean

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import AdminHeader from '../components/AdminHeader';
 
 const AdminProducts = () => {
@@ -35,15 +34,19 @@ const AdminProducts = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get("http://localhost:8080/api/product/getProduct");
-      if (Array.isArray(response.data)) {
-        setProducts(response.data);
+      const response = await fetch("http://localhost:8080/api/product/getProduct");
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to fetch products");
+      }
+      if (Array.isArray(data)) {
+        setProducts(data);
       } else {
         setProducts([]);
       }
     } catch (error) {
       console.error("Error fetching products:", error);
-      setError("Failed to fetch products");
+      setError(error.message || "Failed to fetch products");
     } finally {
       setLoading(false);
     }
@@ -51,10 +54,23 @@ const AdminProducts = () => {
 
   const handleAddProduct = async () => {
     try {
-      const response = await axios.post(
+      const response = await fetch(
         "http://localhost:8080/api/product/postProduct", 
-        newProduct
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(newProduct)
+        }
       );
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to create product");
+      }
+
       if (response.status === 200 || response.status === 201) {
         fetchProducts();
         setNewProduct({
@@ -69,7 +85,7 @@ const AdminProducts = () => {
       }
     } catch (error) {
       console.error("Error creating product:", error);
-      setError("Failed to create product");
+      setError(error.message || "Failed to create product");
     }
   };
 
@@ -87,29 +103,85 @@ const AdminProducts = () => {
 
   const handleUpdate = async (productId) => {
     try {
-      const response = await axios.put(
+      // Get the authentication token (if using JWT)
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch(
         `http://localhost:8080/api/product/putProduct/${productId}`,
-        editForm
+        {
+          method: 'PUT',
+          credentials: 'include', // For cookie-based auth
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token && { 'Authorization': `Bearer ${token}` }) // Add if token exists
+          },
+          body: JSON.stringify(editForm)
+        }
       );
-      if (response.status === 200) {
+  
+      // Handle empty responses
+      if (response.status === 204) { // No Content
         fetchProducts();
         setEditingId(null);
+        return;
       }
+  
+      // Handle JSON responses
+      const data = await response.json().catch(() => ({})); // Fallback if no JSON
+  
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to update product');
+      }
+  
+      fetchProducts();
+      setEditingId(null);
     } catch (error) {
       console.error("Error updating product:", error);
-      setError("Failed to update product");
+      setError(error.message || "Failed to update product");
+      
+      // Optional: Handle specific auth errors
+      if (error.message.includes('Unauthorized') || error.message.includes('401')) {
+        // You can choose to show an error instead of redirecting
+        setError('Please log in to update products');
+        // Or redirect if you prefer:
+        // navigate('/login');
+      }
     }
   };
 
   const handleDelete = async (productId) => {
     try {
-      await axios.delete(
-        `http://localhost:8080/api/product/deleteProduct/${productId}`
+      const response = await fetch(
+        `http://localhost:8080/api/product/deleteProduct/${productId}`,
+        {
+          method: 'DELETE',
+          credentials: 'include', // For cookies (if using session-based auth)
+          headers: {
+            'Content-Type': 'application/json',
+            // If using JWT, uncomment:
+            // 'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+        }
       );
-      fetchProducts();
+  
+      if (!response.ok) {
+        let errorMessage = "Failed to delete product";
+        
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          errorMessage = response.statusText || errorMessage;
+        }
+  
+        throw new Error(errorMessage);
+      }
+  
+      // If successful, refresh the product list
+      await fetchProducts();
     } catch (error) {
-      console.error("Error deleting product:", error);
-      setError("Failed to delete product");
+      console.error("Delete error:", error);
+      setError(error.message); // Show error without redirecting
     }
   };
 

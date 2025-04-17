@@ -107,22 +107,10 @@ function App() {
       <Route path="/oauth-success" element={<OAuthSuccess />} />
       <Route path="/admin" element={<AdminLogin />} />
       
-      {/* Protected admin routes */}
-      <Route path="/adminDashboard" element={
-        <AdminRoute>
-          <AdminDashboard />
-        </AdminRoute>
-      } />
-      <Route path="/adminUsers" element={
-        <AdminRoute>
-          <AdminUsers />
-        </AdminRoute>
-      } />
-      <Route path="/adminProducts" element={
-        <AdminRoute>
-          <AdminProducts />
-        </AdminRoute>
-      } />
+      <Route path="/adminDashboard" element={<AdminDashboard />} />
+      <Route path="/adminUsers" element={<AdminUsers />} />
+      <Route path="/adminProducts" element={<AdminProducts />} />
+
 
       {/* Public or authenticated routes with layout */}
       <Route 
