@@ -42,14 +42,16 @@ public class OAuth2SuccessHandler extends SavedRequestAwareAuthenticationSuccess
         // response header
         response.setHeader("Authorization", "Bearer " + token);
 
+        // Option 1: Set as non-HttpOnly cookie so JavaScript can read it
         Cookie cookie = new Cookie("jwt_token", token);
-        cookie.setHttpOnly(true);
+        cookie.setHttpOnly(false); // Allow JavaScript to read the cookie
         cookie.setSecure(request.isSecure()); // true for HTTPS
         cookie.setPath("/");
         cookie.setMaxAge(3600); // 1 hour in seconds
         response.addCookie(cookie);
 
-        // Redirect to home page
-        getRedirectStrategy().sendRedirect(request, response, "http://localhost:5173/");
+        // Option 2: Also provide token in URL (as backup)
+        getRedirectStrategy().sendRedirect(request, response,
+                "http://localhost:5173/oauth-success?token=" + token);
     }
 }

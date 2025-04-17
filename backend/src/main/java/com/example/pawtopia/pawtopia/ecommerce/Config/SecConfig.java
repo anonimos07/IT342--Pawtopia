@@ -53,7 +53,9 @@ public class SecConfig {
 
                         // Your existing permissions
                         .requestMatchers("/users/signup", "/users/login", "/admin/login",
-                                "/api/product/getProduct","/api/product/getProduct/{id}","/api/review/**").permitAll()
+                                "/api/product/getProduct","/api/product/getProduct/{id}","/api/review/**","/oauth-success",
+                                "/oauth2/authorization/google", // Allow OAuth2 initiation
+                                "/login/oauth2/code/google").permitAll()
                         .requestMatchers("/users/**","/appointments/postAppointment",
                                 "/adresses/get-users/{userId}","/adresses/del-users/{userId}","/api/cartItem/**","/api/cart/**",
                                 "/api/order/postOrderRecord","/api/order/putOrderDetails","/api/order/deleteOrderDetails/{id}").hasRole("CUSTOMER")
@@ -75,12 +77,14 @@ public class SecConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173")); // Allow your frontend origin
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS")); // Allow all needed methods
-        configuration.setAllowedHeaders(Arrays.asList("*")); // Allow all headers (including Authorization)
-        configuration.setAllowCredentials(true); // Allow cookies/auth headers
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173")); // Your frontend URL
+        configuration.setAllowedMethods(Arrays.asList("*"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowCredentials(true); // Must be true for cookies
+        configuration.setExposedHeaders(Arrays.asList("Authorization")); // Expose headers to frontend
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration); // Apply to all paths
+        source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 
