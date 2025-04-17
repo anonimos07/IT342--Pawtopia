@@ -5,6 +5,7 @@ const AdminHeader = ({ username, onLogout }) => {
 
   const handleLogout = () => {
     localStorage.removeItem('adminToken');
+    localStorage.clear();
     onLogout();
     navigate('/admin');
   };

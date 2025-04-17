@@ -80,6 +80,8 @@ export default function Header({ activePage = 'home' }) {
     localStorage.removeItem("id");
     localStorage.removeItem("role");
     localStorage.removeItem("username");
+
+    localStorage.clear();
     
     
     // Update state

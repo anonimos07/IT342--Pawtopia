@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import AdminHeader from '../components/AdminHeader';
 
 const AdminProducts = () => {
@@ -13,7 +14,7 @@ const AdminProducts = () => {
     productPrice: 0,
     quantity: 0,
     productImage: '',
-    productType: 'general'
+    productType: ''
   });
   const [newProduct, setNewProduct] = useState({
     productName: '',
@@ -21,9 +22,11 @@ const AdminProducts = () => {
     productPrice: 0,
     quantity: 0,
     productImage: '',
-    productType: 'general'
+    productType: ''
   });
   const [showAddForm, setShowAddForm] = useState(false);
+  const [productToDelete, setProductToDelete] = useState(null);
+  const [openDeleteConfirmDialog, setOpenDeleteConfirmDialog] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,141 +35,86 @@ const AdminProducts = () => {
 
   const fetchProducts = async () => {
     try {
-      const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:8080/api/product/getProduct', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch products');
+      const response = await axios.get("http://localhost:8080/api/product/getProduct");
+      if (Array.isArray(response.data)) {
+        setProducts(response.data);
+      } else {
+        setProducts([]);
       }
-      
-      const data = await response.json();
-      setProducts(data);
-    } catch (err) {
-      setError(err.message);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      setError("Failed to fetch products");
     } finally {
       setLoading(false);
     }
   };
 
+  const handleAddProduct = async () => {
+    try {
+      const response = await axios.post(
+        "http://localhost:8080/api/product/postProduct", 
+        newProduct
+      );
+      if (response.status === 200 || response.status === 201) {
+        fetchProducts();
+        setNewProduct({
+          productName: '',
+          description: '',
+          productPrice: 0,
+          quantity: 0,
+          productImage: '',
+          productType: ''
+        });
+        setShowAddForm(false);
+      }
+    } catch (error) {
+      console.error("Error creating product:", error);
+      setError("Failed to create product");
+    }
+  };
+
   const handleEdit = (product) => {
-    setEditingId(product.ProductID);
+    setEditingId(product.productID);
     setEditForm({
       productName: product.productName,
       description: product.description,
       productPrice: product.productPrice,
       quantity: product.quantity,
-      productImage: product.productImage,
-      productType: product.productType || 'general'
+      productImage: product.productImage || '',
+      productType: product.productType || ''
     });
   };
 
-  const handleUpdate = async (id) => {
+  const handleUpdate = async (productId) => {
     try {
-      const token = localStorage.getItem('adminToken');
-      if (!token) {
-        throw new Error('No authentication token found');
+      const response = await axios.put(
+        `http://localhost:8080/api/product/putProduct/${productId}`,
+        editForm
+      );
+      if (response.status === 200) {
+        fetchProducts();
+        setEditingId(null);
       }
-
-      const response = await fetch(`http://localhost:8080/api/product/putProduct/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(editForm)
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Update failed');
-      }
-      
-      const updatedProduct = await response.json();
-      setProducts(products.map(product => 
-        product.ProductID === id ? updatedProduct : product
-      ));
-      setEditingId(null);
-    } catch (err) {
-      setError(err.message);
-      console.error('Update error:', err);
+    } catch (error) {
+      console.error("Error updating product:", error);
+      setError("Failed to update product");
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
-      try {
-        const token = localStorage.getItem('adminToken');
-        if (!token) {
-          throw new Error('No authentication token found');
-        }
-
-        const response = await fetch(`http://localhost:8080/api/product/deleteProduct/${id}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Delete failed');
-        }
-        
-        setProducts(products.filter(product => product.ProductID !== id));
-      } catch (err) {
-        setError(err.message);
-        console.error('Delete error:', err);
-      }
-    }
-  };
-
-  const handleAddProduct = async () => {
+  const handleDelete = async (productId) => {
     try {
-      const token = localStorage.getItem('adminToken');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      const response = await fetch('http://localhost:8080/api/product/postProduct', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          ...newProduct,
-          quantitySold: 0
-        })
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Add product failed');
-      }
-      
-      const addedProduct = await response.json();
-      setProducts([...products, addedProduct]);
-      setNewProduct({ 
-        productName: '',
-        description: '',
-        productPrice: 0,
-        quantity: 0,
-        productImage: '',
-        productType: 'general'
-      });
-      setShowAddForm(false);
-    } catch (err) {
-      setError(err.message);
-      console.error('Add product error:', err);
+      await axios.delete(
+        `http://localhost:8080/api/product/deleteProduct/${productId}`
+      );
+      fetchProducts();
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      setError("Failed to delete product");
     }
   };
 
-  if (loading) return <div className="flex justify-center items-center h-screen">Loading...</div>;
-  if (error) return <div className="text-red-500 text-center p-4">Error: {error}</div>;
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -209,7 +157,7 @@ const AdminProducts = () => {
                 <input
                   type="number"
                   value={newProduct.productPrice}
-                  onChange={(e) => setNewProduct({...newProduct, productPrice: parseFloat(e.target.value)})}
+                  onChange={(e) => setNewProduct({...newProduct, productPrice: parseFloat(e.target.value) || 0})}
                   className="w-full border rounded px-3 py-2"
                 />
               </div>
@@ -218,7 +166,7 @@ const AdminProducts = () => {
                 <input
                   type="number"
                   value={newProduct.quantity}
-                  onChange={(e) => setNewProduct({...newProduct, quantity: parseInt(e.target.value)})}
+                  onChange={(e) => setNewProduct({...newProduct, quantity: parseInt(e.target.value) || 0})}
                   className="w-full border rounded px-3 py-2"
                 />
               </div>
@@ -277,10 +225,10 @@ const AdminProducts = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {products.map((product) => (
-                <tr key={product.ProductID}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product.ProductID}</td>
+                <tr key={product.productID}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product.productID}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {editingId === product.ProductID ? (
+                    {editingId === product.productID ? (
                       <input
                         type="text"
                         value={editForm.productName}
@@ -292,7 +240,7 @@ const AdminProducts = () => {
                     )}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500">
-                    {editingId === product.ProductID ? (
+                    {editingId === product.productID ? (
                       <textarea
                         value={editForm.description}
                         onChange={(e) => setEditForm({...editForm, description: e.target.value})}
@@ -304,23 +252,23 @@ const AdminProducts = () => {
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {editingId === product.ProductID ? (
+                    {editingId === product.productID ? (
                       <input
                         type="number"
                         value={editForm.productPrice}
-                        onChange={(e) => setEditForm({...editForm, productPrice: parseFloat(e.target.value)})}
+                        onChange={(e) => setEditForm({...editForm, productPrice: parseFloat(e.target.value) || 0})}
                         className="border rounded px-2 py-1 w-20"
                       />
                     ) : (
-                      `$${product.productPrice.toFixed(2)}`
+                      `$${product.productPrice?.toFixed(2) || '0.00'}`
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {editingId === product.ProductID ? (
+                    {editingId === product.productID ? (
                       <input
                         type="number"
                         value={editForm.quantity}
-                        onChange={(e) => setEditForm({...editForm, quantity: parseInt(e.target.value)})}
+                        onChange={(e) => setEditForm({...editForm, quantity: parseInt(e.target.value) || 0})}
                         className="border rounded px-2 py-1 w-20"
                       />
                     ) : (
@@ -328,7 +276,7 @@ const AdminProducts = () => {
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {editingId === product.ProductID ? (
+                    {editingId === product.productID ? (
                       <input
                         type="text"
                         value={editForm.productType}
@@ -340,7 +288,7 @@ const AdminProducts = () => {
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {editingId === product.ProductID ? (
+                    {editingId === product.productID ? (
                       <input
                         type="text"
                         value={editForm.productImage}
@@ -358,10 +306,10 @@ const AdminProducts = () => {
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {editingId === product.ProductID ? (
+                    {editingId === product.productID ? (
                       <div className="flex space-x-2">
                         <button
-                          onClick={() => handleUpdate(product.ProductID)}
+                          onClick={() => handleUpdate(product.productID)}
                           className="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
                         >
                           Save
@@ -382,7 +330,7 @@ const AdminProducts = () => {
                           Edit
                         </button>
                         <button
-                          onClick={() => handleDelete(product.ProductID)}
+                          onClick={() => handleDelete(product.productID)}
                           className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
                         >
                           Delete
