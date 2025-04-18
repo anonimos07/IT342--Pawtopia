@@ -1,81 +1,125 @@
-"use client"
-
 import { useState, useEffect } from "react"
-import { Link } from "react-router-dom"
-import { PawPrint, Edit2, Save, X, Package, Calendar } from "lucide-react"
+import { Link, useNavigate } from "react-router-dom"
+import { PawPrint } from "lucide-react"
+import axios from "axios"
+import Footer from "../components/Footer"
 
 export default function ProfilePage() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [editMode, setEditMode] = useState(false)
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    address: "",
-    petName: "",
-    petType: "",
-    petBreed: "",
-    petAge: "",
+  const [error, setError] = useState(null)
+  const [address, setAddress] = useState({
+    region: '',
+    province: '',
+    city: '',
+    barangay: '',
+    postalCode: '',
+    streetBuildingHouseNo: ''
   })
+  const [isEditMode, setIsEditMode] = useState(false)
+  const navigate = useNavigate()
 
   useEffect(() => {
-    // Load user data from localStorage
-    const userData = localStorage.getItem("user")
-    if (userData) {
-      const parsedUser = JSON.parse(userData)
-      setUser(parsedUser)
+    const fetchUserData = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem("token");
+        
+        if (!token) {
+          navigate("/login"); // Redirect to login if no token
+          return;
+        }
+      
+        // Fetch current user's data
+        const response = await axios.get("http://localhost:8080/users/me", {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          withCredentials: true // Include this if using cookies
+        });
+        
+        const userData = response.data;
+        setUser({
+          userId: userData.userId,
+          username: userData.username || '',
+          email: userData.email || '',
+          firstName: userData.firstName || '',
+          lastName: userData.lastName || '',
+          role: userData.role || 'CUSTOMER'
+        });
 
-      // Initialize form data with user data
-      setFormData({
-        name: parsedUser.name || "",
-        email: parsedUser.email || "",
-        phone: parsedUser.phone || "",
-        address: parsedUser.address || "",
-        petName: parsedUser.petName || "Buddy",
-        petType: parsedUser.petType || "Dog",
-        petBreed: parsedUser.petBreed || "Golden Retriever",
-        petAge: parsedUser.petAge || "3",
-      })
+        // Fetch address if user exists
+        if (userData.userId) {
+          const addressResponse = await axios.get(
+            `http://localhost:8080/adresses/get-users/${userData.userId}`,
+            {
+              headers: { 
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
+              }
+            }
+          );
+          
+          if (addressResponse.data) {
+            setAddress({
+              region: addressResponse.data.region || '',
+              province: addressResponse.data.province || '',
+              city: addressResponse.data.city || '',
+              barangay: addressResponse.data.barangay || '',
+              postalCode: addressResponse.data.postalCode || '',
+              streetBuildingHouseNo: addressResponse.data.streetBuildingHouseNo || ''
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        if (err.response?.status === 401) {
+          localStorage.removeItem("token"); // Clear invalid token
+          navigate("/login"); // Redirect to login
+        }
+        setError(err.response?.data?.message || "Failed to fetch user data");
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchUserData();
+  }, [navigate]);
+
+  const handleAddressChange = (e) => {
+    const { name, value } = e.target;
+    setAddress(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSaveAddress = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      
+      await axios.put(
+        `http://localhost:8080/users/user/${user.userId}/address`,
+        address,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+      
+      setError(null);
+      setIsEditMode(false);
+    } catch (err) {
+      console.error("Error updating address:", err);
+      setError(err.response?.data?.message || "Failed to update address");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false)
-  }, [])
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target
-    setFormData({
-      ...formData,
-      [name]: value,
-    })
-  }
-
-  const handleSave = () => {
-    // Update user data
-    const updatedUser = {
-      ...user,
-      ...formData,
-    }
-
-    // Save to localStorage
-    localStorage.setItem("user", JSON.stringify(updatedUser))
-    setUser(updatedUser)
-    setEditMode(false)
-  }
-
-  const handleCancel = () => {
-    // Reset form data to current user data
-    setFormData({
-      name: user.name || "",
-      email: user.email || "",
-      phone: user.phone || "",
-      address: user.address || "",
-      petName: user.petName || "Buddy",
-      petType: user.petType || "Dog",
-      petBreed: user.petBreed || "Golden Retriever",
-      petAge: user.petAge || "3",
-    })
-    setEditMode(false)
-  }
+  };
 
   if (loading) {
     return (
@@ -89,8 +133,7 @@ export default function ProfilePage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
         <PawPrint className="h-16 w-16 text-primary mb-4" />
-        <h1 className="text-2xl font-bold mb-2">You are not logged in</h1>
-        <p className="text-gray-600 mb-6">Please log in to view your profile</p>
+        <h1 className="text-2xl font-bold mb-2">Please log in</h1>
         <Link to="/login" className="bg-primary text-white px-6 py-2 rounded-full font-medium hover:bg-primary/90">
           Login
         </Link>
@@ -99,284 +142,159 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-    
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-sm border overflow-hidden">
+          {/* Profile Header */}
+          <div className="bg-primary/10 p-8">
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              <div className="w-24 h-24 rounded-full bg-white flex items-center justify-center border-4 border-white shadow-md">
+                <span className="text-3xl font-bold text-primary">
+                  {user.username.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <div className="text-center md:text-left">
+                <h1 className="text-2xl font-bold text-gray-900">
+                  {user.firstName && user.lastName 
+                    ? `${user.firstName} ${user.lastName}` 
+                    : user.username}
+                </h1>
+                <p className="text-gray-600">{user.email}</p>
+                <p className="text-sm text-gray-500 mt-1">Role: {user.role}</p>
+              </div>
+            </div>
+          </div>
 
-      <main className="flex-1 bg-gray-50">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-4xl mx-auto">
-            <div className="bg-white rounded-2xl shadow-sm border overflow-hidden">
-              {/* Profile Header */}
-              <div className="bg-primary/10 p-8 relative">
-                <div className="flex flex-col md:flex-row items-center gap-6">
-                  <div className="w-24 h-24 rounded-full bg-white flex items-center justify-center border-4 border-white shadow-md">
-                    <span className="text-3xl font-bold text-primary">
-                      {user.name ? user.name.charAt(0).toUpperCase() : user.username.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  <div className="text-center md:text-left">
-                    <h1 className="text-2xl font-bold text-gray-900">{user.name || user.username}</h1>
-                    <p className="text-gray-600">
-                      Member since {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}
-                    </p>
-                  </div>
+          {/* Profile Content */}
+          <div className="p-6">
+            {error && (
+              <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
+                {error}
+              </div>
+            )}
+
+            {/* User Information */}
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-bold text-gray-900">Account Information</h2>
+                <button 
+                  onClick={() => setIsEditMode(!isEditMode)}
+                  className="text-primary hover:text-primary-dark"
+                >
+                  {isEditMode ? 'Cancel' : 'Edit Address'}
+                </button>
+              </div>
+              
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Username</h3>
+                  <p className="mt-1">{user.username}</p>
                 </div>
-
-                {!editMode && (
-                  <button
-                    onClick={() => setEditMode(true)}
-                    className="absolute top-4 right-4 p-2 text-gray-700 hover:text-primary bg-white rounded-full shadow-sm"
-                  >
-                    <Edit2 className="h-5 w-5" />
-                  </button>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Email</h3>
+                  <p className="mt-1">{user.email}</p>
+                </div>
+                {user.firstName && (
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">First Name</h3>
+                    <p className="mt-1">{user.firstName}</p>
+                  </div>
+                )}
+                {user.lastName && (
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">Last Name</h3>
+                    <p className="mt-1">{user.lastName}</p>
+                  </div>
                 )}
               </div>
 
-              {/* Profile Content */}
-              <div className="p-6">
-                <div className="grid md:grid-cols-2 gap-8">
-                  {/* Personal Information */}
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-xl font-bold text-gray-900">Personal Information</h2>
-                      {editMode && (
-                        <div className="flex gap-2">
-                          <button onClick={handleSave} className="p-1 text-green-600 hover:text-green-800">
-                            <Save className="h-5 w-5" />
-                          </button>
-                          <button onClick={handleCancel} className="p-1 text-red-600 hover:text-red-800">
-                            <X className="h-5 w-5" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    {editMode ? (
-                      <div className="space-y-4">
-                        <div>
-                          <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                            Full Name
-                          </label>
-                          <input
-                            type="text"
-                            id="name"
-                            name="name"
-                            value={formData.name}
-                            onChange={handleInputChange}
-                            className="w-full px-3 py-2 border rounded-lg border-gray-300"
-                          />
-                        </div>
-
-                        <div>
-                          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                            Email
-                          </label>
-                          <input
-                            type="email"
-                            id="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleInputChange}
-                            className="w-full px-3 py-2 border rounded-lg border-gray-300"
-                          />
-                        </div>
-
-                        <div>
-                          <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                            Phone
-                          </label>
-                          <input
-                            type="tel"
-                            id="phone"
-                            name="phone"
-                            value={formData.phone}
-                            onChange={handleInputChange}
-                            className="w-full px-3 py-2 border rounded-lg border-gray-300"
-                          />
-                        </div>
-
-                        <div>
-                          <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
-                            Address
-                          </label>
-                          <input
-                            type="text"
-                            id="address"
-                            name="address"
-                            value={formData.address}
-                            onChange={handleInputChange}
-                            className="w-full px-3 py-2 border rounded-lg border-gray-300"
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        <div>
-                          <h3 className="text-sm font-medium text-gray-500">Full Name</h3>
-                          <p className="mt-1">{user.name || "Not provided"}</p>
-                        </div>
-
-                        <div>
-                          <h3 className="text-sm font-medium text-gray-500">Email</h3>
-                          <p className="mt-1">{user.email || "Not provided"}</p>
-                        </div>
-
-                        <div>
-                          <h3 className="text-sm font-medium text-gray-500">Phone</h3>
-                          <p className="mt-1">{user.phone || "Not provided"}</p>
-                        </div>
-
-                        <div>
-                          <h3 className="text-sm font-medium text-gray-500">Address</h3>
-                          <p className="mt-1">{user.address || "Not provided"}</p>
-                        </div>
-                      </div>
-                    )}
+              {/* Address Section */}
+              <div className="mt-8">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Address</h2>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Region</label>
+                    <input
+                      type="text"
+                      name="region"
+                      value={address.region}
+                      onChange={handleAddressChange}
+                      disabled={!isEditMode}
+                      className="mt-1 w-full p-2 border rounded"
+                    />
                   </div>
-
-                  {/* Pet Information */}
-                  <div className="space-y-6">
-                    <h2 className="text-xl font-bold text-gray-900">Pet Information</h2>
-
-                    {editMode ? (
-                      <div className="space-y-4">
-                        <div>
-                          <label htmlFor="petName" className="block text-sm font-medium text-gray-700 mb-1">
-                            Pet Name
-                          </label>
-                          <input
-                            type="text"
-                            id="petName"
-                            name="petName"
-                            value={formData.petName}
-                            onChange={handleInputChange}
-                            className="w-full px-3 py-2 border rounded-lg border-gray-300"
-                          />
-                        </div>
-
-                        <div>
-                          <label htmlFor="petType" className="block text-sm font-medium text-gray-700 mb-1">
-                            Pet Type
-                          </label>
-                          <select
-                            id="petType"
-                            name="petType"
-                            value={formData.petType}
-                            onChange={handleInputChange}
-                            className="w-full px-3 py-2 border rounded-lg border-gray-300"
-                          >
-                            <option value="Dog">Dog</option>
-                            <option value="Cat">Cat</option>
-                            <option value="Bird">Bird</option>
-                            <option value="Fish">Fish</option>
-                            <option value="Other">Other</option>
-                          </select>
-                        </div>
-
-                        <div>
-                          <label htmlFor="petBreed" className="block text-sm font-medium text-gray-700 mb-1">
-                            Breed
-                          </label>
-                          <input
-                            type="text"
-                            id="petBreed"
-                            name="petBreed"
-                            value={formData.petBreed}
-                            onChange={handleInputChange}
-                            className="w-full px-3 py-2 border rounded-lg border-gray-300"
-                          />
-                        </div>
-
-                        <div>
-                          <label htmlFor="petAge" className="block text-sm font-medium text-gray-700 mb-1">
-                            Age (years)
-                          </label>
-                          <input
-                            type="number"
-                            id="petAge"
-                            name="petAge"
-                            value={formData.petAge}
-                            onChange={handleInputChange}
-                            className="w-full px-3 py-2 border rounded-lg border-gray-300"
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        <div>
-                          <h3 className="text-sm font-medium text-gray-500">Pet Name</h3>
-                          <p className="mt-1">{user.petName || "Buddy"}</p>
-                        </div>
-
-                        <div>
-                          <h3 className="text-sm font-medium text-gray-500">Pet Type</h3>
-                          <p className="mt-1">{user.petType || "Dog"}</p>
-                        </div>
-
-                        <div>
-                          <h3 className="text-sm font-medium text-gray-500">Breed</h3>
-                          <p className="mt-1">{user.petBreed || "Golden Retriever"}</p>
-                        </div>
-
-                        <div>
-                          <h3 className="text-sm font-medium text-gray-500">Age</h3>
-                          <p className="mt-1">{user.petAge || "3"} years</p>
-                        </div>
-                      </div>
-                    )}
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Province</label>
+                    <input
+                      type="text"
+                      name="province"
+                      value={address.province}
+                      onChange={handleAddressChange}
+                      disabled={!isEditMode}
+                      className="mt-1 w-full p-2 border rounded"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">City</label>
+                    <input
+                      type="text"
+                      name="city"
+                      value={address.city}
+                      onChange={handleAddressChange}
+                      disabled={!isEditMode}
+                      className="mt-1 w-full p-2 border rounded"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Barangay</label>
+                    <input
+                      type="text"
+                      name="barangay"
+                      value={address.barangay}
+                      onChange={handleAddressChange}
+                      disabled={!isEditMode}
+                      className="mt-1 w-full p-2 border rounded"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Postal Code</label>
+                    <input
+                      type="text"
+                      name="postalCode"
+                      value={address.postalCode}
+                      onChange={handleAddressChange}
+                      disabled={!isEditMode}
+                      className="mt-1 w-full p-2 border rounded"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Street/Building/House No.</label>
+                    <input
+                      type="text"
+                      name="streetBuildingHouseNo"
+                      value={address.streetBuildingHouseNo}
+                      onChange={handleAddressChange}
+                      disabled={!isEditMode}
+                      className="mt-1 w-full p-2 border rounded"
+                    />
                   </div>
                 </div>
 
-                {/* Recent Orders */}
-                <div className="mt-10">
-                  <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Orders</h2>
-
-                  <div className="bg-gray-50 rounded-lg p-8 text-center">
-                    <div className="flex justify-center mb-4">
-                      <Package className="h-12 w-12 text-gray-400" />
-                    </div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No orders yet</h3>
-                    <p className="text-gray-600 mb-4">You haven't placed any orders yet.</p>
-                    <Link
-                      to="/products"
-                      className="inline-block bg-primary text-white px-4 py-2 rounded-full font-medium hover:bg-primary/90"
-                    >
-                      Browse Products
-                    </Link>
-                  </div>
-                </div>
-
-                {/* Upcoming Appointments */}
-                <div className="mt-10">
-                  <h2 className="text-xl font-bold text-gray-900 mb-4">Upcoming Appointments</h2>
-
-                  <div className="bg-gray-50 rounded-lg p-8 text-center">
-                    <div className="flex justify-center mb-4">
-                      <Calendar className="h-12 w-12 text-gray-400" />
-                    </div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No appointments</h3>
-                    <p className="text-gray-600 mb-4">You don't have any upcoming appointments.</p>
-                    <Link
-                      to="/appointment"
-                      className="inline-block bg-primary text-white px-4 py-2 rounded-full font-medium hover:bg-primary/90"
-                    >
-                      Book Appointment
-                    </Link>
-                  </div>
-                </div>
+                {isEditMode && (
+                  <button
+                    onClick={handleSaveAddress}
+                    disabled={loading}
+                    className="mt-4 bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark disabled:bg-primary/50"
+                  >
+                    {loading ? 'Saving...' : 'Save Address'}
+                  </button>
+                )}
               </div>
             </div>
           </div>
         </div>
-      </main>
-
-      <footer className="py-6 text-center">
-        <div className="flex items-center justify-center gap-2">
-          <PawPrint className="h-5 w-5 text-primary" />
-          <span className="font-bold text-primary">Pawtopia</span>
-        </div>
-        <p className="text-sm text-gray-500 mt-2">© {new Date().getFullYear()} Pawtopia. All Rights Reserved.</p>
-      </footer>
+      </div>
+      <Footer />
     </div>
   )
 }

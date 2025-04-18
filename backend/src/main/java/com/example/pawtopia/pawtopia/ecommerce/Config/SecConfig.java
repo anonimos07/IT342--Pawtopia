@@ -50,17 +50,46 @@ public class SecConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/users/signup", "/users/login", "/admin/login",
-                                "/api/product/getProduct", "/api/product/getProduct/{id}", "/api/review/**", "/oauth-success",
-                                "/oauth2/authorization/google", "/login/oauth2/code/google").permitAll()
-                        .requestMatchers("/users/**", "/appointments/postAppointment",
-                                "/adresses/get-users/{userId}", "/adresses/del-users/{userId}", "/api/cartItem/**", "/api/cart/**",
-                                "/api/order/postOrderRecord", "/api/order/putOrderDetails", "/api/order/deleteOrderDetails/{id}").hasRole("CUSTOMER")
-                        .requestMatchers("/admin/**", "/adresses/getAllAddress",
-                                "/appointments/confirm/{appid}", "/appointments/getAppointment",
-                                "/api/product/putProduct/{id}", "/api/product/deleteProduct/{id}", "/api/product/getTotalQuantitySold",
-                                "/api/order/getAllOrders", "/api/order/getOrderDetails/{orderID}", "/api/order/getAllOrdersByUserId",
-                                "/api/order/get-total-income", "/users/all").hasRole("ADMIN") // Added /users/all here
+                        .requestMatchers(
+                                "/users/signup",
+                                "/users/login",
+                                "/admin/login",
+                                "/api/product/getProduct",
+                                "/api/product/getProduct/{id}",
+                                "/api/review/**",
+                                "/oauth-success",
+                                "/oauth2/authorization/google",
+                                "/login/oauth2/code/google"
+                        ).permitAll()
+                        // Allow authenticated users to access their own profile
+                        .requestMatchers("/users/me").authenticated()
+                        // Customer-specific endpoints
+                        .requestMatchers(
+                                "/users/user/{id}",  // Keep this for admin use
+                                "/appointments/postAppointment",
+                                "/adresses/get-users/{userId}",
+                                "/adresses/del-users/{userId}",
+                                "/api/cartItem/**",
+                                "/api/cart/**",
+                                "/api/order/postOrderRecord",
+                                "/api/order/putOrderDetails",
+                                "/api/order/deleteOrderDetails/{id}"
+                        ).hasRole("CUSTOMER")
+                        // Admin-specific endpoints
+                        .requestMatchers(
+                                "/admin/**",
+                                "/adresses/getAllAddress",
+                                "/appointments/confirm/{appid}",
+                                "/appointments/getAppointment",
+                                "/api/product/putProduct/{id}",
+                                "/api/product/deleteProduct/{id}",
+                                "/api/product/getTotalQuantitySold",
+                                "/api/order/getAllOrders",
+                                "/api/order/getOrderDetails/{orderID}",
+                                "/api/order/getAllOrdersByUserId",
+                                "/api/order/get-total-income",
+                                "/users/all"
+                        ).hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception

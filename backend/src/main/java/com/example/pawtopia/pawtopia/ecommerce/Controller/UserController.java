@@ -6,6 +6,7 @@ import com.example.pawtopia.pawtopia.ecommerce.Repository.UserRepo;
 import com.example.pawtopia.pawtopia.ecommerce.Service.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,6 +30,37 @@ public class UserController {
             return ResponseEntity.badRequest().body(result);
         }
         return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<Map<String, String>> getCurrentUser(Authentication authentication) {
+        String username = authentication.getName(); // Fixed this line
+        User user = userRepo.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        return ResponseEntity.ok(Map.of(
+                "userId", user.getUserId().toString(),
+                "username", user.getUsername(),
+                "firstName", user.getFirstName(),
+                "lastName", user.getLastName(),
+                "email", user.getEmail(),
+                "role", user.getRole()
+        ));
+    }
+
+    // Get any user by ID (kept for admin purposes)
+    @GetMapping("/{id}")
+    public ResponseEntity<Map<String, String>> getUserById(@PathVariable Long id) {
+        User user = userRepo.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        return ResponseEntity.ok(Map.of(
+                "username", user.getUsername(),
+                "firstName", user.getFirstName(),
+                "lastName", user.getLastName(),
+                "email", user.getEmail(),
+                "role", user.getRole()
+        ));
     }
 
 

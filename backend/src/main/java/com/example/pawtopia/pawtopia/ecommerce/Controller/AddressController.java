@@ -32,6 +32,13 @@ public class AddressController {
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
+    // Update an address for a user (alternative to POST)
+    @PutMapping("/users/{userId}")
+    public ResponseEntity<Address> updateAddress(@PathVariable Long userId, @RequestBody Address address) {
+        Address updatedAddress = addressService.addOrUpdateAddressForUser(userId, address);
+        return new ResponseEntity<>(updatedAddress, HttpStatus.OK);
+    }
+
     // Get all addresses in the database regardless of user
     @GetMapping("/getAllAddress")
     public List<Address> getAllAddress(){

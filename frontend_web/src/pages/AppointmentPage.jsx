@@ -5,88 +5,115 @@ import Footer from '../components/Footer';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Label } from '../components/ui/Label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/Select';
-import { Textarea } from '../components/ui/Textarea';
-import { RadioGroup, RadioGroupItem } from '../components/ui/RadioGroup';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '../components/ui/Breadcrumb';
 import { Calendar, Clock } from 'lucide-react';
 
 export default function AppointmentPage() {
-
-  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [petName, setPetName] = useState("");
-  const [petType, setPetType] = useState("");
-  const [breed, setBreed] = useState("");
-  const [age, setAge] = useState("");
-  const [instructions, setInstructions] = useState("");
-  const [serviceType, setServiceType] = useState("grooming");
-  const [servicePackage, setServicePackage] = useState("");
+  const [contactNo, setContactNo] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
+  const [service, setService] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("");
+  const [price, setPrice] = useState(0);
   
-
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(false);
 
-
   const validateForm = () => {
     let formErrors = {};
     
-    if (!fullName) formErrors.fullName = "Full name is required";
     if (!email) {
       formErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(email)) {
       formErrors.email = "Email is invalid";
     }
-    if (!phone) formErrors.phone = "Contact number is required";
-    if (!petName) formErrors.petName = "Pet name is required";
-    if (!petType) formErrors.petType = "Pet type is required";
-    if (!servicePackage) formErrors.servicePackage = "Please select a package";
+    if (!contactNo) formErrors.contactNo = "Contact number is required";
+    if (!service) formErrors.service = "Please select a service";
+    if (!paymentMethod) formErrors.paymentMethod = "Please select a payment method";
     if (!date) formErrors.date = "Date is required";
     if (!time) formErrors.time = "Time is required";
     
     return formErrors;
   };
 
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-
     const formErrors = validateForm();
     setErrors(formErrors);
     
-   
     if (Object.keys(formErrors).length === 0) {
       setIsSubmitting(true);
       
- 
-      setTimeout(() => {
-        setBookingSuccess(true);
-        setIsSubmitting(false);
+      try {
+        const appointmentData = {
+          email,
+          contactNo,
+          date,
+          time,
+          groomService: service,
+          paymentMethod,
+          price,
+          confirmed: false,
+          canceled: false
+        };
         
-n
-        setTimeout(() => {
+        const response = await fetch('/appointments/postAppointment', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(appointmentData),
+        });
+        
+        if (response.ok) {
+          setBookingSuccess(true);
+          setEmail("");
+          setContactNo("");
+          setDate("");
+          setTime("");
+          setService("");
+          setPaymentMethod("");
+          setPrice(0);
+          
           window.scrollTo(0, 0);
-        }, 500);
-      }, 1500);
+        } else {
+          console.error('Failed to book appointment');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
+  };
+
+  const handleServiceChange = (value) => {
+    setService(value);
+    // Update price based on service
+    switch(value) {
+      case 'Grooming':
+        setPrice(500);
+        break;
+      case 'Boarding':
+        setPrice(800);
+        break;
+      default:
+        setPrice(0);
     }
   };
 
   return (
     <div className="min-h-screen flex flex-col">
-     
-
+      
       <main className="flex-1">
-
         <section className="bg-gradient-to-r from-primary/10 to-primary/5 py-8 md:py-12">
           <div className="container mx-auto px-4">
             <h1 className="text-3xl md:text-4xl font-bold text-center">Book an Appointment</h1>
             <p className="text-gray-600 text-center mt-2 max-w-2xl mx-auto">
-              Schedule a grooming or boarding service for your pet
+              Schedule a service for your pet
             </p>
 
             <div className="mt-6">
@@ -111,17 +138,15 @@ n
           </div>
         </section>
 
-
         {bookingSuccess && (
           <div className="container mx-auto px-4 py-4 max-w-5xl">
             <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-xl relative">
               <h3 className="font-bold">Booking Successful!</h3>
-              <p>Your appointment has been booked. We'll send a confirmation to your email shortly.</p>
+              <p>Your appointment has been submitted and is pending confirmation. We'll send a confirmation to your email shortly.</p>
             </div>
           </div>
         )}
 
-    
         <form onSubmit={handleSubmit}>
           <section className="py-12">
             <div className="container mx-auto px-4">
@@ -131,18 +156,6 @@ n
                     <h2 className="text-2xl font-bold mb-6">Personal Information</h2>
 
                     <div className="space-y-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="fullName">Full Name</Label>
-                        <Input 
-                          id="fullName" 
-                          placeholder="Enter your full name" 
-                          className={`rounded-lg ${errors.fullName ? 'border-red-500' : ''}`}
-                          value={fullName}
-                          onChange={(e) => setFullName(e.target.value)}
-                        />
-                        {errors.fullName && <p className="text-red-500 text-xs mt-1">{errors.fullName}</p>}
-                      </div>
-
                       <div className="grid gap-2">
                         <Label htmlFor="email">Email</Label>
                         <Input 
@@ -157,83 +170,15 @@ n
                       </div>
 
                       <div className="grid gap-2">
-                        <Label htmlFor="phone">Contact Number</Label>
+                        <Label htmlFor="contactNo">Contact Number</Label>
                         <Input 
-                          id="phone" 
+                          id="contactNo" 
                           placeholder="Enter your contact number" 
-                          className={`rounded-lg ${errors.phone ? 'border-red-500' : ''}`}
-                          value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
+                          className={`rounded-lg ${errors.contactNo ? 'border-red-500' : ''}`}
+                          value={contactNo}
+                          onChange={(e) => setContactNo(e.target.value)}
                         />
-                        {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-white p-8 rounded-xl shadow-sm">
-                    <h2 className="text-2xl font-bold mb-6">Pet Information</h2>
-
-                    <div className="space-y-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="petName">Pet Name</Label>
-                        <Input 
-                          id="petName" 
-                          placeholder="Enter your pet's name" 
-                          className={`rounded-lg ${errors.petName ? 'border-red-500' : ''}`}
-                          value={petName}
-                          onChange={(e) => setPetName(e.target.value)}
-                        />
-                        {errors.petName && <p className="text-red-500 text-xs mt-1">{errors.petName}</p>}
-                      </div>
-
-                      <div className="grid gap-2">
-                        <Label htmlFor="petType">Pet Type</Label>
-                        <Select 
-                          value={petType} 
-                          onValueChange={setPetType}
-                        >
-                          <SelectTrigger className={`rounded-lg ${errors.petType ? 'border-red-500' : ''}`}>
-                            <SelectValue placeholder="Select pet type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="dog">Dog</SelectItem>
-                            <SelectItem value="cat">Cat</SelectItem>
-                            <SelectItem value="other">Other</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        {errors.petType && <p className="text-red-500 text-xs mt-1">{errors.petType}</p>}
-                      </div>
-
-                      <div className="grid gap-2">
-                        <Label htmlFor="breed">Breed</Label>
-                        <Input 
-                          id="breed" 
-                          placeholder="Enter your pet's breed" 
-                          className="rounded-lg"
-                          value={breed}
-                          onChange={(e) => setBreed(e.target.value)}
-                        />
-                      </div>
-
-                      <div className="grid gap-2">
-                        <Label htmlFor="age">Age</Label>
-                        <Input 
-                          id="age" 
-                          placeholder="Enter your pet's age" 
-                          className="rounded-lg"
-                          value={age}
-                          onChange={(e) => setAge(e.target.value)}
-                        />
-                      </div>
-
-                      <div className="grid gap-2">
-                        <Label>Special Instructions</Label>
-                        <Textarea 
-                          placeholder="Any special needs or instructions for your pet" 
-                          className="rounded-lg"
-                          value={instructions}
-                          onChange={(e) => setInstructions(e.target.value)}
-                        />
+                        {errors.contactNo && <p className="text-red-500 text-xs mt-1">{errors.contactNo}</p>}
                       </div>
                     </div>
                   </div>
@@ -245,39 +190,73 @@ n
 
                     <div className="space-y-4">
                       <div className="grid gap-2">
-                        <Label>Service Type</Label>
-                        <RadioGroup 
-                          defaultValue="grooming"
-                          value={serviceType}
-                          onValueChange={setServiceType}
-                        >
+                        <Label>Service</Label>
+                        <div className="space-y-3">
                           <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="grooming" id="grooming" />
-                            <Label htmlFor="grooming">Pet Grooming</Label>
+                            <input
+                              type="radio"
+                              id="grooming"
+                              name="service"
+                              value="Grooming"
+                              checked={service === "Grooming"}
+                              onChange={() => handleServiceChange("Grooming")}
+                              className="h-4 w-4 text-primary focus:ring-primary"
+                            />
+                            <Label htmlFor="grooming" className="font-normal">
+                              Grooming - ₱500
+                            </Label>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="boarding" id="boarding" />
-                            <Label htmlFor="boarding">Pet Boarding</Label>
+                            <input
+                              type="radio"
+                              id="boarding"
+                              name="service"
+                              value="Boarding"
+                              checked={service === "Boarding"}
+                              onChange={() => handleServiceChange("Boarding")}
+                              className="h-4 w-4 text-primary focus:ring-primary"
+                            />
+                            <Label htmlFor="boarding" className="font-normal">
+                              Boarding - ₱800
+                            </Label>
                           </div>
-                        </RadioGroup>
+                        </div>
+                        {errors.service && <p className="text-red-500 text-xs mt-1">{errors.service}</p>}
                       </div>
 
                       <div className="grid gap-2">
-                        <Label>Service Package</Label>
-                        <Select
-                          value={servicePackage}
-                          onValueChange={setServicePackage}
-                        >
-                          <SelectTrigger className={`rounded-lg ${errors.servicePackage ? 'border-red-500' : ''}`}>
-                            <SelectValue placeholder="Select package" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="basic">Basic Grooming - ₱500</SelectItem>
-                            <SelectItem value="premium">Premium Grooming - ₱800</SelectItem>
-                            <SelectItem value="deluxe">Deluxe Spa Package - ₱1200</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        {errors.servicePackage && <p className="text-red-500 text-xs mt-1">{errors.servicePackage}</p>}
+                        <Label>Payment Method</Label>
+                        <div className="space-y-3">
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="radio"
+                              id="gcash"
+                              name="paymentMethod"
+                              value="GCash"
+                              checked={paymentMethod === "GCash"}
+                              onChange={() => setPaymentMethod("GCash")}
+                              className="h-4 w-4 text-primary focus:ring-primary"
+                            />
+                            <Label htmlFor="gcash" className="font-normal">
+                              GCash
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="radio"
+                              id="counter"
+                              name="paymentMethod"
+                              value="Over the Counter"
+                              checked={paymentMethod === "Over the Counter"}
+                              onChange={() => setPaymentMethod("Over the Counter")}
+                              className="h-4 w-4 text-primary focus:ring-primary"
+                            />
+                            <Label htmlFor="counter" className="font-normal">
+                              Over the Counter
+                            </Label>
+                          </div>
+                        </div>
+                        {errors.paymentMethod && <p className="text-red-500 text-xs mt-1">{errors.paymentMethod}</p>}
                       </div>
                     </div>
                   </div>
@@ -320,13 +299,9 @@ n
 
                   <div className="bg-white p-8 rounded-xl shadow-sm">
                     <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">Service Fee:</span>
-                        <span>₱800</span>
-                      </div>
                       <div className="flex items-center justify-between font-bold text-lg">
                         <span>Total:</span>
-                        <span className="text-primary">₱800</span>
+                        <span className="text-primary">₱{price}</span>
                       </div>
                       <Button 
                         type="submit" 
@@ -335,6 +310,9 @@ n
                       >
                         {isSubmitting ? 'Processing...' : 'Book Appointment'}
                       </Button>
+                      <p className="text-sm text-gray-500 text-center">
+                        Your appointment will be pending until confirmed by our staff.
+                      </p>
                     </div>
                   </div>
                 </div>
