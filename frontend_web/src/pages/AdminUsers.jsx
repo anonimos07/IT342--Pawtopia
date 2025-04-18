@@ -1,14 +1,21 @@
-// src/pages/AdminUsers.js
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminHeader from '../components/AdminHeader';
+import axios from 'axios';
 
 const AdminUsers = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editingId, setEditingId] = useState(null);
-  const [editForm, setEditForm] = useState({});
+  const [editForm, setEditForm] = useState({
+    username: '',
+    password: '',
+    firstName: '',
+    lastName: '',
+    email: '',
+    role: ''
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -18,84 +25,106 @@ const AdminUsers = () => {
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:8080/users/all', {
+      const response = await axios.get('http://localhost:8080/admin/all', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch users');
-      }
-      
-      const data = await response.json();
-      setUsers(data);
+      setUsers(response.data);
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message || 'Failed to fetch users');
     } finally {
       setLoading(false);
     }
   };
 
   const handleEdit = (user) => {
-    setEditingId(user.id);
+    setEditingId(user.userId);
     setEditForm({
       username: user.username,
+      password: '', // Password is typically not shown when editing
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
       email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role
+      role: user.role || ''
     });
   };
 
-  const handleUpdate = async (id) => {
+  const handleUpdate = async (userId) => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`http://localhost:8080/users/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(editForm)
-      });
-      
-      if (!response.ok) {
-        throw new Error('Update failed');
+      if (!token) {
+        setError("Unauthorized: No admin token found");
+        return;
       }
-      
-      const updatedUser = await response.json();
-      setUsers(users.map(user => user.id === id ? updatedUser : user));
-      setEditingId(null);
+  
+      // Only send fields that should be updated (excluding password if empty)
+      const updateData = { ...editForm };
+      if (!updateData.password) {
+        delete updateData.password;
+      }
+  
+      const response = await axios.put(
+        `http://localhost:8080/admin/update/${userId}`,  // Changed to match backend endpoint
+        updateData,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+  
+      if (response.status === 200 || response.status === 204) {
+        fetchUsers();
+        setEditingId(null);
+      } else {
+        throw new Error("Failed to update user");
+      }
     } catch (err) {
-      setError(err.message);
+      console.error("Error updating user:", err);
+      setError(err.response?.data || err.message || "Failed to update user");
     }
   };
-
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
-      try {
-        const token = localStorage.getItem('adminToken');
-        const response = await fetch(`http://localhost:8080/users/${id}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (!response.ok) {
-          throw new Error('Delete failed');
-        }
-        
-        setUsers(users.filter(user => user.id !== id));
-      } catch (err) {
-        setError(err.message);
+  
+  const handleDelete = async (userId) => {
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete the user "${users.find(u => u.userId === userId)?.username}"?`
+    );
+    
+    if (!confirmDelete) return;
+  
+    try {
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        setError("Unauthorized: No admin token found");
+        return;
       }
+  
+      const response = await axios.delete(
+        `http://localhost:8080/admin/delete/${userId}`,  // Changed to match backend endpoint
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+  
+      if (response.status === 200 || response.status === 204) {
+        fetchUsers();
+      } else {
+        throw new Error("Failed to delete user");
+      }
+    } catch (err) {
+      console.error("Delete error:", err);
+      setError(err.response?.data || err.message || "Failed to delete user");
     }
   };
 
   if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
+  if (error) return <div>Error: {typeof error === 'object' ? JSON.stringify(error) : error}</div>;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -119,69 +148,75 @@ const AdminUsers = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">First Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Name</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {users.map((user) => (
-                <tr key={user.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.id}</td>
+                <tr key={user.userId}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.userId}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {editingId === user.id ? (
+                    {editingId === user.userId ? (
                       <input
                         type="text"
                         value={editForm.username}
                         onChange={(e) => setEditForm({...editForm, username: e.target.value})}
-                        className="border rounded px-2 py-1"
+                        className="border rounded px-2 py-1 w-full"
+                        required
                       />
                     ) : (
                       user.username
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {editingId === user.id ? (
+                    {editingId === user.userId ? (
                       <input
                         type="email"
                         value={editForm.email}
                         onChange={(e) => setEditForm({...editForm, email: e.target.value})}
-                        className="border rounded px-2 py-1"
+                        className="border rounded px-2 py-1 w-full"
+                        required
                       />
                     ) : (
                       user.email
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {editingId === user.id ? (
-                      <div className="flex space-x-2">
-                        <input
-                          type="text"
-                          value={editForm.firstName}
-                          onChange={(e) => setEditForm({...editForm, firstName: e.target.value})}
-                          className="border rounded px-2 py-1 w-20"
-                          placeholder="First"
-                        />
-                        <input
-                          type="text"
-                          value={editForm.lastName}
-                          onChange={(e) => setEditForm({...editForm, lastName: e.target.value})}
-                          className="border rounded px-2 py-1 w-20"
-                          placeholder="Last"
-                        />
-                      </div>
+                    {editingId === user.userId ? (
+                      <input
+                        type="text"
+                        value={editForm.firstName}
+                        onChange={(e) => setEditForm({...editForm, firstName: e.target.value})}
+                        className="border rounded px-2 py-1 w-full"
+                      />
                     ) : (
-                      `${user.firstName} ${user.lastName}`
+                      user.firstName || '-'
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {editingId === user.id ? (
+                    {editingId === user.userId ? (
+                      <input
+                        type="text"
+                        value={editForm.lastName}
+                        onChange={(e) => setEditForm({...editForm, lastName: e.target.value})}
+                        className="border rounded px-2 py-1 w-full"
+                      />
+                    ) : (
+                      user.lastName || '-'
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {editingId === user.userId ? (
                       <select
                         value={editForm.role}
                         onChange={(e) => setEditForm({...editForm, role: e.target.value})}
                         className="border rounded px-2 py-1"
+                        disabled
                       >
-                        <option value="USER">USER</option>
+                        <option value="CUSTOMER">CUSTOMER</option>
                         <option value="ADMIN">ADMIN</option>
                       </select>
                     ) : (
@@ -189,10 +224,10 @@ const AdminUsers = () => {
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {editingId === user.id ? (
+                    {editingId === user.userId ? (
                       <div className="flex space-x-2">
                         <button
-                          onClick={() => handleUpdate(user.id)}
+                          onClick={() => handleUpdate(user.userId)}
                           className="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
                         >
                           Save
@@ -213,7 +248,7 @@ const AdminUsers = () => {
                           Edit
                         </button>
                         <button
-                          onClick={() => handleDelete(user.id)}
+                          onClick={() => handleDelete(user.userId)}
                           className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
                         >
                           Delete

@@ -60,17 +60,14 @@ public class SecConfig {
                                 "/appointments/confirm/{appid}", "/appointments/getAppointment",
                                 "/api/product/putProduct/{id}", "/api/product/deleteProduct/{id}", "/api/product/getTotalQuantitySold",
                                 "/api/order/getAllOrders", "/api/order/getOrderDetails/{orderID}", "/api/order/getAllOrdersByUserId",
-                                "/api/order/get-total-income").hasRole("ADMIN")
+                                "/api/order/get-total-income", "/users/all").hasRole("ADMIN") // Added /users/all here
                         .anyRequest().authenticated()
                 )
-
-                // 🔐 This prevents redirects to OAuth2 login for API requests
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
                         })
                 )
-
                 .oauth2Login(oauth2login -> oauth2login
                         .successHandler(oAuth2SuccessHandler))
                 .authenticationProvider(authenticationProvider())
@@ -96,12 +93,13 @@ public class SecConfig {
 
 
     @Bean
-    public AuthenticationProvider authenticationProvider(){
+    public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setPasswordEncoder(passwordEncoder());
-        provider.setUserDetailsService(userDetailsService);
+        provider.setUserDetailsService(userDetailsService); // You might need a custom UserDetailsService that handles both regular users and admins
         return provider;
     }
+
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)throws Exception{

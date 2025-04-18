@@ -12,6 +12,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -41,6 +42,10 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         userRepo.save(user);
         return "User registered successfully!";
+    }
+
+    public List<User> findAll() {
+        return userRepo.findAll();
     }
 
     // verify user nya generate token after verification
@@ -84,4 +89,61 @@ public class UserService {
 
         userRepo.save(user);
     }
+
+    // Update user information
+    public String updateUser(Long userId, User updatedUser) {
+        User existingUser = userRepo.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with ID: " + userId));
+
+        // Update username if provided and not already taken
+        if (updatedUser.getUsername() != null && !updatedUser.getUsername().isEmpty()) {
+            Optional<User> userWithSameUsername = userRepo.findByUsername(updatedUser.getUsername());
+            if (userWithSameUsername.isPresent() && !userWithSameUsername.get().getUserId().equals(userId)) {
+                return "Username already taken by another user!";
+            }
+            existingUser.setUsername(updatedUser.getUsername());
+        }
+
+        // Update password if provided
+        if (updatedUser.getPassword() != null && !updatedUser.getPassword().isEmpty()) {
+            existingUser.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
+        }
+
+        // Update email if provided and not already taken
+        if (updatedUser.getEmail() != null && !updatedUser.getEmail().isEmpty()) {
+            Optional<User> userWithSameEmail = userRepo.findByEmail(updatedUser.getEmail());
+            if (userWithSameEmail.isPresent() && !userWithSameEmail.get().getUserId().equals(userId)) {
+                return "Email already registered by another user!";
+            }
+            existingUser.setEmail(updatedUser.getEmail());
+        }
+
+        // Update first name if provided
+        if (updatedUser.getFirstName() != null) {
+            existingUser.setFirstName(updatedUser.getFirstName());
+        }
+
+        // Update last name if provided
+        if (updatedUser.getLastName() != null) {
+            existingUser.setLastName(updatedUser.getLastName());
+        }
+
+        // Update role if provided
+        if (updatedUser.getRole() != null && !updatedUser.getRole().isEmpty()) {
+            existingUser.setRole(updatedUser.getRole());
+        }
+
+        userRepo.save(existingUser);
+        return "User updated successfully!";
+    }
+
+    // Delete user (remains the same as before)
+    public String deleteUser(Long userId) {
+        if (!userRepo.existsById(userId)) {
+            throw new EntityNotFoundException("User not found with ID: " + userId);
+        }
+        userRepo.deleteById(userId);
+        return "User deleted successfully!";
+    }
+
 }
