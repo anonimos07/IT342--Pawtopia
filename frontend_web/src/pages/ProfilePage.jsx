@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { PawPrint } from "lucide-react"
+import { PawPrint, Package, Calendar } from "lucide-react"
 import axios from "axios"
 import Footer from "../components/Footer"
 
@@ -26,7 +26,7 @@ export default function ProfilePage() {
         const token = localStorage.getItem("token");
         
         if (!token) {
-          navigate("/login"); // Redirect to login if no token
+          navigate("/login");
           return;
         }
       
@@ -36,7 +36,7 @@ export default function ProfilePage() {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json"
           },
-          withCredentials: true // Include this if using cookies
+          withCredentials: true
         });
         
         const userData = response.data;
@@ -75,8 +75,8 @@ export default function ProfilePage() {
       } catch (err) {
         console.error("Error fetching data:", err);
         if (err.response?.status === 401) {
-          localStorage.removeItem("token"); // Clear invalid token
-          navigate("/login"); // Redirect to login
+          localStorage.removeItem("token");
+          navigate("/login");
         }
         setError(err.response?.data?.message || "Failed to fetch user data");
       } finally {
@@ -126,7 +126,7 @@ export default function ProfilePage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
-    )
+    );
   }
 
   if (!user) {
@@ -138,7 +138,7 @@ export default function ProfilePage() {
           Login
         </Link>
       </div>
-    )
+    );
   }
 
   return (
@@ -290,11 +290,47 @@ export default function ProfilePage() {
                   </button>
                 )}
               </div>
+
+              {/* Recent Orders */}
+              <div className="mt-10">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Orders</h2>
+                <div className="bg-gray-50 rounded-lg p-8 text-center">
+                  <div className="flex justify-center mb-4">
+                    <Package className="h-12 w-12 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No orders yet</h3>
+                  <p className="text-gray-600 mb-4">You haven't placed any orders yet.</p>
+                  <Link
+                    to="/products"
+                    className="inline-block bg-primary text-white px-4 py-2 rounded-full font-medium hover:bg-primary/90"
+                  >
+                    Browse Products
+                  </Link>
+                </div>
+              </div>
+
+              {/* Upcoming Appointments */}
+              <div className="mt-10">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Upcoming Appointments</h2>
+                <div className="bg-gray-50 rounded-lg p-8 text-center">
+                  <div className="flex justify-center mb-4">
+                    <Calendar className="h-12 w-12 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No appointments</h3>
+                  <p className="text-gray-600 mb-4">You don't have any upcoming appointments.</p>
+                  <Link
+                    to="/appointment"
+                    className="inline-block bg-primary text-white px-4 py-2 rounded-full font-medium hover:bg-primary/90"
+                  >
+                    Book Appointment
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
       <Footer />
     </div>
-  )
+  );
 }

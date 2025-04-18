@@ -34,7 +34,7 @@ public class Appointment {
     private int price;
 
     @ManyToOne
-    @JoinColumn(name = "id")
+    @JoinColumn(name = "username")
     @JsonBackReference
     private User user;
 
