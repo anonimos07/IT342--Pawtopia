@@ -99,6 +99,7 @@ public class UserService {
                     response.put("token", jwtService.generateToken(user.getUsername()));
                     response.put("userId", actualUser.getUserId());
                     response.put("username", actualUser.getUsername());
+                    response.put("email", actualUser.getEmail());
                     return response;
                 }
             }

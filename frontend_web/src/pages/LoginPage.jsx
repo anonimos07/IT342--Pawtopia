@@ -63,12 +63,14 @@ export default function LoginPage() {
           const data = await response.json(); // Assuming you can change backend to return JSON
         const token = data.token;
         const userId = data.userId
+        const email = data.email; // Assuming the backend returns email
           
           // Save token in localStorage
           localStorage.setItem("token", token);
           
           // Save basic user info in localStorage
           const userData = {
+            logemail: email,
             name: username,
             id: userId, // Store the user ID
             avatar: '/default-avatar.png'

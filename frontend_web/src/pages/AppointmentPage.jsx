@@ -33,6 +33,16 @@ export default function AppointmentPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const loggedemail = JSON.parse(localStorage.getItem("user")).logemail;
+
+
+    if (email !== loggedemail) {
+      window.alert('You can only book an appointment using your registered email.');
+      return; 
+    }
+
+    
     
     const formErrors = validateForm();
     setErrors(formErrors);
