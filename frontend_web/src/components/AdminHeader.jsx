@@ -18,8 +18,8 @@ const AdminHeader = ({ username, onLogout }) => {
           <nav className="hidden md:flex space-x-6">
             <Link to="/adminProducts" className="hover:text-blue-200 transition">Inventory</Link>
             <Link to="/adminUsers" className="hover:text-blue-200 transition">Users</Link>
-            <Link to="/admin/appointments" className="hover:text-blue-200 transition">Appointments</Link>
             <Link to="/admin/orders" className="hover:text-blue-200 transition">Orders</Link>
+            <Link to="/adminAppointments" className="hover:text-blue-200 transition">Appointments</Link>
           </nav>
         </div>
         <div className="flex items-center space-x-4">

@@ -36,6 +36,12 @@ const AdminDashboard = () => {
         <h2 className="text-2xl font-bold text-gray-800 mb-6">Admin Dashboard</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+         <DashboardCard 
+            title="Inventory Items" 
+            value={stats.inventory} 
+            icon="📊" 
+            color="bg-purple-100 text-purple-800"
+          />
           <DashboardCard 
             title="Total Users" 
             value={stats.users} 
@@ -47,12 +53,6 @@ const AdminDashboard = () => {
             value={stats.orders} 
             icon="📦" 
             color="bg-green-100 text-green-800"
-          />
-          <DashboardCard 
-            title="Inventory Items" 
-            value={stats.inventory} 
-            icon="📊" 
-            color="bg-purple-100 text-purple-800"
           />
           <DashboardCard 
             title="Appointments" 
@@ -82,7 +82,7 @@ const AdminDashboard = () => {
             />
             <ActionButton 
               label="Schedule" 
-              path="/admin/appointments" 
+              path="/adminAppointments" 
               icon="📅"
             />
           </div>

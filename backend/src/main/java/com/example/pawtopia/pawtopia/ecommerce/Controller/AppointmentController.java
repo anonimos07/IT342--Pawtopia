@@ -29,20 +29,20 @@ public class AppointmentController {
     }
 
     //edit user
-    @PutMapping("/putAppointment/{appid}")
+    @PutMapping("/putAppointment/{appId}")
     public Appointment updateAppointment(@PathVariable Long appId,@RequestBody Appointment appointment) {
         return appointmentService.updateAppointment(appId, appointment);
     }
 
     //del user
-    @DeleteMapping("/deleteAppointment/{appid}")
+    @DeleteMapping("/deleteAppointment/{appId}")
     public String deleteCourse(@PathVariable Long appId) {
         return appointmentService.deleteAppointment(appId);
     }
 
 
     //cancel, user-adm
-    @PutMapping("/cancel/{appid}")
+    @PutMapping("/cancel/{appId}")
     public ResponseEntity<String> cancelAppointment(@PathVariable Long appId) {
         // Find the appointment by appid
         Appointment appointment = appointmentService.getAppointmentById(appId);
@@ -64,7 +64,7 @@ public class AppointmentController {
     }
 
     //confirm adm
-    @PutMapping("/confirm/{appid}")
+    @PutMapping("/confirm/{appId}")
     public ResponseEntity<String> confirmAppointment(@PathVariable Long appId) {
         // Find the appointment by appid
         Appointment appointment = appointmentService.getAppointmentById(appId);

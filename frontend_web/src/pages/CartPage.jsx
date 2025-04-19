@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { ShoppingBag, Trash2, ChevronLeft } from 'lucide-react';
@@ -17,131 +17,127 @@ export default function CartPage() {
   const [itemToDelete, setItemToDelete] = useState(null); 
   const navigate = useNavigate();
 
-  const userId = localStorage.getItem('userId');
+  const user = JSON.parse(localStorage.getItem('user'));
+  const userId = user?.id;
   const token = localStorage.getItem('token');
 
-  const fetchCartItems = async () => {
+  // Memoized fetch function
+  const fetchCartItems = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    
     try {
       if (!userId || !token) {
         navigate('/login');
         return;
       }
-  
-      // First get the user's cart
+
+      // Get user's cart with items
       const cartResponse = await axios.get(
         `http://localhost:8080/api/cart/getCartById/${userId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
+        { headers: { 'Authorization': `Bearer ${token}` } }
       );
-  
-      // If cart exists but has no items
-      if (!cartResponse.data.cartItems || cartResponse.data.cartItems.length === 0) {
+
+      // Handle empty cart
+      if (!cartResponse.data?.cartItems?.length) {
         setCartItems([]);
-        setLoading(false);
         return;
       }
-  
-      // Map the cart items to our frontend structure
-      const items = cartResponse.data.cartItems.map(item => ({
-        cartItemId: item.cartItemId,
-        quantity: item.quantity,
-        lastUpdated: item.lastUpdated,
-        product: {
-          productID: item.product.productID,
-          productName: item.product.productName,
-          productPrice: item.product.productPrice,
-          productType: item.product.productType,
-          productImage: item.product.productImage,
-          quantity: item.product.quantity,
-          description: item.product.description
-        }
-      }));
-  
-      // Adjust quantities if they exceed available stock
-      const updatedCartItems = await Promise.all(items.map(async (item) => {
-        if (item.quantity > item.product.quantity) {
-          try {
-            await axios.put(
-              `http://localhost:8080/api/cartItem/systemUpdateCartItem/${item.cartItemId}`,
-              { 
-                quantity: item.product.quantity,
-                lastUpdated: new Date().toISOString()
-              },
-              { headers: { 'Authorization': `Bearer ${token}` } }
-            );
-            return { ...item, quantity: item.product.quantity };
-          } catch (error) {
-            console.error('Error updating cart item quantity:', error);
-            return item;
+
+      // Process cart items with stock validation
+      const processedItems = await Promise.all(
+        cartResponse.data.cartItems.map(async item => {
+          const product = item.product;
+          const availableQuantity = product.quantity;
+          const currentQuantity = item.quantity;
+          
+          // Adjust quantity if exceeds stock
+          if (currentQuantity > availableQuantity) {
+            try {
+              await axios.put(
+                `http://localhost:8080/api/cartItem/systemUpdateCartItem/${item.cartItemId}`,
+                { 
+                  quantity: availableQuantity,
+                  lastUpdated: new Date().toISOString()
+                },
+                { headers: { 'Authorization': `Bearer ${token}` } }
+              );
+              return { 
+                ...item, 
+                quantity: availableQuantity,
+                product: { ...product, quantity: availableQuantity }
+              };
+            } catch (updateError) {
+              console.error('Failed to adjust quantity:', updateError);
+              return item;
+            }
           }
-        }
-        return item;
-      }));
-  
-      // Sort by lastUpdated (newest first)
-      const sortedItems = updatedCartItems.sort((a, b) => 
+          return item;
+        })
+      );
+
+      // Sort by last updated (newest first)
+      const sortedItems = processedItems.sort((a, b) => 
         new Date(b.lastUpdated) - new Date(a.lastUpdated)
       );
-  
+
       setCartItems(sortedItems);
     } catch (err) {
-      console.error('Error fetching cart:', err);
-      setError(err.response?.data?.message || 'Failed to fetch cart items');
-      toast.error('Failed to load your cart');
+      console.error('Cart fetch error:', err);
+      
       if (err.response?.status === 401) {
         navigate('/login');
+        return;
       }
+
       if (err.response?.status === 404) {
-        // Cart doesn't exist yet - create an empty one
         try {
+          // Create new cart if not found
           await axios.post(
             `http://localhost:8080/api/cart/postCartRecord`,
-            { userId: userId },
+            { userId: user?.id },  // <-- Now sending just the ID
             { headers: { 'Authorization': `Bearer ${token}` } }
           );
           setCartItems([]);
-        } catch (createErr) {
-          console.error('Error creating cart:', createErr);
+          return;
+        } catch (createError) {
+          console.error('Cart creation failed:', createError);
+          setError('Failed to initialize your cart');
+          toast.error('Could not set up your shopping cart');
+          return;
         }
       }
+
+      setError(err.response?.data?.message || 'Failed to load cart');
+      toast.error('Could not load your shopping cart');
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, token, navigate]);
 
   useEffect(() => {
-    const checkAuth = () => {
-      const currentUserId = localStorage.getItem('userId');
-      const currentToken = localStorage.getItem('token');
-      
-      if (!currentUserId || !currentToken) {
-        navigate('/login');
-      } else {
-        setAuthChecked(true);
-        fetchCartItems();
-      }
-    };
-
-    checkAuth();
-  }, [navigate]);
-
-  if (!authChecked) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <main className="flex-1 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </main>
-      </div>
-    );
-  }
+    if (!userId || !token) {
+      navigate('/login');
+      return;
+    }
+    
+    setAuthChecked(true);
+    fetchCartItems();
+  }, [userId, token, navigate, fetchCartItems]);
 
   const handleQuantityChange = async (itemId, newQuantity) => {
-    if (newQuantity < 1) return;  
-  
+    if (newQuantity < 1) return;
+    
     try {
+      const item = cartItems.find(i => i.cartItemId === itemId);
+      if (!item) return;
+
+      // Validate against stock
+      if (newQuantity > item.product.quantity) {
+        toast.error(`Only ${item.product.quantity} available in stock`);
+        return;
+      }
+
       await axios.put(
         `http://localhost:8080/api/cartItem/updateCartItem/${itemId}`,
         { 
@@ -150,54 +146,45 @@ export default function CartPage() {
         },
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
-  
-      setCartItems(prevItems => 
-        prevItems.map(item => 
-          item.cartItemId === itemId 
-            ? { ...item, quantity: newQuantity } 
-            : item
-        )
-      );
-      toast.success('Quantity updated');
+
+      setCartItems(prev => prev.map(item => 
+        item.cartItemId === itemId 
+          ? { ...item, quantity: newQuantity } 
+          : item
+      ));
     } catch (err) {
-      console.error('Error updating quantity:', err);
+      console.error('Quantity update failed:', err);
       toast.error(err.response?.data?.message || 'Failed to update quantity');
     }
   };
 
-  const handleRemoveItem = async (itemId) => {
+  const handleRemoveItem = (itemId) => {
     setItemToDelete(itemId);
     setOpenDialog(true);
   };
 
   const confirmRemoveItem = async () => {
+    if (!itemToDelete) {
+      setOpenDialog(false);
+      return;
+    }
+
     try {
       await axios.delete(
         `http://localhost:8080/api/cartItem/deleteCartItem/${itemToDelete}`,
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
-      
-      setCartItems(prevItems => {
-        const updatedItems = prevItems.filter(item => item.cartItemId !== itemToDelete);
-        
-        // If cart is now empty, we might want to handle that case
-        if (updatedItems.length === 0) {
-          // Optionally: You could delete the cart here if your backend supports it
-        }
-        
-        return updatedItems;
-      });
-      
-      // Also remove from selected items if it was selected
+
+      setCartItems(prev => prev.filter(item => item.cartItemId !== itemToDelete));
       setSelectedItems(prev => {
-        const newSelection = new Set(prev);
-        newSelection.delete(itemToDelete);
-        return newSelection;
+        const newSet = new Set(prev);
+        newSet.delete(itemToDelete);
+        return newSet;
       });
-      
+
       toast.success('Item removed from cart');
     } catch (err) {
-      console.error('Error removing item:', err);
+      console.error('Item removal failed:', err);
       toast.error(err.response?.data?.message || 'Failed to remove item');
     } finally {
       setOpenDialog(false);
@@ -206,20 +193,24 @@ export default function CartPage() {
   };
 
   const handleCheckChange = (itemId, isChecked) => {
-    const newSelection = new Set(selectedItems);
-    if (isChecked) {
-      newSelection.add(itemId);
-    } else {
-      newSelection.delete(itemId);
-    }
-    setSelectedItems(newSelection);
+    setSelectedItems(prev => {
+      const newSet = new Set(prev);
+      isChecked ? newSet.add(itemId) : newSet.delete(itemId);
+      return newSet;
+    });
   };
 
   const calculateTotals = () => {
-    const subtotal = Array.from(selectedItems).reduce((total, itemId) => {
+    let subtotal = 0;
+    let totalItems = 0;
+
+    selectedItems.forEach(itemId => {
       const item = cartItems.find(i => i.cartItemId == itemId);
-      return total + (item?.product.productPrice * item?.quantity || 0);
-    }, 0);
+      if (item) {
+        subtotal += item.product.productPrice * item.quantity;
+        totalItems += item.quantity;
+      }
+    });
 
     const shipping = subtotal > 0 ? 30 : 0;
     const total = subtotal + shipping;
@@ -227,7 +218,8 @@ export default function CartPage() {
     return {
       subtotal: subtotal.toFixed(2),
       shipping: shipping.toFixed(2),
-      total: total.toFixed(2)
+      total: total.toFixed(2),
+      totalItems
     };
   };
 
@@ -236,22 +228,31 @@ export default function CartPage() {
       toast.error('Please select items to checkout');
       return;
     }
-  
+
     try {
-      // Check if user has address by getting user details
+      // Verify user has address
       const userRes = await axios.get(
-        `http://localhost:8080/users/user/${userId}`,
+        `http://localhost:8080/users/me`,
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
-      
+
       if (!userRes.data?.address) {
         toast.error('Please add a shipping address first');
         navigate('/profile');
         return;
       }
-  
-      // Prepare checkout data
-      const { subtotal, shipping, total } = calculateTotals();
+
+      // Verify selected items are still in stock
+      const outOfStockItems = cartItems
+        .filter(item => selectedItems.has(item.cartItemId) && item.quantity > item.product.quantity);
+      
+      if (outOfStockItems.length > 0) {
+        toast.error('Some selected items are out of stock. Please update your cart.');
+        await fetchCartItems(); // Refresh cart data
+        return;
+      }
+
+      const { subtotal, shipping, total, totalItems } = calculateTotals();
       const selectedProducts = cartItems
         .filter(item => selectedItems.has(item.cartItemId))
         .map(item => ({
@@ -264,29 +265,36 @@ export default function CartPage() {
             productImage: item.product.productImage
           }
         }));
-  
+
       navigate('/checkout', {
         state: {
           items: selectedProducts,
-          summary: { subtotal, shipping, total }
+          summary: { 
+            subtotal, 
+            shipping, 
+            total,
+            totalItems 
+          }
         }
       });
     } catch (err) {
-      console.error('Error during checkout:', err);
-      toast.error(err.response?.data?.message || 'Failed to proceed to checkout');
+      console.error('Checkout error:', err);
+      
       if (err.response?.status === 401) {
+        toast.error('Session expired. Please login again.');
         navigate('/login');
+      } else {
+        toast.error(err.response?.data?.message || 'Checkout failed');
       }
     }
   };
 
-  if (loading) {
+  if (!authChecked || loading) {
     return (
       <div className="min-h-screen flex flex-col">
         <main className="flex-1 flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -295,15 +303,17 @@ export default function CartPage() {
     return (
       <div className="min-h-screen flex flex-col">
         <main className="flex-1 flex items-center justify-center">
-          <div className="text-red-500 text-center p-4">
-            <p>{error}</p>
-            <Button 
-              variant="outline" 
-              className="mt-4"
-              onClick={() => window.location.reload()}
-            >
-              Try Again
-            </Button>
+          <div className="text-center p-6 max-w-md">
+            <h2 className="text-xl font-medium text-red-600 mb-4">Error Loading Cart</h2>
+            <p className="mb-6">{error}</p>
+            <div className="space-x-4">
+              <Button variant="outline" onClick={() => window.location.reload()}>
+                Retry
+              </Button>
+              <Button asChild>
+                <Link to="/products">Continue Shopping</Link>
+              </Button>
+            </div>
           </div>
         </main>
         <Footer />
@@ -311,14 +321,18 @@ export default function CartPage() {
     );
   }
 
-  const { subtotal, shipping, total } = calculateTotals();
+  const { subtotal, shipping, total, totalItems } = calculateTotals();
 
   return (
     <div className="min-h-screen flex flex-col">
       <main className="flex-1">
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center mb-6">
-            <Button variant="ghost" onClick={() => navigate(-1)}>
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate(-1)}
+              className="flex items-center"
+            >
               <ChevronLeft className="h-5 w-5 mr-2" />
               Back
             </Button>
@@ -338,85 +352,97 @@ export default function CartPage() {
             <div className="grid md:grid-cols-3 gap-8">
               <div className="md:col-span-2">
                 <div className="bg-white rounded-lg shadow-sm border divide-y">
-                  {cartItems.map((item) => (
-                    <div key={item.cartItemId} className="p-4 flex items-start">
-                      <input
-                        type="checkbox"
-                        checked={selectedItems.has(item.cartItemId)}
-                        onChange={(e) => handleCheckChange(item.cartItemId, e.target.checked)}
-                        className="mr-4 h-5 w-5 mt-4"
-                      />
-                      
-                      <div className="flex-shrink-0 h-24 w-24 rounded-md overflow-hidden border">
-                        <img
-                          src={item.product.productImage || '/placeholder.svg'}
-                          alt={item.product.productName}
-                          className="h-full w-full object-cover"
-                          onError={(e) => {
-                            e.target.src = '/placeholder.svg';
-                          }}
+                  {cartItems.map((item) => {
+                    const isOutOfStock = item.product.quantity <= 0;
+                    const isSelected = selectedItems.has(item.cartItemId);
+                    
+                    return (
+                      <div 
+                        key={item.cartItemId} 
+                        className={`p-4 flex items-start ${isOutOfStock ? 'opacity-70' : ''}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={(e) => !isOutOfStock && handleCheckChange(item.cartItemId, e.target.checked)}
+                          disabled={isOutOfStock}
+                          className={`mr-4 h-5 w-5 mt-4 ${isOutOfStock ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                         />
-                      </div>
-
-                      <div className="ml-4 flex-1 flex flex-col">
-                        <div className="flex justify-between">
-                          <div>
-                            <Link to={`/products/${item.product.productID}`}>
-                              <h3 className="text-lg font-medium text-gray-900 hover:text-primary">
-                                {item.product.productName}
-                              </h3>
-                            </Link>
-                            <p className="text-sm text-gray-500">
-                              {item.product.productType}
-                            </p>
-                            <p className="text-sm text-gray-500 mt-1">
-                              {item.product.quantity > 0 ? (
-                                <span className="text-green-600">In Stock ({item.product.quantity} available)</span>
-                              ) : (
-                                <span className="text-red-600">Out of Stock</span>
-                              )}
-                            </p>
-                          </div>
-                          <p className="text-lg font-medium text-gray-900">
-                            ₱{(item.product.productPrice * item.quantity).toFixed(2)}
-                          </p>
+                        
+                        <div className="flex-shrink-0 h-24 w-24 rounded-md overflow-hidden border">
+                          <img
+                            src={item.product.productImage || '/placeholder.svg'}
+                            alt={item.product.productName}
+                            className="h-full w-full object-cover"
+                            onError={(e) => {
+                              e.target.src = '/placeholder.svg';
+                            }}
+                          />
                         </div>
 
-                        <div className="flex-1 flex items-end justify-between mt-2">
-                          <div className="flex items-center">
-                            <Button 
-                              variant="outline" 
-                              size="icon" 
-                              className="h-8 w-8 rounded-full"
-                              onClick={() => handleQuantityChange(item.cartItemId, item.quantity - 1)}
-                              disabled={item.quantity <= 1}
-                            >
-                              -
-                            </Button>
-                            <span className="mx-2 w-8 text-center">{item.quantity}</span>
-                            <Button 
-                              variant="outline" 
-                              size="icon" 
-                              className="h-8 w-8 rounded-full"
-                              onClick={() => handleQuantityChange(item.cartItemId, item.quantity + 1)}
-                              disabled={item.quantity >= item.product.quantity}
-                            >
-                              +
-                            </Button>
+                        <div className="ml-4 flex-1 flex flex-col">
+                          <div className="flex justify-between">
+                            <div>
+                              <Link 
+                                to={`/products/${item.product.productID}`}
+                                className="hover:text-primary"
+                              >
+                                <h3 className="text-lg font-medium text-gray-900">
+                                  {item.product.productName}
+                                </h3>
+                              </Link>
+                              <p className="text-sm text-gray-500">
+                                {item.product.productType}
+                              </p>
+                              <p className={`text-sm mt-1 ${
+                                isOutOfStock ? 'text-red-600' : 'text-green-600'
+                              }`}>
+                                {isOutOfStock 
+                                  ? 'Out of Stock' 
+                                  : `In Stock (${item.product.quantity} available)`}
+                              </p>
+                            </div>
+                            <p className="text-lg font-medium text-gray-900">
+                              ₱{(item.product.productPrice * item.quantity).toFixed(2)}
+                            </p>
                           </div>
 
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="text-red-500 hover:text-red-700"
-                            onClick={() => handleRemoveItem(item.cartItemId)}
-                          >
-                            <Trash2 className="h-5 w-5" />
-                          </Button>
+                          <div className="flex-1 flex items-end justify-between mt-2">
+                            <div className="flex items-center">
+                              <Button 
+                                variant="outline" 
+                                size="icon" 
+                                className="h-8 w-8 rounded-full"
+                                onClick={() => handleQuantityChange(item.cartItemId, item.quantity - 1)}
+                                disabled={item.quantity <= 1 || isOutOfStock}
+                              >
+                                -
+                              </Button>
+                              <span className="mx-2 w-8 text-center">{item.quantity}</span>
+                              <Button 
+                                variant="outline" 
+                                size="icon" 
+                                className="h-8 w-8 rounded-full"
+                                onClick={() => handleQuantityChange(item.cartItemId, item.quantity + 1)}
+                                disabled={item.quantity >= item.product.quantity || isOutOfStock}
+                              >
+                                +
+                              </Button>
+                            </div>
+
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="text-red-500 hover:text-red-700"
+                              onClick={() => handleRemoveItem(item.cartItemId)}
+                            >
+                              <Trash2 className="h-5 w-5" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -426,7 +452,7 @@ export default function CartPage() {
                   
                   <div className="space-y-4">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Subtotal ({selectedItems.size} items)</span>
+                      <span className="text-gray-600">Subtotal ({totalItems} items)</span>
                       <span className="font-medium">₱{subtotal}</span>
                     </div>
                     <div className="flex justify-between">
@@ -447,11 +473,11 @@ export default function CartPage() {
                     Proceed to Checkout
                   </Button>
 
-                  <div className="mt-4 text-sm text-gray-500">
-                    {selectedItems.size === 0 && (
-                      <p className="text-center">Select items to proceed</p>
-                    )}
-                  </div>
+                  {selectedItems.size === 0 && (
+                    <p className="mt-3 text-sm text-center text-gray-500">
+                      Select items to proceed
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -470,7 +496,10 @@ export default function CartPage() {
               <Button variant="outline" onClick={() => setOpenDialog(false)}>
                 Cancel
               </Button>
-              <Button variant="destructive" onClick={confirmRemoveItem}>
+              <Button 
+                variant="destructive" 
+                onClick={confirmRemoveItem}
+              >
                 Remove
               </Button>
             </div>

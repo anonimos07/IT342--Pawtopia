@@ -16,6 +16,7 @@ import AdminUsers from './pages/AdminUsers';
 import AdminProducts from "./pages/AdminProducts";
 import OAuthSuccess from "./pages/OauthSuccess";
 import CartPage from "./pages/CartPage";
+import AdminAppointments from "./pages/AdminAppoinments";
 
 // Protected route component to handle authentication
 function ProtectedRoute({ children }) {
@@ -111,6 +112,7 @@ function App() {
       <Route path="/adminDashboard" element={<AdminDashboard />} />
       <Route path="/adminUsers" element={<AdminUsers />} />
       <Route path="/adminProducts" element={<AdminProducts />} />
+      <Route path="/adminAppointments" element={<AdminAppointments />} />
 
 
       {/* Public or authenticated routes with layout */}

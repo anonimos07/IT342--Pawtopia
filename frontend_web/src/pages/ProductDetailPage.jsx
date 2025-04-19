@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { Button } from '../components/ui/Button';
@@ -11,6 +11,7 @@ import axios from 'axios';
 
 export default function ProductDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [quantity, setQuantity] = useState(1);
   const [product, setProduct] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
@@ -21,27 +22,32 @@ export default function ProductDetailPage() {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
+        setLoading(true);
+        setError(null);
+        
         // Fetch the current product
-        const productResponse = await fetch(`http://localhost:8080/api/product/getProduct/${id}`);
-        if (!productResponse.ok) {
-          throw new Error('Product not found');
-        }
-        const productData = await productResponse.json();
+        const productResponse = await axios.get(
+          `http://localhost:8080/api/product/getProduct/${id}`
+        );
         
         // Fetch all products for related items
-        const allProductsResponse = await fetch('http://localhost:8080/api/product/getProduct');
-        const allProducts = await allProductsResponse.json();
+        const allProductsResponse = await axios.get(
+          'http://localhost:8080/api/product/getProduct'
+        );
         
         // Filter out current product and get 4 random related products
-        const filteredProducts = allProducts.filter(p => p.productID !== productData.productID);
+        const filteredProducts = allProductsResponse.data.filter(
+          p => p.productID !== productResponse.data.productID
+        );
         const shuffled = [...filteredProducts].sort(() => 0.5 - Math.random());
         const selected = shuffled.slice(0, 4);
         
-        setProduct(productData);
+        setProduct(productResponse.data);
         setRelatedProducts(selected);
-        setLoading(false);
       } catch (err) {
-        setError(err.message);
+        console.error('Error fetching product:', err);
+        setError(err.response?.data?.message || err.message || 'Failed to load product');
+      } finally {
         setLoading(false);
       }
     };
@@ -52,6 +58,7 @@ export default function ProductDetailPage() {
   const handleIncrement = () => {
     setQuantity(prev => {
       if (prev >= product.quantity) {
+        toast.info(`Maximum available quantity is ${product.quantity}`);
         return prev;
       }
       return prev + 1;
@@ -63,56 +70,57 @@ export default function ProductDetailPage() {
   };
 
   const addToCart = async () => {
-    const token = localStorage.getItem('token');
-    const userId = localStorage.getItem('userId');
-    
-    if (!token || !userId) {
+    // Add safety checks for localStorage parsing
+    let token, user;
+    try {
+      token = localStorage.getItem('token');
+      const userString = localStorage.getItem('user');
+      if (!userString) throw new Error('No user data');
+      user = JSON.parse(userString);
+      if (!user?.id) throw new Error('Invalid user data');
+    } catch (error) {
       toast.error('Please login to add items to cart');
-      return;
-    }
-  
-    if (quantity < 1 || quantity > product.quantity) {
-      toast.error('Invalid quantity');
+      navigate('/login');
       return;
     }
   
     try {
       setIsAddingToCart(true);
       
-      // First, check if the user has a cart
-      let cartResponse;
+      // 1. Get user's cart (or create if doesn't exist)
+      let cart;
       try {
-        cartResponse = await axios.get(
-          `http://localhost:8080/api/cart/getCartById/${userId}`,
+        const cartResponse = await axios.get(
+          `http://localhost:8080/api/cart/getCartById/${user.id}`,
           { headers: { 'Authorization': `Bearer ${token}` } }
         );
+        cart = cartResponse.data;
       } catch (error) {
-        // If cart doesn't exist, create one
-        if (error.response && error.response.status === 404) {
-          cartResponse = await axios.post(
+        if (error.response?.status === 404) {
+          // Cart doesn't exist - create one
+          const createResponse = await axios.post(
             `http://localhost:8080/api/cart/postCartRecord`,
-            { userId: userId }, // This should match your backend's expected format
+            { userId: user.userId },
             { headers: { 'Authorization': `Bearer ${token}` } }
           );
+          cart = createResponse.data;
         } else {
           throw error;
         }
       }
-  
-      const cartId = cartResponse.data.userId || userId; // Use userId as cartId based on your backend
-  
-      // Check if product already exists in cart
-      const existingItem = cartResponse.data.cartItems?.find(
+
+      // 2. Check if product already exists in cart
+      const existingItem = cart.cartItems?.find(
         item => item.product.productID === product.productID
       );
-  
+
       if (existingItem) {
-        // Update quantity if item exists
+        // Update existing item quantity
         await axios.put(
           `http://localhost:8080/api/cartItem/updateCartItem/${existingItem.cartItemId}`,
           { 
             quantity: existingItem.quantity + quantity,
-            lastUpdated: new Date().toISOString() 
+            lastUpdated: new Date().toISOString()
           },
           { headers: { 'Authorization': `Bearer ${token}` } }
         );
@@ -122,18 +130,29 @@ export default function ProductDetailPage() {
           `http://localhost:8080/api/cartItem/postCartItem`,
           {
             quantity: quantity,
-            cart: { cartId: cartId },
             product: { productID: product.productID },
+            cart: { cartId: cart.cartId || cart.userId },
             lastUpdated: new Date().toISOString()
           },
           { headers: { 'Authorization': `Bearer ${token}` } }
         );
       }
-  
-      toast.success(`${quantity} ${product.productName} added to cart`);
+
+      toast.success(`${quantity} ${product.productName} added to your cart`);
     } catch (error) {
       console.error('Error adding to cart:', error);
-      toast.error(error.response?.data?.message || 'Failed to add product to cart');
+      
+      let errorMessage = 'Failed to add to cart';
+      if (error.response) {
+        if (error.response.status === 401) {
+          errorMessage = 'Please login to add items to cart';
+          navigate('/login');
+        } else if (error.response.data?.message) {
+          errorMessage = error.response.data.message;
+        }
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setIsAddingToCart(false);
     }
@@ -141,48 +160,49 @@ export default function ProductDetailPage() {
 
   const addRelatedToCart = async (relatedProduct) => {
     const token = localStorage.getItem('token');
-    const userId = localStorage.getItem('userId');
+    const user = JSON.parse(localStorage.getItem('user'));
     
-    if (!token || !userId) {
+    if (!token || !user) {
       toast.error('Please login to add items to cart');
+      navigate('/login');
       return;
     }
   
     try {
-      // First, check if the user has a cart
-      let cartResponse;
+      // 1. Get user's cart (or create if doesn't exist)
+      let cart;
       try {
-        cartResponse = await axios.get(
-          `http://localhost:8080/api/cart/getCartById/${userId}`,
+        const cartResponse = await axios.get(
+          `http://localhost:8080/api/cart/getCartById/${user.userId}`,
           { headers: { 'Authorization': `Bearer ${token}` } }
         );
+        cart = cartResponse.data;
       } catch (error) {
-        // If cart doesn't exist, create one
-        if (error.response && error.response.status === 404) {
-          cartResponse = await axios.post(
+        if (error.response?.status === 404) {
+          // Cart doesn't exist - create one
+          const createResponse = await axios.post(
             `http://localhost:8080/api/cart/postCartRecord`,
-            { userId: userId },
+            { userId: user.userId },
             { headers: { 'Authorization': `Bearer ${token}` } }
           );
+          cart = createResponse.data;
         } else {
           throw error;
         }
       }
-  
-      const cartId = cartResponse.data.userId || userId;
-  
-      // Check if product already exists in cart
-      const existingItem = cartResponse.data.cartItems?.find(
+
+      // 2. Check if product already exists in cart
+      const existingItem = cart.cartItems?.find(
         item => item.product.productID === relatedProduct.productID
       );
-  
+
       if (existingItem) {
-        // Update quantity if item exists
+        // Update existing item quantity
         await axios.put(
           `http://localhost:8080/api/cartItem/updateCartItem/${existingItem.cartItemId}`,
           { 
             quantity: existingItem.quantity + 1,
-            lastUpdated: new Date().toISOString() 
+            lastUpdated: new Date().toISOString()
           },
           { headers: { 'Authorization': `Bearer ${token}` } }
         );
@@ -192,31 +212,60 @@ export default function ProductDetailPage() {
           `http://localhost:8080/api/cartItem/postCartItem`,
           {
             quantity: 1,
-            cart: { cartId: cartId },
             product: { productID: relatedProduct.productID },
+            cart: { cartId: cart.cartId || cart.userId },
             lastUpdated: new Date().toISOString()
           },
           { headers: { 'Authorization': `Bearer ${token}` } }
         );
       }
-  
-      toast.success(`${relatedProduct.productName} added to cart`);
+
+      toast.success(`${relatedProduct.productName} added to your cart`);
     } catch (error) {
-      console.error('Error adding to cart:', error);
+      console.error('Error adding related product to cart:', error);
       toast.error(error.response?.data?.message || 'Failed to add product to cart');
     }
   };
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="min-h-screen flex items-center justify-center text-red-500">Error: {error}</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center p-6 max-w-md">
+          <h2 className="text-xl font-medium text-red-600 mb-4">Error Loading Product</h2>
+          <p className="mb-6">{error}</p>
+          <div className="space-x-4">
+            <Button variant="outline" onClick={() => window.location.reload()}>
+              Retry
+            </Button>
+            <Button asChild>
+              <Link to="/products">Browse Products</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!product) {
-    return <div className="min-h-screen flex items-center justify-center">Product not found</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center p-6 max-w-md">
+          <h2 className="text-xl font-medium mb-4">Product Not Found</h2>
+          <p className="mb-6">The product you're looking for doesn't exist.</p>
+          <Button asChild>
+            <Link to="/products">Browse Products</Link>
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   const averageRating = product.productreview && product.productreview.length > 0 

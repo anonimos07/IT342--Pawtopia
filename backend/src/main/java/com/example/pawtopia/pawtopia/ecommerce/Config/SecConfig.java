@@ -79,7 +79,9 @@ public class SecConfig {
                         .requestMatchers(
                                 "/admin/**",
                                 "/adresses/getAllAddress",
-                                "/appointments/confirm/{appid}",
+                                "/appointments/confirm/{appId}",
+                                "/appointments/cancel/{appId}",
+                                "/appointments/deleteAppointment/{appId}",
                                 "/appointments/getAppointment",
                                 "/api/product/putProduct/{id}",
                                 "/api/product/deleteProduct/{id}",
