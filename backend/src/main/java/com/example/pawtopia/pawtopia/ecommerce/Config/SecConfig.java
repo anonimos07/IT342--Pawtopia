@@ -97,7 +97,7 @@ public class SecConfig {
                             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
                         })
                 )
-                .oauth2Login(oauth2login -> oauth2login
+               .oauth2Login(oauth2login -> oauth2login
                         .successHandler(oAuth2SuccessHandler))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

@@ -92,6 +92,7 @@ public class UserController {
     public ResponseEntity<String> login(@RequestBody User user) {
         String result = userService.verify(user);
         if (result.equals("failed")) {
+
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(result);
         }
         return ResponseEntity.ok(result);

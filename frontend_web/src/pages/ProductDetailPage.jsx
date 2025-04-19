@@ -4,8 +4,10 @@ import Footer from '../components/Footer';
 import { Button } from '../components/ui/Button';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '../components/ui/Breadcrumb';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
-import { Minus, Plus, Star } from 'lucide-react';
+import { Minus, Plus, Star, ShoppingCart } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
+import axios from 'axios';
 
 export default function ProductDetailPage() {
   const { id } = useParams();
@@ -14,6 +16,7 @@ export default function ProductDetailPage() {
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -48,7 +51,6 @@ export default function ProductDetailPage() {
 
   const handleIncrement = () => {
     setQuantity(prev => {
-      // Don't increment if we've reached the available quantity
       if (prev >= product.quantity) {
         return prev;
       }
@@ -58,6 +60,151 @@ export default function ProductDetailPage() {
 
   const handleDecrement = () => {
     setQuantity(prev => (prev > 1 ? prev - 1 : 1));
+  };
+
+  const addToCart = async () => {
+    const token = localStorage.getItem('token');
+    const userId = localStorage.getItem('userId');
+    
+    if (!token || !userId) {
+      toast.error('Please login to add items to cart');
+      return;
+    }
+  
+    if (quantity < 1 || quantity > product.quantity) {
+      toast.error('Invalid quantity');
+      return;
+    }
+  
+    try {
+      setIsAddingToCart(true);
+      
+      // First, check if the user has a cart
+      let cartResponse;
+      try {
+        cartResponse = await axios.get(
+          `http://localhost:8080/api/cart/getCartById/${userId}`,
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        );
+      } catch (error) {
+        // If cart doesn't exist, create one
+        if (error.response && error.response.status === 404) {
+          cartResponse = await axios.post(
+            `http://localhost:8080/api/cart/postCartRecord`,
+            { userId: userId }, // This should match your backend's expected format
+            { headers: { 'Authorization': `Bearer ${token}` } }
+          );
+        } else {
+          throw error;
+        }
+      }
+  
+      const cartId = cartResponse.data.userId || userId; // Use userId as cartId based on your backend
+  
+      // Check if product already exists in cart
+      const existingItem = cartResponse.data.cartItems?.find(
+        item => item.product.productID === product.productID
+      );
+  
+      if (existingItem) {
+        // Update quantity if item exists
+        await axios.put(
+          `http://localhost:8080/api/cartItem/updateCartItem/${existingItem.cartItemId}`,
+          { 
+            quantity: existingItem.quantity + quantity,
+            lastUpdated: new Date().toISOString() 
+          },
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        );
+      } else {
+        // Add new item to cart
+        await axios.post(
+          `http://localhost:8080/api/cartItem/postCartItem`,
+          {
+            quantity: quantity,
+            cart: { cartId: cartId },
+            product: { productID: product.productID },
+            lastUpdated: new Date().toISOString()
+          },
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        );
+      }
+  
+      toast.success(`${quantity} ${product.productName} added to cart`);
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      toast.error(error.response?.data?.message || 'Failed to add product to cart');
+    } finally {
+      setIsAddingToCart(false);
+    }
+  };
+
+  const addRelatedToCart = async (relatedProduct) => {
+    const token = localStorage.getItem('token');
+    const userId = localStorage.getItem('userId');
+    
+    if (!token || !userId) {
+      toast.error('Please login to add items to cart');
+      return;
+    }
+  
+    try {
+      // First, check if the user has a cart
+      let cartResponse;
+      try {
+        cartResponse = await axios.get(
+          `http://localhost:8080/api/cart/getCartById/${userId}`,
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        );
+      } catch (error) {
+        // If cart doesn't exist, create one
+        if (error.response && error.response.status === 404) {
+          cartResponse = await axios.post(
+            `http://localhost:8080/api/cart/postCartRecord`,
+            { userId: userId },
+            { headers: { 'Authorization': `Bearer ${token}` } }
+          );
+        } else {
+          throw error;
+        }
+      }
+  
+      const cartId = cartResponse.data.userId || userId;
+  
+      // Check if product already exists in cart
+      const existingItem = cartResponse.data.cartItems?.find(
+        item => item.product.productID === relatedProduct.productID
+      );
+  
+      if (existingItem) {
+        // Update quantity if item exists
+        await axios.put(
+          `http://localhost:8080/api/cartItem/updateCartItem/${existingItem.cartItemId}`,
+          { 
+            quantity: existingItem.quantity + 1,
+            lastUpdated: new Date().toISOString() 
+          },
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        );
+      } else {
+        // Add new item to cart
+        await axios.post(
+          `http://localhost:8080/api/cartItem/postCartItem`,
+          {
+            quantity: 1,
+            cart: { cartId: cartId },
+            product: { productID: relatedProduct.productID },
+            lastUpdated: new Date().toISOString()
+          },
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        );
+      }
+  
+      toast.success(`${relatedProduct.productName} added to cart`);
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      toast.error(error.response?.data?.message || 'Failed to add product to cart');
+    }
   };
 
   if (loading) {
@@ -72,12 +219,10 @@ export default function ProductDetailPage() {
     return <div className="min-h-screen flex items-center justify-center">Product not found</div>;
   }
 
-  // Calculate average rating from reviews
   const averageRating = product.productreview && product.productreview.length > 0 
     ? product.productreview.reduce((acc, review) => acc + review.rating, 0) / product.productreview.length
     : 0;
 
-  // Check if increment button should be disabled
   const isIncrementDisabled = quantity >= product.quantity;
 
   return (
@@ -139,41 +284,53 @@ export default function ProductDetailPage() {
                 <div className="text-3xl font-bold text-primary">₱{product.productPrice}</div>
 
                 <div className="flex items-center gap-4">
-                  {product.quantity > 0 ? (
-                    <>
-                      <div className="flex items-center border rounded-full">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="rounded-full" 
-                          onClick={handleDecrement}
-                          aria-label="Decrease quantity"
-                        >
-                          <Minus className="h-4 w-4" />
-                        </Button>
-                        <span className="w-8 text-center">{quantity}</span>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="rounded-full" 
-                          onClick={handleIncrement}
-                          disabled={isIncrementDisabled}
-                          aria-label="Increase quantity"
-                        >
-                          <Plus className={`h-4 w-4 ${isIncrementDisabled ? 'text-gray-400' : 'text-current'}`} />
-                        </Button>
-                      </div>
-                      <Button className="rounded-full flex-1">Add to Cart</Button>
-                      {isIncrementDisabled && (
-                        <span className="text-sm text-gray-500">Maximum quantity reached</span>
-                      )}
-                    </>
-                  ) : (
-                    <div className="bg-red-100 text-red-800 px-4 py-2 rounded-full font-medium">
-                      Out of Stock
-                    </div>
-                  )}
-                </div>
+          {product.quantity > 0 ? (
+            <>
+              <div className="flex items-center border rounded-full">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="rounded-full" 
+                  onClick={handleDecrement}
+                  aria-label="Decrease quantity"
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+                <span className="w-8 text-center">{quantity}</span>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="rounded-full" 
+                  onClick={handleIncrement}
+                  disabled={isIncrementDisabled}
+                  aria-label="Increase quantity"
+                >
+                  <Plus className={`h-4 w-4 ${isIncrementDisabled ? 'text-gray-400' : 'text-current'}`} />
+                </Button>
+              </div>
+              <Button 
+                className="rounded-full flex-1 gap-2" 
+                onClick={addToCart}
+                disabled={isAddingToCart}
+              >
+                {isAddingToCart ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                ) : (
+                  <ShoppingCart className="h-4 w-4" />
+                )}
+                Add to Cart
+              </Button>
+              {isIncrementDisabled && (
+                <span className="text-sm text-gray-500">Maximum quantity reached</span>
+              )}
+            </>
+          ) : (
+            <div className="bg-red-100 text-red-800 px-4 py-2 rounded-full font-medium">
+              Out of Stock
+            </div>
+          )}
+        </div>
+
 
                 <Tabs defaultValue="description" className="w-full">
                   <TabsList className="grid w-full grid-cols-2">
@@ -247,7 +404,7 @@ export default function ProductDetailPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {relatedProducts.map((relatedProduct) => (
                 <div key={relatedProduct.productID} className="bg-white rounded-xl shadow-sm border p-6 transition-all hover:shadow-md">
-                  <Link to={`/products/${relatedProduct.productID}`} className="block">
+                  <Link to={`/products/${relatedProduct.productID}`} className="block mb-4">
                     <div className="aspect-square mb-4 bg-gray-100 rounded-lg overflow-hidden">
                       <img
                         src={relatedProduct.productImage || "/placeholder.svg?height=300&width=300"}
@@ -265,7 +422,13 @@ export default function ProductDetailPage() {
                       </div>
                     </div>
                   </Link>
-                  <Button className="w-full rounded-full mt-2">Add to Cart</Button>
+                  <Button 
+                    className="w-full rounded-full gap-2" 
+                    onClick={() => addRelatedToCart(relatedProduct)}
+                  >
+                    <ShoppingCart className="h-4 w-4" />
+                    Add to Cart
+                  </Button>
                 </div>
               ))}
             </div>

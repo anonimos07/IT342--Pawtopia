@@ -1,6 +1,7 @@
 package com.example.pawtopia.pawtopia.ecommerce.Service;
 
 import com.example.pawtopia.pawtopia.ecommerce.Entity.Address;
+import com.example.pawtopia.pawtopia.ecommerce.Entity.Cart;
 import com.example.pawtopia.pawtopia.ecommerce.Entity.User;
 import com.example.pawtopia.pawtopia.ecommerce.Repository.UserRepo;
 import jakarta.persistence.EntityNotFoundException;
@@ -37,6 +38,12 @@ public class UserService {
         }
         if (user.getRole() == null || user.getRole().isEmpty()) {
             user.setRole("CUSTOMER");
+        }
+
+        if (user.getCart() == null) {
+            Cart cart = new Cart();
+            cart.setUser(user);  // This sets cartId = userId (via @MapsId)
+            user.setCart(cart);  // Bidirectional relationship
         }
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));

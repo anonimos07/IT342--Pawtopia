@@ -34,4 +34,7 @@ public class User {
     @JsonManagedReference("user-address")
     private Address address;
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    @JsonManagedReference("user-cart")
+    private Cart cart;
 }
