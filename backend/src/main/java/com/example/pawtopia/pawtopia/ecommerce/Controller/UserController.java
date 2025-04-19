@@ -12,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -88,13 +90,27 @@ public class UserController {
         }
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody User user) {
-        String result = userService.verify(user);
-        if (result.equals("failed")) {
+//    @PostMapping("/login")
+//    public ResponseEntity<String> login(@RequestBody User user) {
+//        String result = userService.verify(user);
+//        if (result.equals("failed")) {
+//
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(result);
+//        }
+//        return ResponseEntity.ok(result);
+//    }
+//
 
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(result);
+    @PostMapping("/login")
+    public ResponseEntity<Map<String, Object>> login(@RequestBody User user) {
+        Map<String, Object> result = userService.verify(user);
+
+        if (result.containsKey("error")) {
+            String error = (String) result.get("error");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Collections.singletonMap("error", error));
         }
+
         return ResponseEntity.ok(result);
     }
 

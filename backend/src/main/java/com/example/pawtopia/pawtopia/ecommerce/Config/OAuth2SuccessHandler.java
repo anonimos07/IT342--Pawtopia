@@ -31,10 +31,12 @@ public class OAuth2SuccessHandler extends SavedRequestAwareAuthenticationSuccess
 
         String email = oauth2User.getAttribute("email");
         String name = oauth2User.getAttribute("name");
+        String googleId = oauth2User.getAttribute("sub");
 
         Map<String, Object> additionalClaims = new HashMap<>();
         additionalClaims.put("name", name);
         additionalClaims.put("auth_provider", "oauth2");
+        additionalClaims.put("googleId", googleId);
 
         // Generate JWT token google
         String token = jwtUtil.generateTokenForOAuth2User(email, additionalClaims);
@@ -52,6 +54,6 @@ public class OAuth2SuccessHandler extends SavedRequestAwareAuthenticationSuccess
 
         // Option 2: Also provide token in URL (as backup)
         getRedirectStrategy().sendRedirect(request, response,
-                "http://localhost:5173/oauth-success?token=" + token);
+                "http://localhost:5173/oauth-success?token=" + token + "&googleId=" + googleId);
     }
 }

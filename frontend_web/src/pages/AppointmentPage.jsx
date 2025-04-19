@@ -56,6 +56,9 @@ export default function AppointmentPage() {
           price,
           confirmed: false,
           canceled: false,
+          user: {
+            userId: JSON.parse(localStorage.getItem("user")).id
+          }
         };
         
         const response = await fetch('http://localhost:8080/appointments/postAppointment', {

@@ -20,13 +20,35 @@ export default function OAuthSuccess() {
       console.log("Found token:", token);
 
       if (token) {
-        // Store the token and user data
+        // Store the token
         console.log("Storing token and user data");
         localStorage.setItem('token', token);
+        
         const userData = {
-          name: 'Google User',
+          name: 'User', // Default fallback name
           avatar: '/default-avatar.png'
         };
+        
+        try {
+          // Decode the JWT token to get user info
+          const tokenParts = token.split('.');
+          if (tokenParts.length === 3) {
+            const payload = JSON.parse(atob(tokenParts[1]));
+            if (payload.name) {
+              userData.name = payload.name;
+            }
+            // If there's an avatar or picture in the payload
+            if (payload.picture) {
+              userData.avatar = payload.picture;
+            }
+            if (payload.googleId){
+              userData.googleId = payload.googleId;
+            }  
+          }
+        } catch (e) {
+          console.error('Error decoding token:', e);
+        }
+        
         localStorage.setItem('user', JSON.stringify(userData));
         
         // Update app state to notify about authentication

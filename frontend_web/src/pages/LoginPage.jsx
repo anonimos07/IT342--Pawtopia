@@ -18,6 +18,7 @@ export default function LoginPage() {
   
   const navigate = useNavigate();
 
+  
   const googleLogin = () => {
     window.location.href = "http://localhost:8080/oauth2/authorization/google";
   };
@@ -59,8 +60,9 @@ export default function LoginPage() {
         });
     
         if (response.ok) {
-          const token = await response.text(); 
-          console.log("Login success, token:", token);
+          const data = await response.json(); // Assuming you can change backend to return JSON
+        const token = data.token;
+        const userId = data.userId
           
           // Save token in localStorage
           localStorage.setItem("token", token);
@@ -68,7 +70,8 @@ export default function LoginPage() {
           // Save basic user info in localStorage
           const userData = {
             name: username,
-            avatar: '/default-avatar.png' // You can replace with actual avatar URL if available
+            id: userId, // Store the user ID
+            avatar: '/default-avatar.png'
           };
           localStorage.setItem("user", JSON.stringify(userData));
           

@@ -10,11 +10,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -56,13 +56,56 @@ public class UserService {
     }
 
     // verify user nya generate token after verification
-    public String verify(User user){
-        Authentication authentication =
-                authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
-        if (authentication.isAuthenticated())
-                return jwtService.generateToken(user.getUsername());
+//    public String verify(User user){
+//        Authentication authentication =
+//                authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
+//        if (authentication.isAuthenticated())
+//                return jwtService.generateToken(user.getUsername());
+//
+//        return "failed";
+//    }
 
-        return "failed";
+
+//    public String verify(User user) {
+//        Authentication authentication = authenticationManager.authenticate(
+//                new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword())
+//        );
+//
+//        if (authentication.isAuthenticated()) {
+//            Optional<User> foundUser = userRepo.findByUsername(user.getUsername());
+//
+//            if (foundUser.isPresent()) {
+//                return jwtService.generateToken(user.getUsername());
+//            } else {
+//                return "unauthorized";
+//            }
+//        }
+//        return "failed";
+//    }
+
+    public Map<String, Object> verify(User user) {
+        try {
+            // Authenticate credentials
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword())
+            );
+
+            if (authentication.isAuthenticated()) {
+                Optional<User> foundUser = userRepo.findByUsername(user.getUsername());
+
+                if (foundUser.isPresent()) {
+                    User actualUser = foundUser.get();
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("token", jwtService.generateToken(user.getUsername()));
+                    response.put("userId", actualUser.getUserId());
+                    response.put("username", actualUser.getUsername());
+                    return response;
+                }
+            }
+            return Collections.singletonMap("error", "unauthorized");
+        } catch (AuthenticationException e) {
+            return Collections.singletonMap("error", "failed");
+        }
     }
 
     //find userid
