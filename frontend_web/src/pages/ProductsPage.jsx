@@ -225,7 +225,9 @@ export default function ProductsPage() {
                           <p className="text-sm text-gray-500 line-clamp-2">{product.description}</p>
                         </div>
                       </Link>
-                      <Button className="w-full rounded-full mt-2">Add to Cart</Button>
+                      <Button className="w-full rounded-full mt-2">
+                      <Link to={`/products/${product.productID}`}>View Details</Link>
+                        </Button>
                     </div>
                   ))}
                 </div>

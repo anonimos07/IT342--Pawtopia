@@ -121,7 +121,7 @@ export default function HomePage() {
                       <div className="flex justify-between items-center">
                         <span className="text-primary font-bold">₱{product.productPrice}</span>
                         <Button size="sm" className="rounded-full">
-                          Add to Cart
+                        <Link to={`/products/${product.productID}`}>View Details</Link>
                         </Button>
                       </div>
                     </div>

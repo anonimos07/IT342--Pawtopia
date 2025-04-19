@@ -15,6 +15,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsers from './pages/AdminUsers';
 import AdminProducts from "./pages/AdminProducts";
 import OAuthSuccess from "./pages/OauthSuccess";
+import CartPage from "./pages/CartPage";
 
 // Protected route component to handle authentication
 function ProtectedRoute({ children }) {
@@ -204,6 +205,19 @@ function App() {
           ) : (
             <Layout>
               <AboutPage />
+            </Layout>
+          )
+        }
+      />
+
+      <Route
+        path="/cart"
+        element={
+          shouldHideHeader ? (
+            <CartPage/>
+          ) : (
+            <Layout>
+              <CartPage />
             </Layout>
           )
         }

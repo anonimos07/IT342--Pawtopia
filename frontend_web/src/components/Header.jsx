@@ -148,10 +148,9 @@ export default function Header({ activePage = 'home' }) {
 
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" className="text-gray-600">
-            <Search className="h-5 w-5" />
-          </Button>
-          <Button variant="ghost" size="icon" className="text-gray-600">
-            <ShoppingBag className="h-5 w-5" />
+            <Link to="/cart" className="text-gray-600 inline-flex items-center justify-center p-2 rounded-full hover:bg-gray-100 focus:ring focus:ring-gray-200">
+              <ShoppingBag className="h-5 w-5" />
+            </Link>
           </Button>
 
           {isLoading ? (

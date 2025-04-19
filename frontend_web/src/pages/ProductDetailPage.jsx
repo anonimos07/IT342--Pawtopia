@@ -5,59 +5,84 @@ import { Button } from '../components/ui/Button';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '../components/ui/Breadcrumb';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
 import { Minus, Plus, Star } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function ProductDetailPage() {
   const { id } = useParams();
   const [quantity, setQuantity] = useState(1);
+  const [product, setProduct] = useState(null);
+  const [relatedProducts, setRelatedProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  
-  const product = {
-    id: 1,
-    name: "Premium Dog Food",
-    category: "Dog Food",
-    price: 450,
-    image: "/placeholder.svg?height=500&width=500",
-    description:
-      "Premium dog food made with high-quality ingredients, providing balanced nutrition for dogs of all sizes and breeds. Supports healthy digestion, promotes a shiny coat, and sustains energy for an active lifestyle. Free from artificial colors, flavors, and preservatives.",
-    about:
-      "This dog food is carefully formulated to meet the highest standards of pet nutrition. Made with real meat, wholesome grains, and natural ingredients, it ensures optimal nutrition. Suitable for puppies, adults, and senior dogs, with formulas designed to support health at every life stage.",
-    ratings: {
-      average: 5,
-      count: 12,
-      reviews: [
-        {
-          id: 1,
-          author: "Emily R.",
-          rating: 5,
-          comment:
-            "My dog loves this food! Noticed a visible improvement, he has more energy and no more stomach issues. Great product, highly recommend!",
-        },
-        {
-          id: 2,
-          author: "Mark T.",
-          rating: 5,
-          comment:
-            "Best dog food I've ever bought! My picky eater devours it every time, and I've noticed a big improvement in his coat. Definitely sticking with this brand!",
-        },
-      ],
-    },
-  };
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        // Fetch the current product
+        const productResponse = await fetch(`http://localhost:8080/api/product/getProduct/${id}`);
+        if (!productResponse.ok) {
+          throw new Error('Product not found');
+        }
+        const productData = await productResponse.json();
+        
+        // Fetch all products for related items
+        const allProductsResponse = await fetch('http://localhost:8080/api/product/getProduct');
+        const allProducts = await allProductsResponse.json();
+        
+        // Filter out current product and get 4 random related products
+        const filteredProducts = allProducts.filter(p => p.productID !== productData.productID);
+        const shuffled = [...filteredProducts].sort(() => 0.5 - Math.random());
+        const selected = shuffled.slice(0, 4);
+        
+        setProduct(productData);
+        setRelatedProducts(selected);
+        setLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+
+    fetchProduct();
+  }, [id]);
 
   const handleIncrement = () => {
-    setQuantity(prev => prev + 1);
+    setQuantity(prev => {
+      // Don't increment if we've reached the available quantity
+      if (prev >= product.quantity) {
+        return prev;
+      }
+      return prev + 1;
+    });
   };
 
   const handleDecrement = () => {
     setQuantity(prev => (prev > 1 ? prev - 1 : 1));
   };
 
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+
+  if (error) {
+    return <div className="min-h-screen flex items-center justify-center text-red-500">Error: {error}</div>;
+  }
+
+  if (!product) {
+    return <div className="min-h-screen flex items-center justify-center">Product not found</div>;
+  }
+
+  // Calculate average rating from reviews
+  const averageRating = product.productreview && product.productreview.length > 0 
+    ? product.productreview.reduce((acc, review) => acc + review.rating, 0) / product.productreview.length
+    : 0;
+
+  // Check if increment button should be disabled
+  const isIncrementDisabled = quantity >= product.quantity;
+
   return (
     <div className="min-h-screen flex flex-col">
-    
-
       <main className="flex-1">
-     
         <div className="bg-gray-50 py-4">
           <div className="container mx-auto px-4">
             <Breadcrumb>
@@ -71,8 +96,8 @@ export default function ProductDetailPage() {
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <BreadcrumbLink href={`/products/${product.id}`} className="font-medium">
-                    {product.name}
+                  <BreadcrumbLink href={`/products/${product.productID}`} className="font-medium">
+                    {product.productName}
                   </BreadcrumbLink>
                 </BreadcrumbItem>
               </BreadcrumbList>
@@ -80,15 +105,14 @@ export default function ProductDetailPage() {
           </div>
         </div>
 
-     
         <section className="py-12">
           <div className="container mx-auto px-4">
             <div className="grid md:grid-cols-2 gap-12 max-w-5xl mx-auto">
               <div className="bg-white rounded-xl p-6 shadow-sm">
                 <div className="aspect-square bg-gray-50 rounded-lg overflow-hidden">
                   <img
-                    src={product.image || "/placeholder.svg"}
-                    alt={product.name}
+                    src={product.productImage || "/placeholder.svg"}
+                    alt={product.productName}
                     className="w-full h-full object-contain"
                   />
                 </div>
@@ -96,43 +120,74 @@ export default function ProductDetailPage() {
 
               <div className="space-y-6">
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900">{product.name}</h1>
-                  <p className="text-gray-500">{product.category}</p>
+                  <h1 className="text-3xl font-bold text-gray-900">{product.productName}</h1>
+                  <p className="text-gray-500">{product.productType}</p>
                 </div>
 
                 <div className="flex items-center gap-1">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                    <Star 
+                      key={i} 
+                      className={`w-5 h-5 ${i < Math.round(averageRating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} 
+                    />
                   ))}
-                  <span className="text-sm text-gray-500 ml-2">({product.ratings.count} reviews)</span>
+                  <span className="text-sm text-gray-500 ml-2">
+                    ({product.productreview ? product.productreview.length : 0} reviews)
+                  </span>
                 </div>
 
-                <div className="text-3xl font-bold text-primary">₱{product.price}</div>
+                <div className="text-3xl font-bold text-primary">₱{product.productPrice}</div>
 
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center border rounded-full">
-                    <Button variant="ghost" size="icon" className="rounded-full" onClick={handleDecrement}>
-                      <Minus className="h-4 w-4" />
-                    </Button>
-                    <span className="w-8 text-center">{quantity}</span>
-                    <Button variant="ghost" size="icon" className="rounded-full" onClick={handleIncrement}>
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-
-                  <Button className="rounded-full flex-1">Add to Cart</Button>
+                  {product.quantity > 0 ? (
+                    <>
+                      <div className="flex items-center border rounded-full">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="rounded-full" 
+                          onClick={handleDecrement}
+                          aria-label="Decrease quantity"
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                        <span className="w-8 text-center">{quantity}</span>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="rounded-full" 
+                          onClick={handleIncrement}
+                          disabled={isIncrementDisabled}
+                          aria-label="Increase quantity"
+                        >
+                          <Plus className={`h-4 w-4 ${isIncrementDisabled ? 'text-gray-400' : 'text-current'}`} />
+                        </Button>
+                      </div>
+                      <Button className="rounded-full flex-1">Add to Cart</Button>
+                      {isIncrementDisabled && (
+                        <span className="text-sm text-gray-500">Maximum quantity reached</span>
+                      )}
+                    </>
+                  ) : (
+                    <div className="bg-red-100 text-red-800 px-4 py-2 rounded-full font-medium">
+                      Out of Stock
+                    </div>
+                  )}
                 </div>
 
                 <Tabs defaultValue="description" className="w-full">
                   <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="description">Description</TabsTrigger>
-                    <TabsTrigger value="about">About</TabsTrigger>
+                    <TabsTrigger value="about">Details</TabsTrigger>
                   </TabsList>
                   <TabsContent value="description" className="p-4 text-gray-600">
                     <p>{product.description}</p>
                   </TabsContent>
                   <TabsContent value="about" className="p-4 text-gray-600">
-                    <p>{product.about}</p>
+                    <div className="space-y-2">
+                      <p><strong>Type:</strong> {product.productType}</p>
+                      <p><strong>Available Quantity:</strong> {product.quantity}</p>
+                    </div>
                   </TabsContent>
                 </Tabs>
               </div>
@@ -140,64 +195,73 @@ export default function ProductDetailPage() {
           </div>
         </section>
 
-       
         <section className="py-12 bg-gray-50">
           <div className="container mx-auto px-4 max-w-5xl">
             <h2 className="text-2xl font-bold mb-6">Product Reviews</h2>
 
             <div className="bg-white rounded-xl p-6 shadow-sm mb-6">
               <div className="flex items-center gap-2 mb-4">
-                <h3 className="font-bold text-lg">5 out of 5</h3>
+                <h3 className="font-bold text-lg">{averageRating.toFixed(1)} out of 5</h3>
                 <div className="flex items-center">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                    <Star 
+                      key={i} 
+                      className={`w-5 h-5 ${i < Math.round(averageRating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} 
+                    />
                   ))}
                 </div>
-                <span className="text-sm text-gray-500">({product.ratings.count} reviews)</span>
+                <span className="text-sm text-gray-500">
+                  ({product.productreview ? product.productreview.length : 0} reviews)
+                </span>
               </div>
             </div>
 
-            <div className="space-y-6">
-              {product.ratings.reviews.map((review) => (
-                <div key={review.id} className="bg-white rounded-xl p-6 shadow-sm">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="flex items-center">
-                      {[...Array(review.rating)].map((_, i) => (
-                        <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      ))}
+            {product.productreview && product.productreview.length > 0 ? (
+              <div className="space-y-6">
+                {product.productreview.map((review) => (
+                  <div key={review.reviewID} className="bg-white rounded-xl p-6 shadow-sm">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center">
+                        {[...Array(review.rating)].map((_, i) => (
+                          <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                        ))}
+                      </div>
                     </div>
+                    <p className="text-gray-600 mb-2">{review.comment}</p>
+                    <p className="text-sm text-gray-500">— {review.user ? review.user.username : 'Anonymous'}</p>
                   </div>
-                  <p className="text-gray-600 mb-2">{review.comment}</p>
-                  <p className="text-sm text-gray-500">— {review.author}</p>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl p-6 shadow-sm text-center text-gray-500">
+                No reviews yet for this product.
+              </div>
+            )}
           </div>
         </section>
 
-       
         <section className="py-12">
           <div className="container mx-auto px-4">
             <h2 className="text-2xl font-bold mb-6">You May Also Like</h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="bg-white rounded-xl shadow-sm border p-6 transition-all hover:shadow-md">
-                  <Link to={`/products/${i + 2}`} className="block">
+              {relatedProducts.map((relatedProduct) => (
+                <div key={relatedProduct.productID} className="bg-white rounded-xl shadow-sm border p-6 transition-all hover:shadow-md">
+                  <Link to={`/products/${relatedProduct.productID}`} className="block">
                     <div className="aspect-square mb-4 bg-gray-100 rounded-lg overflow-hidden">
                       <img
-                        src="/placeholder.svg?height=300&width=300"
-                        alt="Related Product"
+                        src={relatedProduct.productImage || "/placeholder.svg?height=300&width=300"}
+                        alt={relatedProduct.productName}
                         className="object-cover w-full h-full"
                       />
                     </div>
                     <div className="space-y-2">
                       <div className="flex justify-between items-start">
                         <div>
-                          <h3 className="font-semibold text-lg">Related Product {i + 1}</h3>
-                          <p className="text-sm text-gray-500">Pet Food</p>
+                          <h3 className="font-semibold text-lg">{relatedProduct.productName}</h3>
+                          <p className="text-sm text-gray-500">{relatedProduct.productType}</p>
                         </div>
-                        <span className="text-primary font-bold">₱350</span>
+                        <span className="text-primary font-bold">₱{relatedProduct.productPrice}</span>
                       </div>
                     </div>
                   </Link>
