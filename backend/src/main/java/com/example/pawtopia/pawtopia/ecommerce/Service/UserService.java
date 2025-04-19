@@ -55,34 +55,6 @@ public class UserService {
         return userRepo.findAll();
     }
 
-    // verify user nya generate token after verification
-//    public String verify(User user){
-//        Authentication authentication =
-//                authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
-//        if (authentication.isAuthenticated())
-//                return jwtService.generateToken(user.getUsername());
-//
-//        return "failed";
-//    }
-
-
-//    public String verify(User user) {
-//        Authentication authentication = authenticationManager.authenticate(
-//                new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword())
-//        );
-//
-//        if (authentication.isAuthenticated()) {
-//            Optional<User> foundUser = userRepo.findByUsername(user.getUsername());
-//
-//            if (foundUser.isPresent()) {
-//                return jwtService.generateToken(user.getUsername());
-//            } else {
-//                return "unauthorized";
-//            }
-//        }
-//        return "failed";
-//    }
-
     public Map<String, Object> verify(User user) {
         try {
             // Authenticate credentials
@@ -195,6 +167,75 @@ public class UserService {
         }
         userRepo.deleteById(userId);
         return "User deleted successfully!";
+    }
+
+
+
+    //google auth save to database
+    // Find user by email (needed for OAuth login)
+    public User findByEmail(String email) {
+        return userRepo.findByEmail(email).orElse(null);
+    }
+
+    // Save OAuth user
+    public User saveOAuthUser(String email, String name, String googleId) {
+        // Check if user exists
+        User existingUser = findByEmail(email);
+
+        if (existingUser != null) {
+            // Update existing user with Google info if not already set
+            if (existingUser.getGoogleId() == null) {
+                existingUser.setGoogleId(googleId);
+                existingUser.setAuthProvider("GOOGLE");
+                return userRepo.save(existingUser);
+            }
+            return existingUser;
+        } else {
+            // Create new user with Google details
+            User newUser = new User();
+            newUser.setEmail(email);
+
+            // Generate a username from the email if needed
+            String usernameFromEmail = email.split("@")[0];
+            String uniqueUsername = usernameFromEmail;
+            int counter = 1;
+
+            // Ensure username is unique
+            while (userRepo.findByUsername(uniqueUsername).isPresent()) {
+                uniqueUsername = usernameFromEmail + counter++;
+            }
+
+            newUser.setUsername(uniqueUsername);
+
+            // Set names from the full name
+            if (name != null && name.contains(" ")) {
+                String[] nameParts = name.split(" ", 2);
+                newUser.setFirstName(nameParts[0]);
+                newUser.setLastName(nameParts[1]);
+            } else {
+                newUser.setFirstName(name);
+                newUser.setLastName("");
+            }
+
+            newUser.setGoogleId(googleId);
+            newUser.setAuthProvider("GOOGLE");
+            newUser.setRole("CUSTOMER");
+
+            // Set a random password since it's required but won't be used with OAuth
+            newUser.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
+
+            // Create cart for new user
+            Cart cart = new Cart();
+            cart.setUser(newUser);
+            newUser.setCart(cart);
+
+            return userRepo.save(newUser);
+        }
+    }
+
+    // Update a user - useful for OAuth
+    public User updateUser(User user) {
+        return userRepo.save(user);
     }
 
 }

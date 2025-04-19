@@ -44,12 +44,18 @@ export default function OAuthSuccess() {
             if (payload.googleId){
               userData.googleId = payload.googleId;
             }  
+            if(payload.email){
+              userData.email = payload.email;
+            }
+            if(payload.userId){
+              userData.userId = payload.userId;
+            }
           }
         } catch (e) {
           console.error('Error decoding token:', e);
         }
         
-        localStorage.setItem('user', JSON.stringify(userData));
+        localStorage.setItem('googleuser', JSON.stringify(userData));
         
         // Update app state to notify about authentication
         window.dispatchEvent(new Event('storage'));

@@ -1,5 +1,6 @@
 package com.example.pawtopia.pawtopia.ecommerce.Config;
 
+import com.example.pawtopia.pawtopia.ecommerce.Entity.User;
 import com.example.pawtopia.pawtopia.ecommerce.Service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -33,10 +34,14 @@ public class OAuth2SuccessHandler extends SavedRequestAwareAuthenticationSuccess
         String name = oauth2User.getAttribute("name");
         String googleId = oauth2User.getAttribute("sub");
 
+        User user = userService.saveOAuthUser(email, name, googleId);
+
         Map<String, Object> additionalClaims = new HashMap<>();
+        additionalClaims.put("email", email);
         additionalClaims.put("name", name);
         additionalClaims.put("auth_provider", "oauth2");
         additionalClaims.put("googleId", googleId);
+        additionalClaims.put("userId", user.getUserId());
 
         // Generate JWT token google
         String token = jwtUtil.generateTokenForOAuth2User(email, additionalClaims);

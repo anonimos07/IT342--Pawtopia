@@ -30,6 +30,10 @@ public class User {
 
     private String role;
 
+    // Add these fields for OAuth
+    private String googleId;
+    private String authProvider;
+
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     @JsonManagedReference("user-address")
     private Address address;
