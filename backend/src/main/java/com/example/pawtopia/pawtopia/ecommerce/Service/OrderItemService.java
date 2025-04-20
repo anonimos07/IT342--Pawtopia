@@ -1,5 +1,6 @@
 package com.example.pawtopia.pawtopia.ecommerce.Service;
 
+import com.example.pawtopia.pawtopia.ecommerce.Entity.Order;
 import com.example.pawtopia.pawtopia.ecommerce.Entity.OrderItem;
 import com.example.pawtopia.pawtopia.ecommerce.Repository.OrderItemRepo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,16 @@ public class OrderItemService {
     public OrderItem postOrderItemRecord(OrderItem orderItem) {
         return oirepo.save(orderItem);
     }
+//public OrderItem postOrderItemRecord(OrderItem orderItem) {
+//    // Attach the managed Order entity to avoid detached entity error
+//    OrderItem order = oirepo.findById(orderItem.getOrder().getOrderID())
+//            .orElseThrow(() -> new RuntimeException("Order not found"));
+//
+//    orderItem.setOrder(order.getOrder());
+//
+//    return oirepo.save(orderItem);
+//}
+
 
     public List<OrderItem> getAllOrderItem() {
         return oirepo.findAll();

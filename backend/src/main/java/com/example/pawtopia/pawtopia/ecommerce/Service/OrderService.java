@@ -3,8 +3,10 @@ package com.example.pawtopia.pawtopia.ecommerce.Service;
 import com.example.pawtopia.pawtopia.ecommerce.Entity.Order;
 import com.example.pawtopia.pawtopia.ecommerce.Entity.OrderItem;
 import com.example.pawtopia.pawtopia.ecommerce.Entity.Product;
+import com.example.pawtopia.pawtopia.ecommerce.Entity.User;
 import com.example.pawtopia.pawtopia.ecommerce.Repository.OrderRepo;
 import com.example.pawtopia.pawtopia.ecommerce.Repository.ProductRepo;
+import com.example.pawtopia.pawtopia.ecommerce.Repository.UserRepo;
 import jakarta.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,30 +26,62 @@ public class OrderService {
     @Autowired
     ProductRepo productRepository;
 
+    @Autowired
+    UserRepo userRepo;
     public OrderService() {
         super();
     }
 
-    @Transactional
-    public Order postOrderRecord(Order order) {
-        // Loop through each OrderItemEntity in the order
-        for (OrderItem orderItem : order.getOrderItems()) {
-            // Find the corresponding product for the order item
-            Optional<Product> optionalProduct = productRepository.findById(Integer.parseInt(orderItem.getProductId()));
-            if (optionalProduct.isPresent()) {
-                Product product = optionalProduct.get();
-                product.setQuantity(product.getQuantity() - orderItem.getQuantity());
-                product.setQuantitySold(product.getQuantitySold() + orderItem.getQuantity());
-                productRepository.save(product);
-            } else {
-                throw new RuntimeException("Product not found with ID: " + orderItem.getProductId());
-            }
+//    @Transactional
+//    public Order postOrderRecord(Order order) {
+//        // Loop through each OrderItemEntity in the order
+//        for (OrderItem orderItem : order.getOrderItems()) {
+//            // Find the corresponding product for the order item
+//            Optional<Product> optionalProduct = productRepository.findById(Integer.parseInt(orderItem.getProductId()));
+//            if (optionalProduct.isPresent()) {
+//                Product product = optionalProduct.get();
+//                product.setQuantity(product.getQuantity() - orderItem.getQuantity());
+//                product.setQuantitySold(product.getQuantitySold() + orderItem.getQuantity());
+//                productRepository.save(product);
+//            } else {
+//                throw new RuntimeException("Product not found with ID: " + orderItem.getProductId());
+//            }
+//
+//        }
+//
+//        // Save the order
+//        return orepo.save(order); // Save the order after handling the product updates
+//    }
 
+    public Order postOrderRecord(Order order) {
+        // First, make sure the user is loaded from DB to avoid detached entity issues
+        Long userId = order.getUser().getUserId();
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        order.setUser(user);
+
+        // Process order items
+        if (order.getOrderItems() != null) {
+            for (OrderItem orderItem : order.getOrderItems()) {
+                Optional<Product> optionalProduct = productRepository.findById(Integer.parseInt(orderItem.getProductId()));
+                if (optionalProduct.isPresent()) {
+                    Product product = optionalProduct.get();
+                    product.setQuantity(product.getQuantity() - orderItem.getQuantity());
+                    product.setQuantitySold(product.getQuantitySold() + orderItem.getQuantity());
+                    productRepository.save(product);
+                } else {
+                    throw new RuntimeException("Product not found with ID: " + orderItem.getProductId());
+                }
+
+                // Set the parent order for the order item to persist relationship
+                orderItem.setOrder(order);
+            }
         }
 
         // Save the order
-        return orepo.save(order); // Save the order after handling the product updates
+        return orepo.save(order);
     }
+
 
     public OrderService(OrderRepo orderRepository) {
         this.orepo = orderRepository;

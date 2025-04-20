@@ -72,8 +72,12 @@ public class SecConfig {
                                 "/api/cartItem/**",
                                 "/api/cart/**",
                                 "/api/order/postOrderRecord",
+                                "/api/order/test",
                                 "/api/order/putOrderDetails",
-                                "/api/order/deleteOrderDetails/{id}"
+                                "/api/order/deleteOrderDetails/{id}",
+                                "/api/orderItem/test",
+                                "/api/orderItem/postOrderItemRecord",
+                                "/api/orderItem/putOrderItemDetails"
                         ).hasRole("CUSTOMER")
                         // Admin-specific endpoints
                         .requestMatchers(
@@ -90,6 +94,9 @@ public class SecConfig {
                                 "/api/order/getOrderDetails/{orderID}",
                                 "/api/order/getAllOrdersByUserId",
                                 "/api/order/get-total-income",
+                                "/api/orderItem/getAllOrdersItem",
+                                "/api/orderItem/putOrderItemDetails",
+                                "/api/orderItem/deleteOrderItemDetails/{id}",
                                 "/users/all"
                         ).hasRole("ADMIN")
                         .anyRequest().authenticated()

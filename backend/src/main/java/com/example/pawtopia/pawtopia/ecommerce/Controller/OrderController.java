@@ -2,6 +2,7 @@ package com.example.pawtopia.pawtopia.ecommerce.Controller;
 
 import com.example.pawtopia.pawtopia.ecommerce.Entity.Order;
 import com.example.pawtopia.pawtopia.ecommerce.Service.OrderService;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +18,11 @@ public class OrderController {
     @Autowired
     private final OrderService oserv;
 
+    //test
+    @GetMapping("/test")
+    public void test(){
+        System.out.println("Test for order");
+    }
     // CREATE
     //user
     @PostMapping("/postOrderRecord")
