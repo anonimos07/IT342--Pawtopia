@@ -34,12 +34,21 @@ export default function AppointmentPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const loggedemail = JSON.parse(localStorage.getItem("user")).logemail;
+    const localUser = JSON.parse(localStorage.getItem("user") || "null");
+    const googleUser = JSON.parse(localStorage.getItem("googleuser") || "null");
 
+  
+    // Check if either user exists and if email matches
+    if ((localUser && email !== localUser.logemail) || 
+    (googleUser && email !== googleUser.email)) {
+    window.alert('You can only book an appointment using your registered email.');
+    return;
+}
 
-    if (email !== loggedemail) {
-      window.alert('You can only book an appointment using your registered email.');
-      return; 
+    // If neither user exists
+    if (!localUser && !googleUser) {
+        window.alert('No user found. Please log in first.');
+        return;
     }
 
     
@@ -51,11 +60,22 @@ export default function AppointmentPage() {
       setIsSubmitting(true);
       
       try {
-        const token = localStorage.getItem('token');
+        // const token = localStorage.getItem('token');
         
-        if (!token) {
-          throw new Error("You need to be logged in to book an appointment");
-        }
+        // if (!token) {
+        //   throw new Error("You need to be logged in to book an appointment");
+        // }
+        let token;
+if (googleUser) {
+  // Try the jwt_token cookie or check other localStorage keys
+  token = document.cookie.split('; ').find(row => row.startsWith('jwt_token='))?.split('=')[1] 
+       || localStorage.getItem('jwt_token')
+       || localStorage.getItem('token');
+} else {
+  token = localStorage.getItem('token');
+}
+
+console.log("Using token:", token);
         const appointmentData = {
           email,
           contactNo,
@@ -67,8 +87,8 @@ export default function AppointmentPage() {
           confirmed: false,
           canceled: false,
           user: {
-            userId: JSON.parse(localStorage.getItem("user")).id
-          }
+    userId: localUser ? localUser.id : (googleUser ? googleUser.userId : null)
+  }
         };
         
         const response = await fetch('http://localhost:8080/appointments/postAppointment', {
@@ -80,6 +100,9 @@ export default function AppointmentPage() {
           body: JSON.stringify(appointmentData),
           credentials: 'include'
         });
+           console.log("Sending appointment data:", appointmentData);
+console.log("Token being used:", token);
+
         
         const responseData = await response.json();
         
