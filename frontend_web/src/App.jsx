@@ -17,6 +17,7 @@ import AdminProducts from "./pages/AdminProducts";
 import OAuthSuccess from "./pages/OauthSuccess";
 import CartPage from "./pages/CartPage";
 import AdminAppointments from "./pages/AdminAppoinments";
+import OrderDetails from "./pages/OrderDetails";
 
 // Protected route component to handle authentication
 function ProtectedRoute({ children }) {
@@ -220,6 +221,19 @@ function App() {
           ) : (
             <Layout>
               <CartPage />
+            </Layout>
+          )
+        }
+      />
+  
+    <Route
+        path="/orderDetails"
+        element={
+          shouldHideHeader ? (
+            <OrderDetails />
+          ) : (
+            <Layout>
+              <OrderDetails />
             </Layout>
           )
         }

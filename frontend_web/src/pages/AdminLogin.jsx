@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import adminLoginImage from '../assets/adminlogin.webp';
 
 const AdminLogin = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('ADMIN'); // Added role state with default 'ADMIN'
+  const [role, setRole] = useState('ADMIN');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false); // New state for successful auth
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -21,7 +23,7 @@ const AdminLogin = () => {
     setIsLoading(true);
   
     try {
-      const response = await fetch('http://localhost:8080/admin/login', { // Changed to /admin/login
+      const response = await fetch('http://localhost:8080/admin/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -29,7 +31,6 @@ const AdminLogin = () => {
         body: JSON.stringify({ 
           username, 
           password,
-          // role is not needed in the request body since your backend handles it via setAuthType
         }),
       });
   
@@ -40,7 +41,14 @@ const AdminLogin = () => {
   
       const token = await response.text();
       localStorage.setItem('adminToken', token);
-      navigate('/adminDashboard');
+      
+      // Show success loading screen
+      setIsSuccess(true);
+      
+      // Navigate after 2 seconds
+      setTimeout(() => {
+        navigate('/adminDashboard');
+      }, 2000);
     } catch (err) {
       setError(err.message || 'Login failed. Please try again.');
     } finally {
@@ -50,9 +58,25 @@ const AdminLogin = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h1 className="text-center text-3xl font-extrabold text-blue-800">Welcome to Pawtopia</h1>
-        <p className="mt-2 text-center text-sm text-gray-600">Admin Portal</p>
+      {/* Success Loading Overlay */}
+      {isSuccess && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex flex-col items-center justify-center">
+          <img 
+            src={adminLoginImage} 
+            alt="Admin Logo" 
+            className="w-48 h-48 object-contain mb-4"
+          />
+          <div className="text-white text-xl font-semibold mb-2">Authentication Successful!</div>
+          <div className="text-gray-300">Redirecting to Admin Dashboard</div>
+          <div className="mt-4">
+            <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        </div>
+      )}
+
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
+        <h1 className="text-3xl font-extrabold text-blue-800">Welcome to Pawtopia</h1>
+        <p className="mt-2 text-sm text-gray-600">Admin Portal</p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
@@ -72,7 +96,7 @@ const AdminLogin = () => {
             </div>
           )}
 
-          <div className="mb-8">
+          <div className="mb-8 text-center">
             <h2 className="text-xl font-semibold text-blue-800">Login to Admin Account</h2>
             <p className="mt-1 text-sm text-gray-600">Enter your credentials to access the admin dashboard</p>
           </div>
@@ -133,8 +157,8 @@ const AdminLogin = () => {
             <div className="pt-4">
               <button
                 type="submit"
-                disabled={isLoading}
-                className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-800 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${isLoading ? 'opacity-75 cursor-not-allowed' : ''}`}
+                disabled={isLoading || isSuccess}
+                className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-800 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${(isLoading || isSuccess) ? 'opacity-75 cursor-not-allowed' : ''}`}
               >
                 {isLoading ? (
                   <>
@@ -142,7 +166,7 @@ const AdminLogin = () => {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Processing...
+                    Authenticating...
                   </>
                 ) : 'Login'}
               </button>

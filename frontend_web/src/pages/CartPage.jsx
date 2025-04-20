@@ -228,47 +228,72 @@ export default function CartPage() {
       toast.error('Please select items to checkout');
       return;
     }
-
+  
     try {
       // Verify user has address
       const userRes = await axios.get(
         `http://localhost:8080/users/me`,
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
-
+  
       if (!userRes.data?.address) {
         toast.error('Please add a shipping address first');
         navigate('/profile');
         return;
       }
-
+  
       // Verify selected items are still in stock
       const outOfStockItems = cartItems
         .filter(item => selectedItems.has(item.cartItemId) && item.quantity > item.product.quantity);
       
       if (outOfStockItems.length > 0) {
         toast.error('Some selected items are out of stock. Please update your cart.');
-        await fetchCartItems(); // Refresh cart data
+        await fetchCartItems();
         return;
       }
-
+  
       const { subtotal, shipping, total, totalItems } = calculateTotals();
       const selectedProducts = cartItems
         .filter(item => selectedItems.has(item.cartItemId))
         .map(item => ({
-          cartItemId: item.cartItemId,
+          productId: item.product.productID,
           quantity: item.quantity,
-          product: {
-            productID: item.product.productID,
-            productName: item.product.productName,
-            productPrice: item.product.productPrice,
-            productImage: item.product.productImage
-          }
+          price: item.product.productPrice,
+          orderItemName: item.product.productName,
+          orderItemImage: item.product.productImage
         }));
-
-      navigate('/checkout', {
+  
+      // Create the order
+      const orderResponse = await axios.post(
+        `http://localhost:8080/api/order/postOrderRecord`,
+        {
+          user: { id: userId }, // Match your backend's User relationship
+          orderDate: new Date().toISOString(),
+          paymentMethod: 'Gcash', // Default or let user choose
+          paymentStatus: 'Pending',
+          orderStatus: 'Processing',
+          totalPrice: parseFloat(total),
+          orderItems: selectedProducts
+        },
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+  
+      // Remove purchased items from cart
+      await Promise.all(
+        cartItems
+          .filter(item => selectedItems.has(item.cartItemId))
+          .map(item => 
+            axios.delete(
+              `http://localhost:8080/api/cartItem/deleteCartItem/${item.cartItemId}`,
+              { headers: { 'Authorization': `Bearer ${token}` } }
+            )
+          )
+      );
+  
+      // Redirect to order details
+      navigate(`/orderDetails/${orderResponse.data.orderID}`, {
         state: {
-          items: selectedProducts,
+          order: orderResponse.data,
           summary: { 
             subtotal, 
             shipping, 
@@ -277,6 +302,7 @@ export default function CartPage() {
           }
         }
       });
+  
     } catch (err) {
       console.error('Checkout error:', err);
       

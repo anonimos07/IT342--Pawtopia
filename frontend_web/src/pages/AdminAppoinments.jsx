@@ -4,6 +4,7 @@ import AdminHeader from '../components/AdminHeader';
 import axios from 'axios';
 
 const AdminAppointments = () => {
+  const [username, setUsername] = useState('Admin');
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -112,12 +113,26 @@ const AdminAppointments = () => {
     return timeString.substring(0, 5); // Assuming time is in HH:mm format
   };
 
-  if (loading) return <div>Loading...</div>;
+  const handleLogout = () => {
+    // Additional logout logic can go here
+    console.log('Admin logged out');
+  };
+
+  if (loading) return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-4rem)]">
+        <div className="text-6xl animate-pulse mb-4">📅</div>
+        <h2 className="text-2xl font-bold text-gray-700">Loading Pawtopia Appointments...</h2>
+        <p className="text-gray-500 mt-2">Checking the schedule for furry friends!</p>
+      </div>
+    </div>
+  );
+
   if (error) return <div>Error: {typeof error === 'object' ? JSON.stringify(error) : error}</div>;
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <AdminHeader />
+      <AdminHeader username={username} onLogout={handleLogout} />
       
       <main className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">

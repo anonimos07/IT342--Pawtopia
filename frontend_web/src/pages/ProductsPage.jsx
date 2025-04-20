@@ -7,6 +7,8 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbS
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/Select';
 import { Filter, ChevronDown, Search } from 'lucide-react';
 
+import animation from '../assets/animation.gif';
+
 export default function ProductsPage() {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
@@ -82,12 +84,30 @@ export default function ProductsPage() {
   }, [products, categoryFilter, searchTerm, sortOption]);
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
-  }
-
-  if (error) {
-    return <div className="min-h-screen flex items-center justify-center text-red-500">Error: {error}</div>;
-  }
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-start pt-20 bg-gray-50 p-4">
+          <div className="max-w-lg text-center">
+            <img 
+              src={animation} 
+              alt="Loading..." 
+              className="w-64 h-64 md:w-80 md:h-80 mx-auto mb-8"
+            />
+            <h2 className="text-3xl font-bold text-primary mb-4">Welcome to Pawtopia</h2>
+            <p className="text-gray-600 mb-3 text-lg">
+              Your pet's paradise is loading...
+            </p>
+            <p className="text-gray-500 text-base">
+              We're preparing the best pet care products and services for your furry friends.
+              At Pawtopia, we believe every pet deserves happiness, health, and love.
+            </p>
+          </div>
+        </div>
+      );
+    }
+  
+    if (error) {
+      return <div className="min-h-screen flex items-center justify-center text-red-500">Error: {error}</div>;
+    }
 
   // Extract unique product types for filter options
   const productTypes = [...new Set(products.map(product => product.productType))];

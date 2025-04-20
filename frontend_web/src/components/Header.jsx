@@ -2,32 +2,31 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from './ui/Button';
 import { Search, ShoppingBag, Menu, PawPrint, LogOut } from 'lucide-react';
+
+import logout from '../assets/logout.gif';
+
 import Avatar from './ui/Avatar';
 
 export default function Header({ activePage = 'home' }) {
-  // Initialize as explicitly false to ensure login button shows first
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
-  // Add a loading state to prevent any UI flickering
   const [isLoading, setIsLoading] = useState(true);
-  // State for dropdown menu
   const [showDropdown, setShowDropdown] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false); // New state for logout animation
+
   
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check authentication status on component mount
     const checkAuth = () => {
       const token = localStorage.getItem('token');
       
       if (token) {
         try {
-          // Get user information from localStorage if available
           const storedUser = localStorage.getItem('user');
           if (storedUser) {
             setUser(JSON.parse(storedUser));
           } else {
-            // If no user info stored, use default placeholder
             setUser({ name: 'User', avatar: '/default-avatar.png' });
           }
           setIsAuthenticated(true);
@@ -35,7 +34,6 @@ export default function Header({ activePage = 'home' }) {
           console.error("Error parsing user data:", error);
           setUser(null);
           setIsAuthenticated(false);
-          // Clear invalid token or user data
           localStorage.removeItem('token');
           localStorage.removeItem('user');
         }
@@ -44,21 +42,17 @@ export default function Header({ activePage = 'home' }) {
         setIsAuthenticated(false);
       }
       
-      // Authentication check is complete
       setIsLoading(false);
     };
 
-    // Initial check
     checkAuth();
 
-    // Listen for storage events (used by LoginPage)
     const handleStorageChange = () => {
       checkAuth();
     };
 
     window.addEventListener('storage', handleStorageChange);
     
-    // Custom event for login success
     const handleLoginSuccess = () => {
       checkAuth();
     };
@@ -71,33 +65,36 @@ export default function Header({ activePage = 'home' }) {
     };
   }, []);
   
-  // Logout function
   const handleLogout = () => {
-    // Clear authentication data
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem("email");
-    localStorage.removeItem("id");
-    localStorage.removeItem("role");
-    localStorage.removeItem("username");
-
-    localStorage.clear();
+    // Show logout animation
+    setIsLoggingOut(true);
     
-    
-    // Update state
-    setIsAuthenticated(false);
-    setUser(null);
-    setShowDropdown(false);
-    
-    // Dispatch storage event to notify other components
-    window.dispatchEvent(new Event('storage'));
-    window.dispatchEvent(new CustomEvent("logoutSuccess"));
-    
-    // Redirect to home page
-    navigate('/');
+    // Wait for 1.5 seconds to show the animation before proceeding
+    setTimeout(() => {
+      // Clear authentication data
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem("email");
+      localStorage.removeItem("id");
+      localStorage.removeItem("role");
+      localStorage.removeItem("username");
+      localStorage.clear();
+      
+      // Update state
+      setIsAuthenticated(false);
+      setUser(null);
+      setShowDropdown(false);
+      setIsLoggingOut(false);
+      
+      // Dispatch events to notify other components
+      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new CustomEvent("logoutSuccess"));
+      
+      // Redirect to login page
+      navigate('/login');
+    }, 1500);
   };
   
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (showDropdown && !event.target.closest('.avatar-dropdown')) {
@@ -113,6 +110,20 @@ export default function Header({ activePage = 'home' }) {
   
   return (
     <header className="sticky top-0 z-50 bg-white border-b">
+      {isLoggingOut && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex flex-col items-center justify-center z-50">
+          <img 
+            src={logout}
+            alt="Logging out..." 
+            className="w-32 h-32 object-contain"
+          />
+          <div className="text-center mt-4">
+            <p className="text-white text-lg font-medium">Logging you out...</p>
+            <p className="text-gray-300 text-sm mt-1">Please wait while we secure your session</p>
+          </div>
+        </div>
+      )}
+      
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <PawPrint className="h-8 w-8 text-primary" />
@@ -154,10 +165,8 @@ export default function Header({ activePage = 'home' }) {
           </Button>
 
           {isLoading ? (
-            // Show nothing or a loading indicator while checking auth status
             <div className="w-9 h-9"></div>
           ) : isAuthenticated && user ? (
-            // Show profile avatar when authenticated
             <div className="relative avatar-dropdown">
               <div 
                 className="cursor-pointer" 
@@ -200,7 +209,6 @@ export default function Header({ activePage = 'home' }) {
               )}
             </div>
           ) : (
-            // Show login button when not authenticated
             <Button className="hidden md:flex" asChild>
               <Link to="/login">Login</Link>
             </Button>

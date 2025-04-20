@@ -5,6 +5,7 @@ import axios from 'axios';
 
 
 const AdminProducts = () => {
+  const [username, setUsername] = useState('Admin');
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -180,13 +181,28 @@ const handleUpdate = async (productId) => {
       setError("Failed to delete product. Make sure you're logged in as admin.");
     }
   };
+
+  const handleLogout = () => {
+    // Additional logout logic can go here
+    console.log('Admin logged out');
+  };
   
-  if (loading) return <div>Loading...</div>;
+  if (loading) return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-4rem)]">
+        <div className="text-6xl animate-bounce mb-4">📦</div>
+        <h2 className="text-2xl font-bold text-gray-700">Loading Pawtopia Inventory...</h2>
+        <p className="text-gray-500 mt-2">Fetching all the goodies for your pets!</p>
+      </div>
+    </div>
+  );
+
+  if (error) return <div>Error: {error}</div>;if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <AdminHeader />
+      <AdminHeader username={username} onLogout={handleLogout} />
       
       <main className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">

@@ -6,7 +6,6 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbS
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
 import { Minus, Plus, Star, ShoppingCart } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { toast } from 'sonner';
 import axios from 'axios';
 
 export default function ProductDetailPage() {
@@ -18,6 +17,8 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [showCartToast, setShowCartToast] = useState(false);
+  const [toastProduct, setToastProduct] = useState(null);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -25,17 +26,14 @@ export default function ProductDetailPage() {
         setLoading(true);
         setError(null);
         
-        // Fetch the current product
         const productResponse = await axios.get(
           `http://localhost:8080/api/product/getProduct/${id}`
         );
         
-        // Fetch all products for related items
         const allProductsResponse = await axios.get(
           'http://localhost:8080/api/product/getProduct'
         );
         
-        // Filter out current product and get 4 random related products
         const filteredProducts = allProductsResponse.data.filter(
           p => p.productID !== productResponse.data.productID
         );
@@ -58,7 +56,11 @@ export default function ProductDetailPage() {
   const handleIncrement = () => {
     setQuantity(prev => {
       if (prev >= product.quantity) {
-        toast.info(`Maximum available quantity is ${product.quantity}`);
+        setToastProduct({
+          isError: true,
+          message: `Maximum available quantity is ${product.quantity}`
+        });
+        setShowCartToast(true);
         return prev;
       }
       return prev + 1;
@@ -70,7 +72,6 @@ export default function ProductDetailPage() {
   };
 
   const addToCart = async () => {
-    // Add safety checks for localStorage parsing
     let token, user;
     try {
       token = localStorage.getItem('token');
@@ -79,15 +80,17 @@ export default function ProductDetailPage() {
       user = JSON.parse(userString);
       if (!user?.id) throw new Error('Invalid user data');
     } catch (error) {
-      toast.error('Please login to add items to cart');
-      navigate('/login');
+      setToastProduct({
+        isError: true,
+        message: 'Please login to add items to cart'
+      });
+      setShowCartToast(true);
       return;
     }
   
     try {
       setIsAddingToCart(true);
       
-      // 1. Get user's cart (or create if doesn't exist)
       let cart;
       try {
         const cartResponse = await axios.get(
@@ -97,7 +100,6 @@ export default function ProductDetailPage() {
         cart = cartResponse.data;
       } catch (error) {
         if (error.response?.status === 404) {
-          // Cart doesn't exist - create one
           const createResponse = await axios.post(
             `http://localhost:8080/api/cart/postCartRecord`,
             { userId: user.userId },
@@ -109,13 +111,11 @@ export default function ProductDetailPage() {
         }
       }
 
-      // 2. Check if product already exists in cart
       const existingItem = cart.cartItems?.find(
         item => item.product.productID === product.productID
       );
 
       if (existingItem) {
-        // Update existing item quantity
         await axios.put(
           `http://localhost:8080/api/cartItem/updateCartItem/${existingItem.cartItemId}`,
           { 
@@ -125,7 +125,6 @@ export default function ProductDetailPage() {
           { headers: { 'Authorization': `Bearer ${token}` } }
         );
       } else {
-        // Add new item to cart
         await axios.post(
           `http://localhost:8080/api/cartItem/postCartItem`,
           {
@@ -138,21 +137,27 @@ export default function ProductDetailPage() {
         );
       }
 
-      toast.success(`${quantity} ${product.productName} added to your cart`);
+      setToastProduct({
+        productName: product.productName,
+        quantity: quantity,
+        productImage: product.productImage
+      });
+      setShowCartToast(true);
     } catch (error) {
       console.error('Error adding to cart:', error);
       
-      let errorMessage = 'Failed to add to cart';
-      if (error.response) {
-        if (error.response.status === 401) {
-          errorMessage = 'Please login to add items to cart';
-          navigate('/login');
-        } else if (error.response.data?.message) {
-          errorMessage = error.response.data.message;
-        }
-      }
+      setToastProduct({
+        productName: product.productName,
+        quantity: quantity,
+        productImage: product.productImage,
+        isError: true,
+        message: error.response?.data?.message || 'Failed to add to cart'
+      });
+      setShowCartToast(true);
       
-      toast.error(errorMessage);
+      if (error.response?.status === 401) {
+        navigate('/login');
+      }
     } finally {
       setIsAddingToCart(false);
     }
@@ -163,13 +168,15 @@ export default function ProductDetailPage() {
     const user = JSON.parse(localStorage.getItem('user'));
     
     if (!token || !user) {
-      toast.error('Please login to add items to cart');
-      navigate('/login');
+      setToastProduct({
+        isError: true,
+        message: 'Please login to add items to cart'
+      });
+      setShowCartToast(true);
       return;
     }
-  
+
     try {
-      // 1. Get user's cart (or create if doesn't exist)
       let cart;
       try {
         const cartResponse = await axios.get(
@@ -179,7 +186,6 @@ export default function ProductDetailPage() {
         cart = cartResponse.data;
       } catch (error) {
         if (error.response?.status === 404) {
-          // Cart doesn't exist - create one
           const createResponse = await axios.post(
             `http://localhost:8080/api/cart/postCartRecord`,
             { userId: user.userId },
@@ -191,13 +197,11 @@ export default function ProductDetailPage() {
         }
       }
 
-      // 2. Check if product already exists in cart
       const existingItem = cart.cartItems?.find(
         item => item.product.productID === relatedProduct.productID
       );
 
       if (existingItem) {
-        // Update existing item quantity
         await axios.put(
           `http://localhost:8080/api/cartItem/updateCartItem/${existingItem.cartItemId}`,
           { 
@@ -207,7 +211,6 @@ export default function ProductDetailPage() {
           { headers: { 'Authorization': `Bearer ${token}` } }
         );
       } else {
-        // Add new item to cart
         await axios.post(
           `http://localhost:8080/api/cartItem/postCartItem`,
           {
@@ -220,10 +223,22 @@ export default function ProductDetailPage() {
         );
       }
 
-      toast.success(`${relatedProduct.productName} added to your cart`);
+      setToastProduct({
+        productName: relatedProduct.productName,
+        quantity: 1,
+        productImage: relatedProduct.productImage
+      });
+      setShowCartToast(true);
     } catch (error) {
       console.error('Error adding related product to cart:', error);
-      toast.error(error.response?.data?.message || 'Failed to add product to cart');
+      setToastProduct({
+        productName: relatedProduct.productName,
+        quantity: 1,
+        productImage: relatedProduct.productImage,
+        isError: true,
+        message: error.response?.data?.message || 'Failed to add product to cart'
+      });
+      setShowCartToast(true);
     }
   };
 
@@ -276,6 +291,74 @@ export default function ProductDetailPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      {showCartToast && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white rounded-xl p-6 shadow-xl max-w-sm w-full mx-4">
+            <div className="flex items-start space-x-4">
+              {toastProduct?.productImage && !toastProduct?.isError && (
+                <img 
+                  src={toastProduct.productImage} 
+                  alt={toastProduct.productName}
+                  className="h-16 w-16 object-contain rounded-md border border-gray-200"
+                />
+              )}
+              <div className="flex-1">
+                <h3 className="font-medium text-lg text-gray-900">
+                  {toastProduct?.isError ? 'Error' : 'Added to Cart'}
+                </h3>
+                <p className="text-gray-600 mt-1">
+                  {toastProduct?.isError ? (
+                    toastProduct.message
+                  ) : (
+                    <>
+                      {toastProduct?.quantity} × {toastProduct?.productName}
+                    </>
+                  )}
+                </p>
+                <div className="mt-4 flex space-x-3">
+                  <button
+                    onClick={() => setShowCartToast(false)}
+                    className="px-4 py-2 border border-gray-300 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    {toastProduct?.isError ? 'Close' : 'Continue Shopping'}
+                  </button>
+                  {!toastProduct?.isError && (
+                    <button
+                      onClick={() => {
+                        navigate('/cart');
+                        setShowCartToast(false);
+                      }}
+                      className="px-4 py-2 bg-primary rounded-full text-sm font-medium text-white hover:bg-primary-dark"
+                    >
+                      View Cart
+                    </button>
+                  )}
+                  {toastProduct?.isError && toastProduct.message.includes('login') && (
+                    <button
+                      onClick={() => {
+                        navigate('/login');
+                        setShowCartToast(false);
+                      }}
+                      className="px-4 py-2 bg-primary rounded-full text-sm font-medium text-white hover:bg-primary-dark"
+                    >
+                      Login
+                    </button>
+                  )}
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowCartToast(false)}
+                className="text-gray-400 hover:text-gray-500"
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <main className="flex-1">
         <div className="bg-gray-50 py-4">
           <div className="container mx-auto px-4">
@@ -333,53 +416,52 @@ export default function ProductDetailPage() {
                 <div className="text-3xl font-bold text-primary">₱{product.productPrice}</div>
 
                 <div className="flex items-center gap-4">
-          {product.quantity > 0 ? (
-            <>
-              <div className="flex items-center border rounded-full">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="rounded-full" 
-                  onClick={handleDecrement}
-                  aria-label="Decrease quantity"
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
-                <span className="w-8 text-center">{quantity}</span>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="rounded-full" 
-                  onClick={handleIncrement}
-                  disabled={isIncrementDisabled}
-                  aria-label="Increase quantity"
-                >
-                  <Plus className={`h-4 w-4 ${isIncrementDisabled ? 'text-gray-400' : 'text-current'}`} />
-                </Button>
-              </div>
-              <Button 
-                className="rounded-full flex-1 gap-2" 
-                onClick={addToCart}
-                disabled={isAddingToCart}
-              >
-                {isAddingToCart ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                ) : (
-                  <ShoppingCart className="h-4 w-4" />
-                )}
-                Add to Cart
-              </Button>
-              {isIncrementDisabled && (
-                <span className="text-sm text-gray-500">Maximum quantity reached</span>
-              )}
-            </>
-          ) : (
-            <div className="bg-red-100 text-red-800 px-4 py-2 rounded-full font-medium">
-              Out of Stock
-            </div>
-          )}
-        </div>
-
+                  {product.quantity > 0 ? (
+                    <>
+                      <div className="flex items-center border rounded-full">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="rounded-full" 
+                          onClick={handleDecrement}
+                          aria-label="Decrease quantity"
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                        <span className="w-8 text-center">{quantity}</span>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="rounded-full" 
+                          onClick={handleIncrement}
+                          disabled={isIncrementDisabled}
+                          aria-label="Increase quantity"
+                        >
+                          <Plus className={`h-4 w-4 ${isIncrementDisabled ? 'text-gray-400' : 'text-current'}`} />
+                        </Button>
+                      </div>
+                      <Button 
+                        className="rounded-full flex-1 gap-2" 
+                        onClick={addToCart}
+                        disabled={isAddingToCart}
+                      >
+                        {isAddingToCart ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        ) : (
+                          <ShoppingCart className="h-4 w-4" />
+                        )}
+                        Add to Cart
+                      </Button>
+                      {isIncrementDisabled && (
+                        <span className="text-sm text-gray-500">Maximum quantity reached</span>
+                      )}
+                    </>
+                  ) : (
+                    <div className="bg-red-100 text-red-800 px-4 py-2 rounded-full font-medium">
+                      Out of Stock
+                    </div>
+                  )}
+                </div>
 
                 <Tabs defaultValue="description" className="w-full">
                   <TabsList className="grid w-full grid-cols-2">
