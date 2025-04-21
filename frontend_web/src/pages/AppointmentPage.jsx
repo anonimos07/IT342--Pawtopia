@@ -33,49 +33,38 @@ export default function AppointmentPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     const localUser = JSON.parse(localStorage.getItem("user") || "null");
     const googleUser = JSON.parse(localStorage.getItem("googleuser") || "null");
-
   
-    // Check if either user exists and if email matches
-    if ((localUser && email !== localUser.logemail) || 
-    (googleUser && email !== googleUser.email)) {
-    window.alert('You can only book an appointment using your registered email.');
-    return;
-}
-
-    // If neither user exists
-    if (!localUser && !googleUser) {
-        window.alert('No user found. Please log in first.');
-        return;
+    // Unified token from localStorage
+    const token = localStorage.getItem("token");
+  
+    // Validate email match
+    if (
+      (localUser && email !== localUser.logemail) || 
+      (googleUser && email !== googleUser.email)
+    ) {
+      window.alert('You can only book an appointment using your registered email.');
+      return;
     }
-
-    
-    
+  
+    if (!localUser && !googleUser) {
+      window.alert('No user found. Please log in first.');
+      return;
+    }
+  
     const formErrors = validateForm();
     setErrors(formErrors);
-    
+  
     if (Object.keys(formErrors).length === 0) {
       setIsSubmitting(true);
-      
+  
       try {
-        // const token = localStorage.getItem('token');
-        
-        // if (!token) {
-        //   throw new Error("You need to be logged in to book an appointment");
-        // }
-        let token;
-if (googleUser) {
-  // Try the jwt_token cookie or check other localStorage keys
-  token = document.cookie.split('; ').find(row => row.startsWith('jwt_token='))?.split('=')[1] 
-       || localStorage.getItem('jwt_token')
-       || localStorage.getItem('token');
-} else {
-  token = localStorage.getItem('token');
-}
-
-console.log("Using token:", token);
+        if (!token) {
+          throw new Error("You need to be logged in to book an appointment");
+        }
+  
         const appointmentData = {
           email,
           contactNo,
@@ -87,28 +76,27 @@ console.log("Using token:", token);
           confirmed: false,
           canceled: false,
           user: {
-    userId: localUser ? localUser.id : (googleUser ? googleUser.userId : null)
-  }
+            userId: localUser ? localUser.id : (googleUser ? googleUser.userId : null),
+          },
         };
-        
-        const response = await fetch('http://localhost:8080/appointments/postAppointment', {
-          method: 'POST',
+  
+        console.log("Sending appointment data:", appointmentData);
+        console.log("Token being used:", token);
+  
+        const response = await fetch("http://localhost:8080/appointments/postAppointment", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
           },
           body: JSON.stringify(appointmentData),
-          credentials: 'include'
+          // credentials: "include",
         });
-           console.log("Sending appointment data:", appointmentData);
-console.log("Token being used:", token);
-
-        
+  
         const responseData = await response.json();
-        
+  
         if (response.ok) {
           setBookingSuccess(true);
-          // Reset form
           setEmail("");
           setContactNo("");
           setDate("");
@@ -117,17 +105,18 @@ console.log("Token being used:", token);
           setPaymentMethod("");
           setPrice(0);
         } else {
-          console.error('Failed to book appointment:', responseData.message);
-          alert(responseData.message || 'Failed to book appointment');
+          console.error("Failed to book appointment:", responseData.message);
+          alert(responseData.message || "Failed to book appointment");
         }
       } catch (error) {
-        console.error('Error:', error);
-        alert('Network error. Please try again.');
+        console.error("Error:", error);
+        alert("Network error. Please try again.");
       } finally {
         setIsSubmitting(false);
       }
     }
-  };  
+  };
+   
 
   const handleServiceChange = (value) => {
     setService(value);

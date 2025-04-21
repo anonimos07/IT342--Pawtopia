@@ -4,89 +4,63 @@ import { useNavigate } from 'react-router-dom';
 export default function OAuthSuccess() {
   const navigate = useNavigate();
 
-  // Define the cookie extraction function
-  const getTokenFromCookie = () => {
-    const cookie = document.cookie
-      .split('; ')
-      .find(row => row.startsWith('jwt_token='));
-    return cookie ? cookie.split('=')[1] : null;
-  };
-
   useEffect(() => {
-    try {
-      console.log("OAuthSuccess rendered, checking for token");
-      console.log("All cookies:", document.cookie);
-      const token = getTokenFromCookie();
-      console.log("Found token:", token);
+    const processOAuthLogin = async () => {
+      try {
+        console.log("OAuthSuccess rendered, checking for token");
 
-      if (token) {
-        // Store the token
-        console.log("Storing token and user data");
+        // First, try to get the token from the URL
+        const query = new URLSearchParams(window.location.search);
+        const token = query.get('token');
+
+        if (!token) {
+          console.log("No token found in URL, redirecting to login");
+          navigate('/login', { state: { error: 'Google login failed - no token received' } });
+          return;
+        }
+
+        console.log("Token received:", token);
         localStorage.setItem('token', token);
-        
+
         const userData = {
-          name: 'User', // Default fallback name
-          avatar: '/default-avatar.png'
+          name: 'User',
+          avatar: '/default-avatar.png',
         };
-        
+
         try {
-          // Decode the JWT token to get user info
           const tokenParts = token.split('.');
           if (tokenParts.length === 3) {
             const payload = JSON.parse(atob(tokenParts[1]));
-            if (payload.name) {
-              userData.name = payload.name;
-            }
-            // If there's an avatar or picture in the payload
-            if (payload.picture) {
-              userData.avatar = payload.picture;
-            }
-            if (payload.googleId){
-              userData.googleId = payload.googleId;
-            }  
-            if(payload.email){
-              userData.email = payload.email;
-            }
-            if(payload.userId){
-              userData.userId = payload.userId;
-            }
+
+            userData.name = payload.name || userData.name;
+            userData.avatar = payload.picture || userData.avatar;
+            if (payload.googleId) userData.googleId = payload.googleId;
+            if (payload.email) userData.email = payload.email;
+            if (payload.userId) userData.userId = payload.userId;
+            if (payload.role) userData.role = payload.role;
           }
-        } catch (e) {
-          console.error('Error decoding token:', e);
+        } catch (err) {
+          console.error("Error decoding token:", err);
         }
         
         localStorage.setItem('googleuser', JSON.stringify(userData));
-        
-        // Update app state to notify about authentication
-        window.dispatchEvent(new Event('storage'));
-        window.dispatchEvent(new CustomEvent('loginSuccess'));
-        
-        // Use React Router for navigation
-        console.log("Navigating to homepage");
-        navigate('/');
-      } else {
-        // Fallback: Check URL for token (for debugging)
-        const query = new URLSearchParams(window.location.search);
-        const urlToken = query.get('token');
-        
-        if (urlToken) {
-          console.log("Token found in URL");
-          localStorage.setItem('token', urlToken);
-          
-          // Update app state
-          window.dispatchEvent(new Event('storage'));
-          window.dispatchEvent(new CustomEvent('loginSuccess'));
-          
+
+        // Notify app of login success
+        window.dispatchEvent(new Event("storage"));
+        window.dispatchEvent(new CustomEvent("loginSuccess"));
+
+        // Optional short delay
+        setTimeout(() => {
+          console.log("Redirecting to homepage");
           navigate('/');
-        } else {
-          console.log("No token found, redirecting to login");
-          navigate('/login', { state: { error: 'Google login failed - no token received' } });
-        }
+        }, 500);
+      } catch (error) {
+        console.error("Unexpected error during OAuth processing:", error);
+        navigate('/login', { state: { error: 'An unexpected error occurred during login' } });
       }
-    } catch (error) {
-      console.error('Error during OAuth processing:', error);
-      navigate('/login', { state: { error: 'An error occurred during login' } });
-    }
+    };
+
+    processOAuthLogin();
   }, [navigate]);
 
   return (
