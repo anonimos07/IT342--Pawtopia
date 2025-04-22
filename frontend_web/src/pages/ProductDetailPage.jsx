@@ -76,9 +76,22 @@ export default function ProductDetailPage() {
     try {
       token = localStorage.getItem('token');
       const userString = localStorage.getItem('user');
-      if (!userString) throw new Error('No user data');
-      user = JSON.parse(userString);
-      if (!user?.id) throw new Error('Invalid user data');
+      const googleuserString = localStorage.getItem('googleuser');
+      
+      // First check if we have a Google user
+      if (googleuserString) {
+        const googleuser = JSON.parse(googleuserString);
+        if (!googleuser?.userId) throw new Error('Invalid Google user data');
+        // Use the Google user
+        user = googleuser;
+      } else if (userString) {
+        // Fall back to regular user if no Google user
+        user = JSON.parse(userString);
+        if (!user?.id) throw new Error('Invalid user data');
+      } else {
+        // No user found
+        throw new Error('No user data');
+      }
     } catch (error) {
       setToastProduct({
         isError: true,
@@ -93,8 +106,10 @@ export default function ProductDetailPage() {
       
       let cart;
       try {
+        // Use the correct ID field based on user type
+        const userId = user.userId || user.id;
         const cartResponse = await axios.get(
-          `http://localhost:8080/api/cart/getCartById/${user.id}`,
+          `http://localhost:8080/api/cart/getCartById/${userId}`,
           { headers: { 'Authorization': `Bearer ${token}` } }
         );
         cart = cartResponse.data;
@@ -102,7 +117,7 @@ export default function ProductDetailPage() {
         if (error.response?.status === 404) {
           const createResponse = await axios.post(
             `http://localhost:8080/api/cart/postCartRecord`,
-            { userId: user.userId },
+            { userId: user.userId || user.id },
             { headers: { 'Authorization': `Bearer ${token}` } }
           );
           cart = createResponse.data;
