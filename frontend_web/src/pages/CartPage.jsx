@@ -17,8 +17,10 @@ export default function CartPage() {
   const [itemToDelete, setItemToDelete] = useState(null); 
   const navigate = useNavigate();
 
-  const user = JSON.parse(localStorage.getItem('user'));
-  const userId = user?.id;
+  // const user = JSON.parse(localStorage.getItem('user'));
+  const user = JSON.parse(localStorage.getItem('user')) || JSON.parse(localStorage.getItem('googleuser'));
+
+  const userId = user?.id || user?.userId;
   const token = localStorage.getItem('token');
 
   // Memoized fetch function

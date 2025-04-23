@@ -16,6 +16,7 @@ export default function ProfilePage() {
     postalCode: '',
     streetBuildingHouseNo: ''
   })
+ 
   const [isEditMode, setIsEditMode] = useState(false)
   const navigate = useNavigate()
 
