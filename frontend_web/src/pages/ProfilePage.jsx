@@ -37,7 +37,7 @@ export default function ProfilePage() {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json"
           },
-          withCredentials: true
+          // withCredentials: true
         });
         
         const userData = response.data;
