@@ -3,8 +3,11 @@ import { Link, useNavigate } from "react-router-dom"
 import { PawPrint, Package, Calendar } from "lucide-react"
 import axios from "axios"
 import Footer from "../components/Footer"
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL_USER;
+const API_BASE_URL_ADDRESS = import.meta.env.VITE_API_BASE_URL_ADDRESS;
 
 export default function ProfilePage() {
+   
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -32,7 +35,7 @@ export default function ProfilePage() {
         }
       
         // Fetch current user's data
-        const response = await axios.get("http://localhost:8080/users/me", {
+        const response = await axios.get(`${API_BASE_URL}/me`, {
           headers: { 
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json"
@@ -53,7 +56,7 @@ export default function ProfilePage() {
         // Fetch address if user exists
         if (userData.userId) {
           const addressResponse = await axios.get(
-            `http://localhost:8080/adresses/get-users/${userData.userId}`,
+            `${API_BASE_URL_ADDRESS}/get-users/${userData.userId}`,
             {
               headers: { 
                 Authorization: `Bearer ${token}`,
@@ -79,7 +82,7 @@ export default function ProfilePage() {
           localStorage.removeItem("token");
           navigate("/login");
         }
-        setError(err.response?.data?.message || "Failed to fetch user data");
+        setError(err.response?.data?.message || "Please Add Account Information for you to be able to Order.");
       } finally {
         setLoading(false);
       }
@@ -102,7 +105,7 @@ export default function ProfilePage() {
       const token = localStorage.getItem("token");
       
       await axios.put(
-        `http://localhost:8080/users/user/${user.userId}/address`,
+        `${API_BASE_URL}/user/${user.userId}/address`,
         address,
         {
           headers: {

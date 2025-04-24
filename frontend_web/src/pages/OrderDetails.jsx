@@ -5,6 +5,7 @@ import { CheckCircle, Clock, ChevronLeft } from 'lucide-react';
 import Footer from '../components/Footer';
 import axios from 'axios';
 import { toast } from 'sonner';
+const API_BASE_URL_ORDER = import.meta.env.VITE_API_BASE_URL_ORDER;
 
 export default function OrderDetails() {
   const { state } = useLocation();
@@ -38,7 +39,7 @@ export default function OrderDetails() {
         };
 
         const response = await axios.post(
-          'http://localhost:8080/api/order/postOrderRecord',
+          `${API_BASE_URL_ORDER}/postOrderRecord`,
           orderData,
           { headers: { 'Authorization': `Bearer ${token}` } }
         );

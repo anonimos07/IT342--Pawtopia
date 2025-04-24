@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminHeader from '../components/AdminHeader';
 import axios from 'axios';
+const API_BASE_URL_ADMIN_PRODUCT = import.meta.env.VITE_API_BASE_URL_PRODUCT;
 
 
 const AdminProducts = () => {
@@ -37,7 +38,7 @@ const AdminProducts = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/product/getProduct");
+      const response = await fetch(`${API_BASE_URL_ADMIN_PRODUCT}/getProduct`);
       const data = await response.json();
       if (!response.ok) {
         throw new Error(data.message || "Failed to fetch products");
@@ -64,7 +65,7 @@ const AdminProducts = () => {
       }
   
       const response = await fetch(
-        "http://localhost:8080/api/product/postProduct", 
+        `${API_BASE_URL_ADMIN_PRODUCT}/postProduct`, 
         {
           method: 'POST',
           headers: {
@@ -126,7 +127,7 @@ const handleUpdate = async (productId) => {
 
     // 2️⃣ Send the update via axios, passing your editForm as the body
     const response = await axios.put(
-      `http://localhost:8080/api/product/putProduct/${productId}`,
+      `${API_BASE_URL_ADMIN_PRODUCT}/putProduct/${productId}`,
       editForm,
       {
         headers: {
@@ -160,7 +161,7 @@ const handleUpdate = async (productId) => {
       }
   
       const response = await axios.delete(
-        `http://localhost:8080/api/product/deleteProduct/${productId}`,
+        `${API_BASE_URL_ADMIN_PRODUCT}/deleteProduct/${productId}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminHeader from '../components/AdminHeader';
 import axios from 'axios';
+const API_BASE_URL_ADMIN = import.meta.env.VITE_API_BASE_URL_ADMIN;
 
 const AdminUsers = () => {
   const [username, setUsername] = useState('Admin');
@@ -26,7 +27,7 @@ const AdminUsers = () => {
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await axios.get('http://localhost:8080/admin/all', {
+      const response = await axios.get(`${API_BASE_URL_ADMIN}/all`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -67,7 +68,7 @@ const AdminUsers = () => {
       }
   
       const response = await axios.put(
-        `http://localhost:8080/admin/update/${userId}`,  // Changed to match backend endpoint
+        `${API_BASE_URL_ADMIN}/update/${userId}`,  // Changed to match backend endpoint
         updateData,
         {
           headers: {
@@ -104,7 +105,7 @@ const AdminUsers = () => {
       }
   
       const response = await axios.delete(
-        `http://localhost:8080/admin/delete/${userId}`,  // Changed to match backend endpoint
+        `${API_BASE_URL_ADMIN}/delete/${userId}`,  // Changed to match backend endpoint
         {
           headers: {
             'Authorization': `Bearer ${token}`,

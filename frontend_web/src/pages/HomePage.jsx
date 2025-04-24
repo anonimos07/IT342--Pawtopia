@@ -7,6 +7,7 @@ import petgrooming from '../assets/petgrooming.jpg';
 import petboarding from '../assets/petboarding.png';
 import happypets from '../assets/happypets.webp';
 import animation from '../assets/animation.gif';
+const API_BASE_URL_PRODUCT = import.meta.env.VITE_API_BASE_URL_PRODUCT;
 
 export default function HomePage() {
   const [products, setProducts] = useState([]);
@@ -17,7 +18,7 @@ export default function HomePage() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch('http://localhost:8080/api/product/getProduct');
+        const response = await fetch(`${API_BASE_URL_PRODUCT}/getProduct`);
         if (!response.ok) {
           throw new Error('Failed to fetch products');
         }

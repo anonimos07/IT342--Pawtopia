@@ -6,6 +6,10 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import axios from 'axios';
 import { toast } from 'sonner';
+const API_BASE_URL_USER_CART = import.meta.env.VITE_API_BASE_URL_CART;
+const API_BASE_URL_USER_CART_ITEM = import.meta.env.VITE_API_BASE_URL_CART_ITEM;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL_USER;
+const API_BASE_URL_ORDER = import.meta.env.VITE_API_BASE_URL_ORDER;
 
 export default function CartPage() {
   const [authChecked, setAuthChecked] = useState(false);  
@@ -36,7 +40,7 @@ export default function CartPage() {
 
       // Get user's cart with items
       const cartResponse = await axios.get(
-        `http://localhost:8080/api/cart/getCartById/${userId}`,
+        `${API_BASE_URL_USER_CART}/getCartById/${userId}`,
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
 
@@ -57,7 +61,7 @@ export default function CartPage() {
           if (currentQuantity > availableQuantity) {
             try {
               await axios.put(
-                `http://localhost:8080/api/cartItem/systemUpdateCartItem/${item.cartItemId}`,
+                `${API_BASE_URL_USER_CART_ITEM}/systemUpdateCartItem/${item.cartItemId}`,
                 { 
                   quantity: availableQuantity,
                   lastUpdated: new Date().toISOString()
@@ -96,7 +100,7 @@ export default function CartPage() {
         try {
           // Create new cart if not found
           await axios.post(
-            `http://localhost:8080/api/cart/postCartRecord`,
+            `${API_BASE_URL_USER_CART}/postCartRecord`,
             { userId: user?.id },  // <-- Now sending just the ID
             { headers: { 'Authorization': `Bearer ${token}` } }
           );
@@ -141,7 +145,7 @@ export default function CartPage() {
       }
 
       await axios.put(
-        `http://localhost:8080/api/cartItem/updateCartItem/${itemId}`,
+        `${API_BASE_URL_USER_CART_ITEM}/updateCartItem/${itemId}`,
         { 
           quantity: newQuantity,
           lastUpdated: new Date().toISOString()
@@ -173,7 +177,7 @@ export default function CartPage() {
 
     try {
       await axios.delete(
-        `http://localhost:8080/api/cartItem/deleteCartItem/${itemToDelete}`,
+        `${API_BASE_URL_USER_CART_ITEM}/deleteCartItem/${itemToDelete}`,
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
 
@@ -234,7 +238,7 @@ export default function CartPage() {
     try {
       // Verify user has address
       const userRes = await axios.get(
-        `http://localhost:8080/users/me`,
+        `${API_BASE_URL}/me`,
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
   
@@ -267,7 +271,7 @@ export default function CartPage() {
   
       // Create the order
       const orderResponse = await axios.post(
-        `http://localhost:8080/api/order/postOrderRecord`,
+        `${API_BASE_URL_ORDER}/postOrderRecord`,
         {
           user: { id: userId }, // Match your backend's User relationship
           orderDate: new Date().toISOString(),
@@ -286,7 +290,7 @@ export default function CartPage() {
           .filter(item => selectedItems.has(item.cartItemId))
           .map(item => 
             axios.delete(
-              `http://localhost:8080/api/cartItem/deleteCartItem/${item.cartItemId}`,
+              `${API_BASE_URL_USER_CART_ITEM}/deleteCartItem/${item.cartItemId}`,
               { headers: { 'Authorization': `Bearer ${token}` } }
             )
           )

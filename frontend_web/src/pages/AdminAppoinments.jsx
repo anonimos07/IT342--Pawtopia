@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import AdminHeader from '../components/AdminHeader';
 import axios from 'axios';
 
+const API_BASE_URL_ADMIN_APPOINTMENT = import.meta.env.VITE_API_BASE_URL_APPOINTMENT;
+
 const AdminAppointments = () => {
   const [username, setUsername] = useState('Admin');
   const [appointments, setAppointments] = useState([]);
@@ -17,7 +19,7 @@ const AdminAppointments = () => {
   const fetchAppointments = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await axios.get('http://localhost:8080/appointments/getAppointment', {
+      const response = await axios.get(`${API_BASE_URL_ADMIN_APPOINTMENT}/getAppointment`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -35,7 +37,7 @@ const AdminAppointments = () => {
     try {
       const token = localStorage.getItem('adminToken');
       const response = await axios.put(
-        `http://localhost:8080/appointments/confirm/${appId}`,
+        `${API_BASE_URL_ADMIN_APPOINTMENT}/confirm/${appId}`,
         {},
         {
           headers: {
@@ -58,7 +60,7 @@ const AdminAppointments = () => {
     try {
       const token = localStorage.getItem('adminToken');
       const response = await axios.put(
-        `http://localhost:8080/appointments/cancel/${appId}`,
+        `${API_BASE_URL_ADMIN_APPOINTMENT}/cancel/${appId}`,
         {},
         {
           headers: {
@@ -87,7 +89,7 @@ const AdminAppointments = () => {
     try {
       const token = localStorage.getItem('adminToken');
       const response = await axios.delete(
-        `http://localhost:8080/appointments/deleteAppointment/${appId}`,
+        `${API_BASE_URL_ADMIN_APPOINTMENT}/deleteAppointment/${appId}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`

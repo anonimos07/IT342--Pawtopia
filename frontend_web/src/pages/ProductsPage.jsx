@@ -4,7 +4,13 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { Button } from '../components/ui/Button';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '../components/ui/Breadcrumb';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/Select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"; // or "../components/ui/select"
 import { Filter, ChevronDown, Search } from 'lucide-react';
 
 import animation from '../assets/animation.gif';
@@ -18,11 +24,14 @@ export default function ProductsPage() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [sortOption, setSortOption] = useState('featured');
   const [showFilters, setShowFilters] = useState(false);
+  const API_BASE_URL_PRODUCT = import.meta.env.VITE_API_BASE_URL_PRODUCT;
+
+ 
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch('http://localhost:8080/api/product/getProduct');
+        const response = await fetch(`${API_BASE_URL_PRODUCT}/getProduct`);
         if (!response.ok) {
           throw new Error('Failed to fetch products');
         }
@@ -168,19 +177,24 @@ export default function ProductsPage() {
                   </div>
 
                   <Select 
-                    value={sortOption}
-                    onValueChange={(value) => setSortOption(value)}
-                  >
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Sort by" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="featured">Featured</SelectItem>
-                      <SelectItem value="price-low">Price: Low to High</SelectItem>
-                      <SelectItem value="price-high">Price: High to Low</SelectItem>
-                      <SelectItem value="newest">Newest</SelectItem>
-                    </SelectContent>
-                  </Select>
+  value={sortOption}
+  onChange={(value) => {
+    console.log('Selection changed:', value);
+    setSortOption(value);
+  }}
+  className="w-[180px] border rounded-md"
+>
+  <SelectTrigger className="flex items-center justify-between p-2 w-full">
+    <SelectValue placeholder="Sort by" />
+    <ChevronDown className="h-4 w-4" />
+  </SelectTrigger>
+  <SelectContent className="z-50 bg-white shadow-lg rounded-md mt-1">
+    <SelectItem value="featured">Featured</SelectItem>
+    <SelectItem value="price-low">Price: Low to High</SelectItem>
+    <SelectItem value="price-high">Price: High to Low</SelectItem>
+    <SelectItem value="newest">Newest</SelectItem>
+  </SelectContent>
+</Select>
                 </div>
               </div>
 

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import adminLoginImage from '../assets/adminlogin.webp';
+const API_BASE_URL_ADMIN = import.meta.env.VITE_API_BASE_URL_ADMIN;
 
 const AdminLogin = () => {
   const [username, setUsername] = useState('');
@@ -23,7 +24,7 @@ const AdminLogin = () => {
     setIsLoading(true);
   
     try {
-      const response = await fetch('http://localhost:8080/admin/login', {
+      const response = await fetch(`${API_BASE_URL_ADMIN}/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

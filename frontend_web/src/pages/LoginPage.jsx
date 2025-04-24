@@ -4,6 +4,8 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Label } from '../components/ui/Label';
 import { PawPrint } from 'lucide-react';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL_USER; 
+const API_BASE_URL_GOOGLE = import.meta.env.VITE_API_BASE_URL_GOOGLE;
 
 export default function LoginPage() {
   // State for form inputs
@@ -20,10 +22,10 @@ export default function LoginPage() {
 
   
   const googleLogin = () => {
-    window.location.href = "http://localhost:8080/oauth2/authorization/google";
+    window.location.href = `${API_BASE_URL_GOOGLE}`;
   };
 
-  const API_URL = "http://localhost:8080/users";
+  
 
   const validateForm = () => {
     let formErrors = {};
@@ -51,7 +53,7 @@ export default function LoginPage() {
       setIsSubmitting(true);
     
       try {
-        const response = await fetch(`${API_URL}/login`, {
+        const response = await fetch(`${API_BASE_URL}/login`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

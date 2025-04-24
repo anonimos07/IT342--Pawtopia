@@ -3,6 +3,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Label } from '../components/ui/Label';
 import { Calendar, Clock, X } from 'lucide-react';
+const API_BASE_URL_USER_APPOINTMENT = import.meta.env.VITE_API_BASE_URL_APPOINTMENT;
 
 export default function AppointmentPage() {
   const [email, setEmail] = useState("");
@@ -83,7 +84,7 @@ export default function AppointmentPage() {
         console.log("Sending appointment data:", appointmentData);
         console.log("Token being used:", token);
   
-        const response = await fetch("http://localhost:8080/appointments/postAppointment", {
+        const response = await fetch(`${API_BASE_URL_USER_APPOINTMENT}/postAppointment`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

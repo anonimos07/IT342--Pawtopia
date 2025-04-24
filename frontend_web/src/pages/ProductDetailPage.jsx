@@ -7,6 +7,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs'
 import { Minus, Plus, Star, ShoppingCart } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+const API_BASE_URL_PRODUCT = import.meta.env.VITE_API_BASE_URL_PRODUCT;
+const API_BASE_URL_USER_CART = import.meta.env.VITE_API_BASE_URL_CART;
+const API_BASE_URL_USER_CART_ITEM = import.meta.env.VITE_API_BASE_URL_CART_ITEM;
 
 export default function ProductDetailPage() {
   const { id } = useParams();
@@ -27,11 +30,11 @@ export default function ProductDetailPage() {
         setError(null);
         
         const productResponse = await axios.get(
-          `http://localhost:8080/api/product/getProduct/${id}`
+          `${API_BASE_URL_PRODUCT}/getProduct/${id}`
         );
         
         const allProductsResponse = await axios.get(
-          'http://localhost:8080/api/product/getProduct'
+          `${API_BASE_URL_PRODUCT}/getProduct`
         );
         
         const filteredProducts = allProductsResponse.data.filter(
@@ -109,14 +112,14 @@ export default function ProductDetailPage() {
         // Use the correct ID field based on user type
         const userId = user.userId || user.id;
         const cartResponse = await axios.get(
-          `http://localhost:8080/api/cart/getCartById/${userId}`,
+          `${API_BASE_URL_USER_CART}/getCartById/${userId}`,
           { headers: { 'Authorization': `Bearer ${token}` } }
         );
         cart = cartResponse.data;
       } catch (error) {
         if (error.response?.status === 404) {
           const createResponse = await axios.post(
-            `http://localhost:8080/api/cart/postCartRecord`,
+            `${API_BASE_URL_USER_CART}/postCartRecord`,
             { userId: user.userId || user.id },
             { headers: { 'Authorization': `Bearer ${token}` } }
           );
@@ -132,7 +135,7 @@ export default function ProductDetailPage() {
 
       if (existingItem) {
         await axios.put(
-          `http://localhost:8080/api/cartItem/updateCartItem/${existingItem.cartItemId}`,
+          `${API_BASE_URL_USER_CART_ITEM}/updateCartItem/${existingItem.cartItemId}`,
           { 
             quantity: existingItem.quantity + quantity,
             lastUpdated: new Date().toISOString()
@@ -141,7 +144,7 @@ export default function ProductDetailPage() {
         );
       } else {
         await axios.post(
-          `http://localhost:8080/api/cartItem/postCartItem`,
+          `${API_BASE_URL_USER_CART_ITEM}/postCartItem`,
           {
             quantity: quantity,
             product: { productID: product.productID },
@@ -195,14 +198,14 @@ export default function ProductDetailPage() {
       let cart;
       try {
         const cartResponse = await axios.get(
-          `http://localhost:8080/api/cart/getCartById/${user.userId}`,
+          `${API_BASE_URL_USER_CART}/getCartById/${user.userId}`,
           { headers: { 'Authorization': `Bearer ${token}` } }
         );
         cart = cartResponse.data;
       } catch (error) {
         if (error.response?.status === 404) {
           const createResponse = await axios.post(
-            `http://localhost:8080/api/cart/postCartRecord`,
+            `${API_BASE_URL_USER_CART}/postCartRecord`,
             { userId: user.userId },
             { headers: { 'Authorization': `Bearer ${token}` } }
           );
@@ -218,7 +221,7 @@ export default function ProductDetailPage() {
 
       if (existingItem) {
         await axios.put(
-          `http://localhost:8080/api/cartItem/updateCartItem/${existingItem.cartItemId}`,
+          `${API_BASE_URL_USER_CART_ITEM}/updateCartItem/${existingItem.cartItemId}`,
           { 
             quantity: existingItem.quantity + 1,
             lastUpdated: new Date().toISOString()
@@ -227,7 +230,7 @@ export default function ProductDetailPage() {
         );
       } else {
         await axios.post(
-          `http://localhost:8080/api/cartItem/postCartItem`,
+          `${API_BASE_URL_USER_CART_ITEM}/postCartItem`,
           {
             quantity: 1,
             product: { productID: relatedProduct.productID },
@@ -570,10 +573,10 @@ export default function ProductDetailPage() {
                   </Link>
                   <Button 
                     className="w-full rounded-full gap-2" 
-                    onClick={() => addRelatedToCart(relatedProduct)}
+                   
                   >
                     <ShoppingCart className="h-4 w-4" />
-                    Add to Cart
+                    <Link to={`/products/${relatedProduct.productID}`}>View Details</Link>
                   </Button>
                 </div>
               ))}

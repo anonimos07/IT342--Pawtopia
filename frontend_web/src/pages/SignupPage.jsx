@@ -5,6 +5,7 @@ import { Input } from '../components/ui/Input';
 import { Label } from '../components/ui/Label';
 import { Checkbox } from '../components/ui/Checkbox';
 import { PawPrint } from 'lucide-react';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL_USER;
 
 export default function SignupPage() {
   // State for form inputs
@@ -22,7 +23,7 @@ export default function SignupPage() {
   const [signupSuccess, setSignupSuccess] = useState(false);
   const [signupError, setSignupError] = useState("");
 
-  const API_URL = "http://localhost:8080/users";
+  
 
 
   const validateForm = () => {
@@ -96,7 +97,7 @@ export default function SignupPage() {
         console.log("Sending user data:", userData);
         
     
-        const response = await fetch(`${API_URL}/signup`, {
+        const response = await fetch(`${API_BASE_URL}/signup`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
