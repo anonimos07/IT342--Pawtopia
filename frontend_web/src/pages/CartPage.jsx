@@ -232,24 +232,56 @@ export default function CartPage() {
     }
   
     try {
-      // Verify user has address
-      const userRes = await axios.get(
-        `http://localhost:8080/users/me`,
-        { headers: { 'Authorization': `Bearer ${token}` } }
+    
+      const userRes = await axios.get(`http://localhost:8080/adresses/get-users/${userId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      
+      
+      
+  
+      console.log('Full user data:', userRes.data);
+      console.log('Address data:', userRes.data?.address);
+
+      const address = userRes.data;
+  
+      
+     const addressFieldsObject = {
+      //addressId: user.id || user.userId,
+      region: '',
+      province: '',
+      city: '',
+      barangay: '',
+      postalCode: ''
+    };
+  
+    const requiredFields = ['region', 'province', 'city', 'barangay', 'postalCode'];
+    const hasValidAddress = requiredFields.every(field =>
+      address?.[field] && address[field].toString().trim() !== ''
+    );
+
+    
+  
+    if (!hasValidAddress) {
+      toast.error('Please complete all required address fields in your profile');
+      navigate('/profile', {
+        state: {
+          fromCheckout: true,
+          missingFields: requiredFields.filter(field => !address?.[field]),
+          initialAddress: address
+        }
+      });
+      return;
+    }
+  
+      // 3. Proceed with checkout if address is valid
+      const outOfStockItems = cartItems.filter(item => 
+        selectedItems.has(item.cartItemId) && item.quantity > item.product.quantity
       );
   
-      if (!userRes.data?.address) {
-        toast.error('Please add a shipping address first');
-        navigate('/profile');
-        return;
-      }
-  
-      // Verify selected items are still in stock
-      const outOfStockItems = cartItems
-        .filter(item => selectedItems.has(item.cartItemId) && item.quantity > item.product.quantity);
-      
       if (outOfStockItems.length > 0) {
-        toast.error('Some selected items are out of stock. Please update your cart.');
+        toast.error('Some items are out of stock. Please update your cart.');
         await fetchCartItems();
         return;
       }
@@ -269,13 +301,14 @@ export default function CartPage() {
       const orderResponse = await axios.post(
         `http://localhost:8080/api/order/postOrderRecord`,
         {
-          user: { id: userId }, // Match your backend's User relationship
+          
           orderDate: new Date().toISOString(),
           paymentMethod: 'Gcash', // Default or let user choose
           paymentStatus: 'Pending',
           orderStatus: 'Processing',
           totalPrice: parseFloat(total),
-          orderItems: selectedProducts
+          orderItems: selectedProducts,
+          user: { id: user?.id || user?.userId } 
         },
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
@@ -293,7 +326,7 @@ export default function CartPage() {
       );
   
       // Redirect to order details
-      navigate(`/orderDetails/${orderResponse.data.orderID}`, {
+      navigate('/MyPurchases', {
         state: {
           order: orderResponse.data,
           summary: { 
