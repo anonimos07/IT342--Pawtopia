@@ -8,64 +8,57 @@ import axios from 'axios';
 import { toast } from 'sonner';
 
 export default function CartPage() {
-  const [authChecked, setAuthChecked] = useState(false);  
+  const [authChecked, setAuthChecked] = useState(false);
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [openDialog, setOpenDialog] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState(null); 
+  const [itemToDelete, setItemToDelete] = useState(null);
   const navigate = useNavigate();
 
-  // const user = JSON.parse(localStorage.getItem('user'));
   const user = JSON.parse(localStorage.getItem('user')) || JSON.parse(localStorage.getItem('googleuser'));
-
   const userId = user?.id || user?.userId;
   const token = localStorage.getItem('token');
 
-  // Memoized fetch function
   const fetchCartItems = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       if (!userId || !token) {
         navigate('/login');
         return;
       }
 
-      // Get user's cart with items
       const cartResponse = await axios.get(
         `http://localhost:8080/api/cart/getCartById/${userId}`,
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
 
-      // Handle empty cart
       if (!cartResponse.data?.cartItems?.length) {
         setCartItems([]);
         return;
       }
 
-      // Process cart items with stock validation
       const processedItems = await Promise.all(
         cartResponse.data.cartItems.map(async item => {
           const product = item.product;
           const availableQuantity = product.quantity;
           const currentQuantity = item.quantity;
-          
-          // Adjust quantity if exceeds stock
+
           if (currentQuantity > availableQuantity) {
             try {
               await axios.put(
                 `http://localhost:8080/api/cartItem/systemUpdateCartItem/${item.cartItemId}`,
-                { 
+                {
                   quantity: availableQuantity,
                   lastUpdated: new Date().toISOString()
                 },
                 { headers: { 'Authorization': `Bearer ${token}` } }
               );
-              return { 
-                ...item, 
+              return {
+                ...item,
                 quantity: availableQuantity,
                 product: { ...product, quantity: availableQuantity }
               };
@@ -78,26 +71,26 @@ export default function CartPage() {
         })
       );
 
-      // Sort by last updated (newest first)
-      const sortedItems = processedItems.sort((a, b) => 
+      const sortedItems = processedItems.sort((a, b) =>
         new Date(b.lastUpdated) - new Date(a.lastUpdated)
       );
 
       setCartItems(sortedItems);
     } catch (err) {
       console.error('Cart fetch error:', err);
-      
+
       if (err.response?.status === 401) {
+        toast.error('Session expired. Please login again.');
+        localStorage.removeItem('token');
         navigate('/login');
         return;
       }
 
       if (err.response?.status === 404) {
         try {
-          // Create new cart if not found
           await axios.post(
             `http://localhost:8080/api/cart/postCartRecord`,
-            { userId: user?.id },  // <-- Now sending just the ID
+            { userId: userId },
             { headers: { 'Authorization': `Bearer ${token}` } }
           );
           setCartItems([]);
@@ -122,19 +115,18 @@ export default function CartPage() {
       navigate('/login');
       return;
     }
-    
+
     setAuthChecked(true);
     fetchCartItems();
   }, [userId, token, navigate, fetchCartItems]);
 
   const handleQuantityChange = async (itemId, newQuantity) => {
     if (newQuantity < 1) return;
-    
+
     try {
       const item = cartItems.find(i => i.cartItemId === itemId);
       if (!item) return;
 
-      // Validate against stock
       if (newQuantity > item.product.quantity) {
         toast.error(`Only ${item.product.quantity} available in stock`);
         return;
@@ -142,16 +134,16 @@ export default function CartPage() {
 
       await axios.put(
         `http://localhost:8080/api/cartItem/updateCartItem/${itemId}`,
-        { 
+        {
           quantity: newQuantity,
           lastUpdated: new Date().toISOString()
         },
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
 
-      setCartItems(prev => prev.map(item => 
-        item.cartItemId === itemId 
-          ? { ...item, quantity: newQuantity } 
+      setCartItems(prev => prev.map(item =>
+        item.cartItemId === itemId
+          ? { ...item, quantity: newQuantity }
           : item
       ));
     } catch (err) {
@@ -230,119 +222,57 @@ export default function CartPage() {
       toast.error('Please select items to checkout');
       return;
     }
-  
+
     try {
-    
       const userRes = await axios.get(`http://localhost:8080/adresses/get-users/${userId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
-      
-      
-      
-  
       console.log('Full user data:', userRes.data);
-      console.log('Address data:', userRes.data?.address);
-
       const address = userRes.data;
-  
-      
-     const addressFieldsObject = {
-      //addressId: user.id || user.userId,
-      region: '',
-      province: '',
-      city: '',
-      barangay: '',
-      postalCode: ''
-    };
-  
-    const requiredFields = ['region', 'province', 'city', 'barangay', 'postalCode'];
-    const hasValidAddress = requiredFields.every(field =>
-      address?.[field] && address[field].toString().trim() !== ''
-    );
 
-    
-  
-    if (!hasValidAddress) {
-      toast.error('Please complete all required address fields in your profile');
-      navigate('/profile', {
-        state: {
-          fromCheckout: true,
-          missingFields: requiredFields.filter(field => !address?.[field]),
-          initialAddress: address
-        }
-      });
-      return;
-    }
-  
-      // 3. Proceed with checkout if address is valid
-      const outOfStockItems = cartItems.filter(item => 
+      const requiredFields = ['region', 'province', 'city', 'barangay', 'postalCode'];
+      const hasValidAddress = requiredFields.every(field =>
+        address?.[field] && address[field].toString().trim() !== ''
+      );
+
+      if (!hasValidAddress) {
+        toast.error('Please complete all required address fields in your profile');
+        navigate('/profile', {
+          state: {
+            fromCheckout: true,
+            missingFields: requiredFields.filter(field => !address?.[field]),
+            initialAddress: address
+          }
+        });
+        return;
+      }
+
+      const outOfStockItems = cartItems.filter(item =>
         selectedItems.has(item.cartItemId) && item.quantity > item.product.quantity
       );
-  
+
       if (outOfStockItems.length > 0) {
         toast.error('Some items are out of stock. Please update your cart.');
         await fetchCartItems();
         return;
       }
-  
+
       const { subtotal, shipping, total, totalItems } = calculateTotals();
-      const selectedProducts = cartItems
-        .filter(item => selectedItems.has(item.cartItemId))
-        .map(item => ({
-          productId: item.product.productID,
-          quantity: item.quantity,
-          price: item.product.productPrice,
-          orderItemName: item.product.productName,
-          orderItemImage: item.product.productImage
-        }));
-  
-      // Create the order
-      const orderResponse = await axios.post(
-        `http://localhost:8080/api/order/postOrderRecord`,
-        {
-          
-          orderDate: new Date().toISOString(),
-          paymentMethod: 'Gcash', // Default or let user choose
-          paymentStatus: 'Pending',
-          orderStatus: 'Processing',
-          totalPrice: parseFloat(total),
-          orderItems: selectedProducts,
-          user: { id: user?.id || user?.userId } 
-        },
-        { headers: { 'Authorization': `Bearer ${token}` } }
-      );
-  
-      // Remove purchased items from cart
-      await Promise.all(
-        cartItems
-          .filter(item => selectedItems.has(item.cartItemId))
-          .map(item => 
-            axios.delete(
-              `http://localhost:8080/api/cartItem/deleteCartItem/${item.cartItemId}`,
-              { headers: { 'Authorization': `Bearer ${token}` } }
-            )
-          )
-      );
-  
-      // Redirect to order details
-      navigate('/MyPurchases', {
+      const selectedCartItems = cartItems.filter(item => selectedItems.has(item.cartItemId));
+
+      navigate('/checkout', {
         state: {
-          order: orderResponse.data,
-          summary: { 
-            subtotal, 
-            shipping, 
-            total,
-            totalItems 
-          }
+          selectedItems: selectedCartItems,
+          orderSummary: { subtotal, shipping, total, totalItems }
         }
       });
-  
     } catch (err) {
       console.error('Checkout error:', err);
-      
+
       if (err.response?.status === 401) {
         toast.error('Session expired. Please login again.');
+        localStorage.removeItem('token');
         navigate('/login');
       } else {
         toast.error(err.response?.data?.message || 'Checkout failed');
@@ -389,8 +319,8 @@ export default function CartPage() {
       <main className="flex-1">
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center mb-6">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               onClick={() => navigate(-1)}
               className="flex items-center"
             >
@@ -416,10 +346,10 @@ export default function CartPage() {
                   {cartItems.map((item) => {
                     const isOutOfStock = item.product.quantity <= 0;
                     const isSelected = selectedItems.has(item.cartItemId);
-                    
+
                     return (
-                      <div 
-                        key={item.cartItemId} 
+                      <div
+                        key={item.cartItemId}
                         className={`p-4 flex items-start ${isOutOfStock ? 'opacity-70' : ''}`}
                       >
                         <input
@@ -429,7 +359,7 @@ export default function CartPage() {
                           disabled={isOutOfStock}
                           className={`mr-4 h-5 w-5 mt-4 ${isOutOfStock ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                         />
-                        
+
                         <div className="flex-shrink-0 h-24 w-24 rounded-md overflow-hidden border">
                           <img
                             src={item.product.productImage || '/placeholder.svg'}
@@ -444,7 +374,7 @@ export default function CartPage() {
                         <div className="ml-4 flex-1 flex flex-col">
                           <div className="flex justify-between">
                             <div>
-                              <Link 
+                              <Link
                                 to={`/products/${item.product.productID}`}
                                 className="hover:text-primary"
                               >
@@ -458,8 +388,8 @@ export default function CartPage() {
                               <p className={`text-sm mt-1 ${
                                 isOutOfStock ? 'text-red-600' : 'text-green-600'
                               }`}>
-                                {isOutOfStock 
-                                  ? 'Out of Stock' 
+                                {isOutOfStock
+                                  ? 'Out of Stock'
                                   : `In Stock (${item.product.quantity} available)`}
                               </p>
                             </div>
@@ -470,9 +400,9 @@ export default function CartPage() {
 
                           <div className="flex-1 flex items-end justify-between mt-2">
                             <div className="flex items-center">
-                              <Button 
-                                variant="outline" 
-                                size="icon" 
+                              <Button
+                                variant="outline"
+                                size="icon"
                                 className="h-8 w-8 rounded-full"
                                 onClick={() => handleQuantityChange(item.cartItemId, item.quantity - 1)}
                                 disabled={item.quantity <= 1 || isOutOfStock}
@@ -480,9 +410,9 @@ export default function CartPage() {
                                 -
                               </Button>
                               <span className="mx-2 w-8 text-center">{item.quantity}</span>
-                              <Button 
-                                variant="outline" 
-                                size="icon" 
+                              <Button
+                                variant="outline"
+                                size="icon"
                                 className="h-8 w-8 rounded-full"
                                 onClick={() => handleQuantityChange(item.cartItemId, item.quantity + 1)}
                                 disabled={item.quantity >= item.product.quantity || isOutOfStock}
@@ -491,9 +421,9 @@ export default function CartPage() {
                               </Button>
                             </div>
 
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               className="text-red-500 hover:text-red-700"
                               onClick={() => handleRemoveItem(item.cartItemId)}
                             >
@@ -510,7 +440,7 @@ export default function CartPage() {
               <div className="md:col-span-1">
                 <div className="bg-white rounded-lg shadow-sm border p-6 sticky top-4">
                   <h2 className="text-lg font-medium text-gray-900 mb-4">Order Summary</h2>
-                  
+
                   <div className="space-y-4">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Subtotal ({totalItems} items)</span>
@@ -526,7 +456,7 @@ export default function CartPage() {
                     </div>
                   </div>
 
-                  <Button 
+                  <Button
                     className="w-full mt-6 rounded-full"
                     onClick={handleCheckout}
                     disabled={selectedItems.size === 0}
@@ -547,7 +477,6 @@ export default function CartPage() {
       </main>
       <Footer />
 
-      {/* Delete Confirmation Dialog */}
       {openDialog && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg max-w-md w-full">
@@ -557,8 +486,8 @@ export default function CartPage() {
               <Button variant="outline" onClick={() => setOpenDialog(false)}>
                 Cancel
               </Button>
-              <Button 
-                variant="destructive" 
+              <Button
+                variant="destructive"
                 onClick={confirmRemoveItem}
               >
                 Remove

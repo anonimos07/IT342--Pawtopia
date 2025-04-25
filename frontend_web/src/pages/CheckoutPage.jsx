@@ -5,6 +5,7 @@ import { ArrowLeft, ShoppingBag } from "lucide-react"
 import Header from "../components/Header"
 import Footer from "../components/Footer"
 import { Button } from "../components/ui/Button"
+import { toast } from 'sonner'
 
 const CheckoutPage = () => {
   const [user, setUser] = useState(null)
@@ -21,38 +22,74 @@ const CheckoutPage = () => {
   }
 
   useEffect(() => {
-    // Get user from localStorage
-    const user = JSON.parse(localStorage.getItem("user")) || JSON.parse(localStorage.getItem("googleuser"))
-    const userId = user?.id || user?.userId
+    const fetchUserData = async () => {
+      try {
+        const token = localStorage.getItem("token")
+        const storedUser = JSON.parse(localStorage.getItem("user")) || JSON.parse(localStorage.getItem("googleuser"))
+        const userId = storedUser?.id || storedUser?.userId
 
-    if (!userId) {
-      navigate("/")
-      return
-    }
-    if (selectedItems.length === 0) {
-      navigate("/cart")
-      return
-    }
+        if (!userId || !token) {
+          console.error("Missing userId or token:", { userId, token })
+          toast.error("Please log in to proceed.")
+          navigate("/login")
+          return
+        }
+        if (selectedItems.length === 0) {
+          toast.error("No items selected for checkout.")
+          navigate("/cart")
+          return
+        }
 
-    axios
-      .get(`http://localhost:8080/users/me`)
-      .then((response) => {
+        // Fetch user data with address
+        const response = await axios.get(`http://localhost:8080/users/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
         setUser(response.data)
-      })
-      .catch((error) => {
+
+        // Fetch address separately
+        const addressResponse = await axios.get(`http://localhost:8080/adresses/get-users/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        console.log("Address response:", addressResponse.data)
+        if (!addressResponse.data || !addressResponse.data.region) {
+          toast.error("Please complete your address in your profile.")
+          navigate("/profile", { state: { fromCheckout: true } })
+        }
+      } catch (error) {
         console.error("Error fetching user data:", error)
-      })
+        if (error.response?.status === 401) {
+          console.error("401 error fetching user data, token:", localStorage.getItem("token"))
+          toast.error("Session expired. Please log in again.")
+          localStorage.removeItem("token")
+          navigate("/login")
+        } else {
+          toast.error("Failed to load user data.")
+        }
+      }
+    }
+    fetchUserData()
   }, [navigate, selectedItems])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    console.log("Submitting order, current user state:", user);
-    // Get user directly from localStorage again to ensure we have the latest data
     const storedUser = JSON.parse(localStorage.getItem("user")) || JSON.parse(localStorage.getItem("googleuser"))
     const userId = storedUser?.id || storedUser?.userId
+    const username = storedUser?.username || storedUser?.email // Use email as fallback for Google users
+    const token = localStorage.getItem("token")
+
+    console.log("Submitting order with:", { userId, username, token, selectedItems })
+
+    if (!token || !userId || !username) {
+      console.error("Missing required data for order:", { token, userId, username })
+      toast.error("Please log in to proceed.")
+      localStorage.removeItem("token")
+      navigate("/login")
+      return
+    }
 
     if (selectedItems.length === 0) {
-      alert("No items to order. Please go back and add items to the cart.")
+      toast.error("No items to order.")
+      navigate("/cart")
       return
     }
 
@@ -61,7 +98,7 @@ const CheckoutPage = () => {
       orderItemImage: item.product.productImage || "/placeholder.svg?height=100&width=100",
       price: item.product.productPrice,
       quantity: item.quantity,
-      productId: item.product.productID,
+      productId: item.product.productID.toString(),
     }))
 
     const orderDate = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
@@ -72,38 +109,46 @@ const CheckoutPage = () => {
       orderStatus: "To Receive",
       paymentMethod: "Cash on Delivery",
       totalPrice: orderSummary.total,
-      user: user,
+      user: { userId, username }, // Include username to match backend check
     }
 
+    console.log("Order data being sent:", orderData)
+
     try {
-      const response = await axios.post("http://localhost:8080/api/order/postOrderRecord", orderData)
+      const response = await axios.post(
+        "http://localhost:8080/api/order/postOrderRecord",
+        orderData,
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+
+      console.log("Order response:", response.data)
 
       if (response.status === 200) {
-        alert("Order successfully placed!")
-
-        for (const item of selectedItems) {
-          const cartItemId = item.cartItemId
-          await axios
-            .delete(`http://localhost:8080/api/cartItem/deleteCartItem/${cartItemId}`)
-            .then((response) => {
-              if (response.status === 200) {
-                console.log(`Cart item ${cartItemId} removed from cart`)
-              }
+        // Remove cart items
+        await Promise.all(
+          selectedItems.map((item) =>
+            axios.delete(`http://localhost:8080/api/cartItem/deleteCartItem/${item.cartItemId}`, {
+              headers: { Authorization: `Bearer ${token}` },
             })
-            .catch((error) => {
-              console.error(`Error removing cart item ${cartItemId}:`, error)
-            })
-        }
+          )
+        )
 
+        toast.success("Order successfully placed!")
         clearState()
-
         navigate("/MyPurchases", { state: { orders: response.data } })
       } else {
-        alert("Failed to place the order. Please try again.")
+        toast.error("Failed to place the order.")
       }
     } catch (error) {
       console.error("Error placing the order:", error)
-      alert("An error occurred while placing the order.")
+      if (error.response?.status === 401) {
+        console.error("401 error on order submission, token:", token)
+        toast.error("Session expired. Please log in again.")
+        localStorage.removeItem("token")
+        navigate("/login")
+      } else {
+        toast.error("An error occurred while placing the order: " + (error.response?.data?.message || error.message))
+      }
     }
   }
 
@@ -117,12 +162,11 @@ const CheckoutPage = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
+      
 
       <main className="flex-1 bg-gray-50">
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-6xl mx-auto">
-            {/* Header */}
             <div className="flex flex-col items-center mb-8">
               <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mb-4">
                 <ShoppingBag className="h-8 w-8 text-primary" />
@@ -133,7 +177,6 @@ const CheckoutPage = () => {
               </p>
             </div>
 
-            {/* Back Button */}
             <div className="mb-6">
               <Button variant="ghost" className="flex items-center gap-2" onClick={() => navigate(-1)}>
                 <ArrowLeft className="h-4 w-4" />
@@ -142,7 +185,6 @@ const CheckoutPage = () => {
             </div>
 
             <div className="grid md:grid-cols-7 gap-8">
-              {/* Order Summary */}
               <div className="md:col-span-4">
                 <div className="bg-white rounded-xl shadow-sm border p-6">
                   <h2 className="text-xl font-bold text-gray-900 mb-4">Order Summary</h2>
@@ -189,7 +231,6 @@ const CheckoutPage = () => {
                 </div>
               </div>
 
-              {/* Billing Details */}
               <div className="md:col-span-3">
                 <div className="bg-white rounded-xl shadow-sm border p-6">
                   <h2 className="text-xl font-bold text-gray-900 mb-4">Billing & Shipping Details</h2>
