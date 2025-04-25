@@ -4,43 +4,54 @@ import android.content.Context
 import android.content.SharedPreferences
 
 class SessionManager(context: Context) {
-    private var prefs: SharedPreferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+    private val prefs: SharedPreferences = context.getSharedPreferences("PawtopiaAuth", Context.MODE_PRIVATE)
 
     companion object {
-        const val PREF_NAME = "pawtopia_prefs"
-        const val USER_TOKEN = "user_token"
-        const val USER_ID = "user_id"
-        const val IS_LOGGED_IN = "is_logged_in"
+        private const val KEY_TOKEN = "auth_token"
+        private const val KEY_USER_ID = "user_id"
+        private const val KEY_EMAIL = "email"
+        private const val KEY_USERNAME = "username"
+        private const val KEY_ROLE = "role"
+        private const val KEY_IS_LOGGED_IN = "is_logged_in"
     }
 
-    fun saveAuthToken(token: String) {
-        val editor = prefs.edit()
-        editor.putString(USER_TOKEN, token)
-        editor.putBoolean(IS_LOGGED_IN, true)
-        editor.apply()
+    // Save token & user data after login
+    fun saveAuthSession(
+        token: String,
+        userId: Long,
+        email: String,
+        username: String,
+        role: String
+    ) {
+        prefs.edit().apply {
+            putString(KEY_TOKEN, token)
+            putLong(KEY_USER_ID, userId)
+            putString(KEY_EMAIL, email)
+            putString(KEY_USERNAME, username)
+            putString(KEY_ROLE, role)
+            putBoolean(KEY_IS_LOGGED_IN, true)
+            apply()
+        }
     }
 
-    fun saveUserId(userId: String) {
-        val editor = prefs.edit()
-        editor.putString(USER_ID, userId)
-        editor.apply()
-    }
-
-    fun fetchAuthToken(): String? {
-        return prefs.getString(USER_TOKEN, null)
-    }
-
-    fun fetchUserId(): String? {
-        return prefs.getString(USER_ID, null)
-    }
-
+    // Check if user is logged in
     fun isLoggedIn(): Boolean {
-        return prefs.getBoolean(IS_LOGGED_IN, false)
+        return prefs.getBoolean(KEY_IS_LOGGED_IN, false) && getToken() != null
     }
 
-    fun clearSession() {
-        val editor = prefs.edit()
-        editor.clear()
-        editor.apply()
+    // Get stored token (for API requests)
+    fun getToken(): String? {
+        return prefs.getString(KEY_TOKEN, null)
+    }
+
+    // Get user data (for UI)
+    fun getUserId(): Long = prefs.getLong(KEY_USER_ID, 0L)
+    fun getEmail(): String? = prefs.getString(KEY_EMAIL, null)
+    fun getUsername(): String? = prefs.getString(KEY_USERNAME, null)
+    fun getRole(): String? = prefs.getString(KEY_ROLE, null)
+
+    // Clear session on logout
+    fun logout() {
+        prefs.edit().clear().apply()
     }
 }

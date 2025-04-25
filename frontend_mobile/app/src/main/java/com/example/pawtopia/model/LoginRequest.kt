@@ -1,6 +1,6 @@
 package com.example.pawtopia.model
 
 data class LoginRequest(
-    val username: String,
+    val usernameOrEmail: String,
     val password: String
 )
