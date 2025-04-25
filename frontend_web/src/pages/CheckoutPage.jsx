@@ -1,96 +1,92 @@
-import { useState, useEffect } from "react"
-import { useNavigate, useLocation } from "react-router-dom"
-import axios from "axios"
-import { ArrowLeft, ShoppingBag } from "lucide-react"
-import Header from "../components/Header"
-import Footer from "../components/Footer"
-import { Button } from "../components/ui/Button"
-import { toast } from 'sonner'
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import axios from "axios";
+import { ArrowLeft, ShoppingBag } from "lucide-react";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import { Button } from "../components/ui/Button";
+import { toast } from 'sonner';
 
 const CheckoutPage = () => {
-  const [user, setUser] = useState(null)
-  const navigate = useNavigate()
-  const location = useLocation()
+  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const { selectedItems, orderSummary } = location.state || {
     selectedItems: [],
     orderSummary: {},
-  }
+  };
 
   const clearState = () => {
-    navigate(location.pathname, { state: { selectedItems: [], orderSummary: {} } })
-  }
+    navigate(location.pathname, { state: { selectedItems: [], orderSummary: {} } });
+  };
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const token = localStorage.getItem("token")
-        const storedUser = JSON.parse(localStorage.getItem("user")) || JSON.parse(localStorage.getItem("googleuser"))
-        const userId = storedUser?.id || storedUser?.userId
+        const token = localStorage.getItem("token");
+        const storedUser = JSON.parse(localStorage.getItem("user")) || JSON.parse(localStorage.getItem("googleuser"));
+        const userId = storedUser?.id || storedUser?.userId;
 
         if (!userId || !token) {
-          console.error("Missing userId or token:", { userId, token })
-          toast.error("Please log in to proceed.")
-          navigate("/login")
-          return
+          console.error("Missing userId or token:", { userId, token });
+          toast.error("Please log in to proceed.");
+          navigate("/login");
+          return;
         }
         if (selectedItems.length === 0) {
-          toast.error("No items selected for checkout.")
-          navigate("/cart")
-          return
+          toast.error("No items selected for checkout.");
+          navigate("/cart");
+          return;
         }
 
-        // Fetch user data with address
         const response = await axios.get(`http://localhost:8080/users/me`, {
           headers: { Authorization: `Bearer ${token}` },
-        })
-        setUser(response.data)
+        });
+        setUser(response.data);
 
-        // Fetch address separately
         const addressResponse = await axios.get(`http://localhost:8080/adresses/get-users/${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
-        })
-        console.log("Address response:", addressResponse.data)
+        });
         if (!addressResponse.data || !addressResponse.data.region) {
-          toast.error("Please complete your address in your profile.")
-          navigate("/profile", { state: { fromCheckout: true } })
+          toast.error("Please complete your address in your profile.");
+          navigate("/profile", { state: { fromCheckout: true } });
         }
       } catch (error) {
-        console.error("Error fetching user data:", error)
+        console.error("Error fetching user data:", error);
         if (error.response?.status === 401) {
-          console.error("401 error fetching user data, token:", localStorage.getItem("token"))
-          toast.error("Session expired. Please log in again.")
-          localStorage.removeItem("token")
-          navigate("/login")
+          toast.error("Session expired. Please log in again.");
+          localStorage.removeItem("token");
+          navigate("/login");
         } else {
-          toast.error("Failed to load user data.")
+          toast.error("Failed to load user data.");
         }
       }
-    }
-    fetchUserData()
-  }, [navigate, selectedItems])
+    };
+    fetchUserData();
+  }, [navigate, selectedItems]);
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    const storedUser = JSON.parse(localStorage.getItem("user")) || JSON.parse(localStorage.getItem("googleuser"))
-    const userId = storedUser?.id || storedUser?.userId
-    const username = storedUser?.username || storedUser?.email // Use email as fallback for Google users
-    const token = localStorage.getItem("token")
+    e.preventDefault();
+    const token = localStorage.getItem("token");
+    const storedUser = JSON.parse(localStorage.getItem("user")) || JSON.parse(localStorage.getItem("googleuser"));
+    const userId = storedUser?.id || storedUser?.userId;
+    const username = storedUser?.name || storedUser?.logemail; // Use name, fallback to logemail
 
-    console.log("Submitting order with:", { userId, username, token, selectedItems })
+    console.log("Submitting order with:", { userId, username, token, selectedItems });
 
     if (!token || !userId || !username) {
-      console.error("Missing required data for order:", { token, userId, username })
-      toast.error("Please log in to proceed.")
-      localStorage.removeItem("token")
-      navigate("/login")
-      return
+      console.error("Missing required data for order:", { token, userId, username });
+      toast.error("Please log in to proceed.");
+      localStorage.removeItem("token");
+      navigate("/login");
+      return;
     }
 
     if (selectedItems.length === 0) {
-      toast.error("No items to order.")
-      navigate("/cart")
-      return
+      toast.error("No items to order.");
+      navigate("/cart");
+      return;
     }
 
     const orderItems = selectedItems.map((item) => ({
@@ -99,9 +95,9 @@ const CheckoutPage = () => {
       price: item.product.productPrice,
       quantity: item.quantity,
       productId: item.product.productID.toString(),
-    }))
+    }));
 
-    const orderDate = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+    const orderDate = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 
     const orderData = {
       orderItems,
@@ -109,61 +105,58 @@ const CheckoutPage = () => {
       orderStatus: "To Receive",
       paymentMethod: "Cash on Delivery",
       totalPrice: orderSummary.total,
-      user: { userId, username }, // Include username to match backend check
-    }
-
-    console.log("Order data being sent:", orderData)
+      user: { userId, username },
+    };
 
     try {
       const response = await axios.post(
         "http://localhost:8080/api/order/postOrderRecord",
         orderData,
         { headers: { Authorization: `Bearer ${token}` } }
-      )
-
-      console.log("Order response:", response.data)
+      );
 
       if (response.status === 200) {
-        // Remove cart items
         await Promise.all(
           selectedItems.map((item) =>
             axios.delete(`http://localhost:8080/api/cartItem/deleteCartItem/${item.cartItemId}`, {
               headers: { Authorization: `Bearer ${token}` },
             })
           )
-        )
+        );
 
-        toast.success("Order successfully placed!")
-        clearState()
-        navigate("/MyPurchases", { state: { orders: response.data } })
+        toast.success("Order successfully placed!");
+        clearState();
+        navigate("/MyPurchases", { state: { orders: response.data } });
       } else {
-        toast.error("Failed to place the order.")
+        toast.error("Failed to place the order.");
       }
     } catch (error) {
-      console.error("Error placing the order:", error)
+      console.error("Error placing the order:", error);
       if (error.response?.status === 401) {
-        console.error("401 error on order submission, token:", token)
-        toast.error("Session expired. Please log in again.")
-        localStorage.removeItem("token")
-        navigate("/login")
+        toast.error("Session expired. Please log in again.");
+        localStorage.removeItem("token");
+        navigate("/login");
+      } else if (error.response?.status === 403) {
+        toast.error("Unauthorized: User data mismatch. Please log in again.");
+        localStorage.removeItem("token");
+        navigate("/login");
       } else {
-        toast.error("An error occurred while placing the order: " + (error.response?.data?.message || error.message))
+        toast.error("An error occurred while placing the order: " + (error.response?.data?.message || error.message));
       }
     }
-  }
+  };
 
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="min-h-screen flex flex-col">
       
-
       <main className="flex-1 bg-gray-50">
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-6xl mx-auto">
@@ -176,19 +169,16 @@ const CheckoutPage = () => {
                 Complete your purchase by reviewing your order and confirming your details.
               </p>
             </div>
-
             <div className="mb-6">
               <Button variant="ghost" className="flex items-center gap-2" onClick={() => navigate(-1)}>
                 <ArrowLeft className="h-4 w-4" />
                 <span>Back</span>
               </Button>
             </div>
-
             <div className="grid md:grid-cols-7 gap-8">
               <div className="md:col-span-4">
                 <div className="bg-white rounded-xl shadow-sm border p-6">
                   <h2 className="text-xl font-bold text-gray-900 mb-4">Order Summary</h2>
-
                   <div className="space-y-4">
                     {selectedItems.map((item, index) => (
                       <div key={index} className="flex items-center gap-4">
@@ -213,7 +203,6 @@ const CheckoutPage = () => {
                       </div>
                     ))}
                   </div>
-
                   <div className="border-t border-gray-200 mt-6 pt-4">
                     <div className="flex justify-between mb-2">
                       <span className="text-gray-600">Subtotal</span>
@@ -230,11 +219,9 @@ const CheckoutPage = () => {
                   </div>
                 </div>
               </div>
-
               <div className="md:col-span-3">
                 <div className="bg-white rounded-xl shadow-sm border p-6">
                   <h2 className="text-xl font-bold text-gray-900 mb-4">Billing & Shipping Details</h2>
-
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                       <p className="text-sm text-gray-500 mb-1">Full Name</p>
@@ -242,12 +229,10 @@ const CheckoutPage = () => {
                         {user.firstName} {user.lastName}
                       </p>
                     </div>
-
                     <div>
                       <p className="text-sm text-gray-500 mb-1">Email</p>
                       <p className="font-medium">{user.email}</p>
                     </div>
-
                     <div>
                       <p className="text-sm text-gray-500 mb-1">Address</p>
                       <p className="font-medium">
@@ -255,12 +240,10 @@ const CheckoutPage = () => {
                         Region {user.address?.region}, {user.address?.postalCode}
                       </p>
                     </div>
-
                     <div>
                       <p className="text-sm text-gray-500 mb-1">Payment Method</p>
                       <p className="font-medium">Cash on Delivery</p>
                     </div>
-
                     <Button type="submit" className="w-full rounded-full mt-4">
                       Place Order
                     </Button>
@@ -271,10 +254,9 @@ const CheckoutPage = () => {
           </div>
         </div>
       </main>
-
       <Footer />
     </div>
-  )
-}
+  );
+};
 
-export default CheckoutPage
+export default CheckoutPage;

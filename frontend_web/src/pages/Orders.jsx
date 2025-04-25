@@ -1,57 +1,79 @@
-import { useEffect, useState } from "react"
-import { Link } from "react-router-dom"
-import axios from "axios"
-import { PawPrint, ShoppingBag, Package } from "lucide-react"
-import Header from "../components/Header"
-import Footer from "../components/Footer"
-import { Button } from "../components/ui/Button"
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import { PawPrint, ShoppingBag, Package } from "lucide-react";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import { Button } from "../components/ui/Button";
+import { toast } from 'sonner';
 
 function Orders() {
-  const [orders, setOrders] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const userId = localStorage.getItem("id")
-    axios
-      .get(`http://localhost:8080/api/order/getAllOrdersByUserId`, {
-        params: { userId },
-      })
-      .then((response) => {
-        console.log("Orders fetched from backend:", response.data)
-        setOrders(response.data)
-        setLoading(false)
-      })
-      .catch((error) => {
-        console.error("Error fetching orders:", error)
-        setLoading(false)
-      })
-  }, [])
+    const fetchOrders = async () => {
+      try {
+        const storedUser = JSON.parse(localStorage.getItem("user")) || JSON.parse(localStorage.getItem("googleuser"));
+        const userId = storedUser?.id || storedUser?.userId;
+        const token = localStorage.getItem("token");
+
+        if (!userId || !token) {
+          toast.error("Please log in to view your orders.");
+          navigate("/login");
+          return;
+        }
+
+        const response = await axios.get(`http://localhost:8080/api/order/getAllOrdersByUserId`, {
+          params: { userId },
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        console.log("Orders fetched from backend:", response.data);
+        setOrders(response.data);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching orders:", error);
+        if (error.response?.status === 401) {
+          toast.error("Session expired. Please log in again.");
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          localStorage.removeItem("googleuser");
+          navigate("/login");
+        } else {
+          toast.error("Failed to fetch orders.");
+        }
+        setLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, [navigate]);
 
   const calculateTotal = (items) => {
-    const shippingFee = 30
-    let itemsTotal = 0
+    const shippingFee = 30;
+    let itemsTotal = 0;
 
     if (items) {
       items.forEach((item) => {
-        console.log("Item details in calculateTotal:", item)
+        console.log("Item details in calculateTotal:", item);
         if (item.price && item.quantity) {
-          itemsTotal += item.price * item.quantity
-          console.log("Item price:", item.price)
-          console.log("Item quantity:", item.quantity)
+          itemsTotal += item.price * item.quantity;
+          console.log("Item price:", item.price);
+          console.log("Item quantity:", item.quantity);
         }
-      })
+      });
     }
 
-    return itemsTotal + shippingFee
-  }
+    return itemsTotal + shippingFee;
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
+      
 
       <main className="flex-1 bg-gray-50 relative overflow-hidden">
-        <ScatteredPaws />
-
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto">
             {/* Header */}
@@ -85,8 +107,8 @@ function Orders() {
                 </div>
               ) : (
                 orders.map((order) => {
-                  console.log("Order data:", order)
-                  const total = calculateTotal(order.orderItems || [])
+                  console.log("Order data:", order);
+                  const total = calculateTotal(order.orderItems || []);
 
                   return (
                     <div
@@ -106,8 +128,8 @@ function Orders() {
                             order.orderStatus === "DELIVERED"
                               ? "bg-green-100 text-green-800"
                               : order.orderStatus === "SHIPPED"
-                                ? "bg-orange-100 text-orange-800"
-                                : "bg-red-100 text-red-800"
+                              ? "bg-orange-100 text-orange-800"
+                              : "bg-red-100 text-red-800"
                           }`}
                         >
                           {order.orderStatus}
@@ -165,7 +187,7 @@ function Orders() {
                         </Button>
                       </div>
                     </div>
-                  )
+                  );
                 })
               )}
             </div>
@@ -175,7 +197,7 @@ function Orders() {
 
       <Footer />
     </div>
-  )
+  );
 }
 
-export default Orders
+export default Orders;
