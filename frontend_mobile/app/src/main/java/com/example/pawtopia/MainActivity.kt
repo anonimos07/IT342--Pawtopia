@@ -9,6 +9,7 @@ import com.example.pawtopia.databinding.ActivityMainBinding
 import com.example.pawtopia.fragments.AboutFragment
 import com.example.pawtopia.fragments.HomeFragment
 import com.example.pawtopia.fragments.ProductsFragment
+import com.example.pawtopia.fragments.ProfileFragment
 import com.example.pawtopia.fragments.ServicesFragment
 import com.example.pawtopia.util.SessionManager
 
@@ -42,6 +43,15 @@ class MainActivity : AppCompatActivity() {
                 R.id.nav_about -> {
                     loadFragment(AboutFragment())
                     true
+                }
+                R.id.nav_profile -> {  // Add this if you want a profile tab
+                    if (sessionManager.isLoggedIn()) {
+                        loadFragment(ProfileFragment())
+                        true
+                    } else {
+                        LoginRequiredActivity.start(this)
+                        false
+                    }
                 }
                 else -> false
             }
@@ -81,9 +91,8 @@ class MainActivity : AppCompatActivity() {
 
         binding.btnLogin.setOnClickListener {
             if (sessionManager.isLoggedIn()) {
-                // If already logged in, show profile or logout option
-                Toast.makeText(this, "You are already logged in", Toast.LENGTH_SHORT).show()
-                // TODO: Show profile or logout dialog
+                // Show profile fragment when user is logged in
+                loadFragment(ProfileFragment())
             } else {
                 startActivity(Intent(this, LoginActivity::class.java))
             }

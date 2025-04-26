@@ -14,4 +14,8 @@
     <color name="very_light_purple">#F8F5FF</color>
     <color name="light_gray">#E0E0E0</color>
     <color name="dark_gray">#757575</color>
+
+    <color name="blue_500">#2196F3</color>
+    <color name="blue_700">#1976D2</color>
+    <color name="gray_600">#757575</color>
 </resources>

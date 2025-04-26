@@ -1,4 +1,16 @@
 <resources>
     <string name="app_name">Pawtopia</string>
     <string name="sign_up">Sign Up</string>
+    <string name="profile_picture">Profile Picture</string>
+    <string name="edit_profile">Edit Profile</string>
+    <string name="logout">Logout</string>
+    <string name="edit_address">Edit Address</string>
+    <string name="region">Region</string>
+    <string name="province">Province</string>
+    <string name="city">City</string>
+    <string name="barangay">Barangay</string>
+    <string name="postal_code">Postal Code</string>
+    <string name="street">Street/Building/House No.</string>
+    <string name="save_address">Save Address</string>
+    <string name="back">Back</string>
 </resources>

@@ -11,7 +11,6 @@ class SessionManager(context: Context) {
         private const val KEY_USER_ID = "user_id"
         private const val KEY_EMAIL = "email"
         private const val KEY_USERNAME = "username"
-        private const val KEY_ROLE = "role"
         private const val KEY_IS_LOGGED_IN = "is_logged_in"
     }
 
@@ -21,14 +20,12 @@ class SessionManager(context: Context) {
         userId: Long,
         email: String,
         username: String,
-        role: String
     ) {
         prefs.edit().apply {
             putString(KEY_TOKEN, token)
             putLong(KEY_USER_ID, userId)
             putString(KEY_EMAIL, email)
             putString(KEY_USERNAME, username)
-            putString(KEY_ROLE, role)
             putBoolean(KEY_IS_LOGGED_IN, true)
             apply()
         }
@@ -44,14 +41,14 @@ class SessionManager(context: Context) {
         return prefs.getString(KEY_TOKEN, null)
     }
 
-    // Get user data (for UI)
-    fun getUserId(): Long = prefs.getLong(KEY_USER_ID, 0L)
-    fun getEmail(): String? = prefs.getString(KEY_EMAIL, null)
-    fun getUsername(): String? = prefs.getString(KEY_USERNAME, null)
-    fun getRole(): String? = prefs.getString(KEY_ROLE, null)
-
     // Clear session on logout
+
     fun logout() {
         prefs.edit().clear().apply()
     }
+
+    // Add these helper methods if not already present
+    fun getUsername(): String? = prefs.getString(KEY_USERNAME, null)
+    fun getEmail(): String? = prefs.getString(KEY_EMAIL, null)
+    fun getUserId(): Long = prefs.getLong(KEY_USER_ID, 0L)
 }

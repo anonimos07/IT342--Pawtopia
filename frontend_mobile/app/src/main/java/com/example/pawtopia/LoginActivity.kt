@@ -16,11 +16,16 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
+import java.util.concurrent.TimeUnit
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
     private lateinit var sessionManager: SessionManager
-    private val client = OkHttpClient()
+    private val client = OkHttpClient.Builder()
+        .connectTimeout(3600, TimeUnit.SECONDS)
+        .readTimeout(3600, TimeUnit.SECONDS)
+        .writeTimeout(3600, TimeUnit.SECONDS)
+        .build()
     private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaTypeOrNull()
     private val TAG = "LoginActivity"
     private var redirectAction = ""
@@ -145,14 +150,12 @@ class LoginActivity : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    // Restore UI state
+                    Log.e(TAG, "Full error: ${e.stackTraceToString()}") // Add this line
                     binding.btnLogin.isEnabled = true
                     binding.btnLogin.text = "Login"
-
-                    Log.e(TAG, "Login error: ${e.message}", e)
                     Toast.makeText(
                         this@LoginActivity,
-                        "Network error: Please check your connection",
+                        "Network error: ${e.message}",
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -166,10 +169,9 @@ class LoginActivity : AppCompatActivity() {
             val userId = jsonResponse.getLong("userId")
             val email = jsonResponse.getString("email")
             val username = jsonResponse.getString("username")
-            val role = jsonResponse.getString("role")
 
             // Save session
-            sessionManager.saveAuthSession(token, userId, email, username, role)
+            sessionManager.saveAuthSession(token, userId, email, username)
 
             // Redirect to MainActivity
             startActivity(Intent(this, MainActivity::class.java))
