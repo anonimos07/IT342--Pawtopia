@@ -32,27 +32,6 @@ public class OrderService {
         super();
     }
 
-//    @Transactional
-//    public Order postOrderRecord(Order order) {
-//        // Loop through each OrderItemEntity in the order
-//        for (OrderItem orderItem : order.getOrderItems()) {
-//            // Find the corresponding product for the order item
-//            Optional<Product> optionalProduct = productRepository.findById(Integer.parseInt(orderItem.getProductId()));
-//            if (optionalProduct.isPresent()) {
-//                Product product = optionalProduct.get();
-//                product.setQuantity(product.getQuantity() - orderItem.getQuantity());
-//                product.setQuantitySold(product.getQuantitySold() + orderItem.getQuantity());
-//                productRepository.save(product);
-//            } else {
-//                throw new RuntimeException("Product not found with ID: " + orderItem.getProductId());
-//            }
-//
-//        }
-//
-//        // Save the order
-//        return orepo.save(order); // Save the order after handling the product updates
-//    }
-
     public Order postOrderRecord(Order order) {
         // First, make sure the user is loaded from DB to avoid detached entity issues
         Long userId = order.getUser().getUserId();
@@ -135,4 +114,11 @@ public class OrderService {
         // Call the repository method to get the sum of all totalPrice values
         return orepo.calculateTotalIncome();
     }
+
+    public Order findById(Integer orderId) {
+        return orepo.findById(orderId)
+                .orElse(null); // Returns null if order is not found
+    }
+
+
 }

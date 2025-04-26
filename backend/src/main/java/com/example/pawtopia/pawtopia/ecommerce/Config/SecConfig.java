@@ -1,7 +1,9 @@
 package com.example.pawtopia.pawtopia.ecommerce.Config;
 
 import com.example.pawtopia.pawtopia.ecommerce.Service.UserService;
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletResponse;
+import kong.unirest.Unirest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -78,7 +80,9 @@ public class SecConfig {
                                 "/api/orderItem/test",
                                 "/api/orderItem/postOrderItemRecord",
                                 "/api/orderItem/putOrderItemDetails",
-                                "/api/order/getAllOrdersByUserId"
+                                "/api/order/getAllOrdersByUserId",
+                                "/api/payment/create-payment-link/{orderId}",
+                                "/api/payment/verify/{orderId}"
 
                         ).hasRole("CUSTOMER")
                         // Admin-specific endpoints
@@ -149,6 +153,14 @@ public class SecConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @PostConstruct
+    public void initUnirest() {
+        Unirest.config()
+                .connectTimeout(5000)
+                .socketTimeout(5000)
+                .defaultBaseUrl("https://api.paymongo.com");
     }
 }
 

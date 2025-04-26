@@ -20,9 +20,12 @@ public class Order {
     private Integer orderID;
     private String orderDate;
     private String paymentMethod;
-    private String paymentStatus;
+    @Column(name = "payment_status")
+    private String paymentStatus = "PENDING";
     private String orderStatus;
     private Double totalPrice;
+    private String description = "A Great Way to Spend Money to your Pets!";
+    private String remarks = "Shop Again!";
 
     @JsonManagedReference
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
