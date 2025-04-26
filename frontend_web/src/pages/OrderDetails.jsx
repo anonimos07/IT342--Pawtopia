@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { CheckCircle, Clock, ChevronLeft } from 'lucide-react';
 import Footer from '../components/Footer';
-import axios from 'axios';
 import { toast } from 'sonner';
 const API_BASE_URL_ORDER = import.meta.env.VITE_API_BASE_URL_ORDER;
 
@@ -12,50 +11,16 @@ export default function OrderDetails() {
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
-  const token = localStorage.getItem('token');
-  const user = JSON.parse(localStorage.getItem('user'));
 
   useEffect(() => {
-    if (!state?.items) {
+    if (!state?.order) {
       navigate('/cart');
       return;
     }
 
-    const createOrder = async () => {
-      try {
-        const orderData = {
-          userId: user.id,
-          paymentMethod: 'GCash',
-          paymentStatus: 'Pending',
-          orderStatus: 'Pending',
-          totalPrice: state.summary.total,
-          orderItems: state.items.map(item => ({
-            orderItemName: item.product.productName,
-            orderItemImage: item.product.productImage,
-            price: item.product.productPrice,
-            quantity: item.quantity,
-            productId: item.product.productID
-          }))
-        };
-
-        const response = await axios.post(
-          `${API_BASE_URL_ORDER}/postOrderRecord`,
-          orderData,
-          { headers: { 'Authorization': `Bearer ${token}` } }
-        );
-
-        setOrder(response.data);
-      } catch (error) {
-        console.error('Order creation failed:', error);
-        toast.error('Failed to create order. Please try again.');
-        navigate('/cart');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    createOrder();
-  }, [state, navigate, token, user]);
+    setOrder(state.order);
+    setLoading(false);
+  }, [state, navigate]);
 
   if (loading) {
     return (
@@ -88,8 +53,8 @@ export default function OrderDetails() {
       <main className="flex-1">
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center mb-6">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               onClick={() => navigate(-1)}
               className="flex items-center"
             >
@@ -152,11 +117,11 @@ export default function OrderDetails() {
                   <div className="space-y-3">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Payment Method:</span>
-                      <span className="font-medium">GCash</span>
+                      <span className="font-medium">{order.paymentMethod}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Payment Status:</span>
-                      <span className="font-medium text-yellow-600">Pending</span>
+                      <span className="font-medium text-yellow-600">{order.paymentStatus}</span>
                     </div>
                     <div className="flex justify-between border-t pt-3">
                       <span className="text-gray-600">Total Amount:</span>
@@ -165,9 +130,9 @@ export default function OrderDetails() {
                   </div>
 
                   <div className="mt-6">
-                    <h3 className="text-lg font-medium mb-2">GCash Payment Instructions</h3>
+                    <h3 className="text-lg font-medium mb-2">Payment Instructions</h3>
                     <ol className="list-decimal list-inside text-sm space-y-2 text-gray-700">
-                      <li>Open your GCash app</li>
+                      <li>Open your payment app</li>
                       <li>Go to "Pay Bills"</li>
                       <li>Select "Online Shopping"</li>
                       <li>Choose "Pawtopia" as the merchant</li>
@@ -182,7 +147,7 @@ export default function OrderDetails() {
           </div>
 
           <div className="flex justify-end">
-            <Button 
+            <Button
               onClick={() => navigate('/orders')}
               className="px-8 py-3"
             >

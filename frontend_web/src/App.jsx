@@ -18,6 +18,8 @@ import OAuthSuccess from "./pages/OauthSuccess";
 import CartPage from "./pages/CartPage";
 import AdminAppointments from "./pages/AdminAppoinments";
 import OrderDetails from "./pages/OrderDetails";
+import CheckoutPage from "./pages/CheckoutPage";
+import Orders from "./pages/Orders";
 
 // Protected route component to handle authentication
 function ProtectedRoute({ children }) {
@@ -114,6 +116,7 @@ function App() {
       <Route path="/adminUsers" element={<AdminUsers />} />
       <Route path="/adminProducts" element={<AdminProducts />} />
       <Route path="/adminAppointments" element={<AdminAppointments />} />
+    
 
 
       {/* Public or authenticated routes with layout */}
@@ -201,6 +204,36 @@ function App() {
       />
 
       <Route
+        path="/Mypurchases"
+        element={
+          <ProtectedRoute>
+            {shouldHideHeader ? (
+              <Orders />
+            ) : (
+              <Layout>
+                <Orders />
+              </Layout>
+            )}
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/Mypurchases/:OrderID"
+        element={
+          <ProtectedRoute>
+            {shouldHideHeader ? (
+              <Orders />
+            ) : (
+              <Layout>
+                <Orders />
+              </Layout>
+            )}
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/about"
         element={
           shouldHideHeader ? (
@@ -238,6 +271,19 @@ function App() {
           )
         }
       />
+
+      <Route
+        path="/checkout"
+        element={
+          shouldHideHeader ? (
+            <CheckoutPage />
+          ) : (
+            <Layout>
+              <CheckoutPage />
+            </Layout>
+          )
+        }
+      />  
     </Routes>
   );
 }

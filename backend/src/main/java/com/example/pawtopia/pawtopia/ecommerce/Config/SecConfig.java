@@ -77,7 +77,9 @@ public class SecConfig {
                                 "/api/order/deleteOrderDetails/{id}",
                                 "/api/orderItem/test",
                                 "/api/orderItem/postOrderItemRecord",
-                                "/api/orderItem/putOrderItemDetails"
+                                "/api/orderItem/putOrderItemDetails",
+                                "/api/order/getAllOrdersByUserId"
+
                         ).hasRole("CUSTOMER")
                         // Admin-specific endpoints
                         .requestMatchers(
@@ -92,7 +94,6 @@ public class SecConfig {
                                 "/api/product/getTotalQuantitySold",
                                 "/api/order/getAllOrders",
                                 "/api/order/getOrderDetails/{orderID}",
-                                "/api/order/getAllOrdersByUserId",
                                 "/api/order/get-total-income",
                                 "/api/orderItem/getAllOrdersItem",
                                 "/api/orderItem/putOrderItemDetails",
