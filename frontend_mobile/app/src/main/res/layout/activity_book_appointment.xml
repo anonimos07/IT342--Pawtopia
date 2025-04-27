@@ -171,30 +171,10 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <!-- Email -->
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Email:"
-                    android:textColor="@color/black"
-                    android:textSize="14sp" />
-
-                <EditText
-                    android:id="@+id/et_email"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:background="@drawable/edit_text_background"
-                    android:hint="Enter your email"
-                    android:inputType="textEmailAddress"
-                    android:padding="12dp"
-                    android:textSize="14sp" />
-
                 <!-- Contact Number -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
                     android:text="Contact Number:"
                     android:textColor="@color/black"
                     android:textSize="14sp" />
@@ -284,73 +264,67 @@
                         app:tint="@color/dark_gray" />
                 </LinearLayout>
 
-                <!-- Grooming Service -->
+                <!-- Service Selection -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:text="Grooming Service:"
+                    android:text="Service Type:"
                     android:textColor="@color/black"
                     android:textSize="14sp" />
 
-                <LinearLayout
-                    android:id="@+id/layout_service"
+                <RadioGroup
+                    android:id="@+id/radioGroupService"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:background="@drawable/edit_text_background"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:padding="12dp">
+                    android:orientation="vertical">
 
-                    <TextView
-                        android:id="@+id/tv_service"
-                        android:layout_width="0dp"
+                    <RadioButton
+                        android:id="@+id/radio_grooming"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:hint="Select service"
-                        android:textSize="14sp" />
+                        android:text="Grooming" />
 
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:src="@drawable/ic_dropdown"
-                        app:tint="@color/dark_gray" />
-                </LinearLayout>
+                    <RadioButton
+                        android:id="@+id/radio_boarding"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Boarding" />
+                </RadioGroup>
 
-                <!-- Payment Method -->
+                <!-- Price Selection -->
                 <TextView
+                    android:id="@+id/textPriceTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:text="Payment Method:"
+                    android:text="Price:"
                     android:textColor="@color/black"
-                    android:textSize="14sp" />
+                    android:textSize="14sp"
+                    android:visibility="gone" />
 
-                <LinearLayout
-                    android:id="@+id/layout_payment"
+                <RadioGroup
+                    android:id="@+id/radioGroupPrice"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:background="@drawable/edit_text_background"
-                    android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:padding="12dp">
+                    android:visibility="gone">
 
-                    <TextView
-                        android:id="@+id/tv_payment"
-                        android:layout_width="0dp"
+                    <RadioButton
+                        android:id="@+id/radio_500"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:hint="Select payment"
-                        android:textSize="14sp" />
+                        android:layout_marginEnd="16dp"
+                        android:text="500" />
 
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:src="@drawable/ic_dropdown"
-                        app:tint="@color/dark_gray" />
-                </LinearLayout>
+                    <RadioButton
+                        android:id="@+id/radio_1000"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="1000" />
+                </RadioGroup>
 
                 <!-- Book Button -->
                 <Button

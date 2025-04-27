@@ -1,5 +1,6 @@
 package com.example.pawtopia.fragments
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -7,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.example.pawtopia.LoginRequiredActivity
+import com.example.pawtopia.BookAppointmentActivity // Add this import
 import com.example.pawtopia.databinding.FragmentServicesBinding
 import com.example.pawtopia.util.SessionManager
 
@@ -32,7 +34,8 @@ class ServicesFragment : Fragment() {
         // Set up book appointment button
         binding.btnBookAppointment.setOnClickListener {
             if (sessionManager.isLoggedIn()) {
-                Toast.makeText(requireContext(), "Booking appointment...", Toast.LENGTH_SHORT).show()
+                // Redirect to BookAppointmentActivity
+                startActivity(Intent(requireContext(), BookAppointmentActivity::class.java))
             } else {
                 // Show login required screen
                 LoginRequiredActivity.startForBooking(requireContext())

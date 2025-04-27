@@ -47,6 +47,10 @@ class SessionManager(context: Context) {
         prefs.edit().clear().apply()
     }
 
+    fun getUserEmail(): String? {
+        return prefs.getString(KEY_EMAIL, null)
+    }
+
     // Add these helper methods if not already present
     fun getUsername(): String? = prefs.getString(KEY_USERNAME, null)
     fun getEmail(): String? = prefs.getString(KEY_EMAIL, null)

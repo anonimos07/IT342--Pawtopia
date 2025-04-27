@@ -6,6 +6,9 @@ import com.example.pawtopia.util.SessionManager
 import com.example.pawtopia.AuthInterceptor
 import com.example.pawtopia.model.AddressRequest
 import com.example.pawtopia.model.AddressResponse
+import com.example.pawtopia.model.AppointmentRequest
+import com.example.pawtopia.model.AppointmentResponse
+import com.example.pawtopia.model.Product
 import com.example.pawtopia.model.SignupRequest
 import okhttp3.OkHttpClient
 import retrofit2.Response
@@ -28,27 +31,34 @@ object ApiClient {
         suspend fun signup(@Body request: SignupRequest): Response<Unit>
         @GET("/adresses/get-users/{userId}")
         suspend fun getUserAddress(@Path("userId") userId: Long): Response<AddressResponse>
-
         @PUT("/adresses/users/{userId}")
         suspend fun updateUserAddress(
             @Path("userId") userId: Long,
             @Body address: AddressRequest
         ): Response<Unit>
+        @POST("/appointments/postAppointment")
+        suspend fun bookAppointment(@Body request: AppointmentRequest): Response<AppointmentResponse>
     }
 
     fun createApiService(sessionManager: SessionManager): ApiService {
-        val client = OkHttpClient.Builder()
+        val okHttpClient = OkHttpClient.Builder()
             .connectTimeout(3600, TimeUnit.SECONDS)
             .readTimeout(3600, TimeUnit.SECONDS)
             .writeTimeout(3600, TimeUnit.SECONDS)
+            .addInterceptor { chain ->
+                val request = chain.request().newBuilder()
+            .addHeader("Authorization", "Bearer ${sessionManager.getToken()}")
+            .build()
+        chain.proceed(request)
+    }
             .addInterceptor(AuthInterceptor(sessionManager))
-            .build()
+    .build()
 
-        return Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .client(client)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(ApiService::class.java)
+    return Retrofit.Builder()
+    .baseUrl(BASE_URL)
+    .client(okHttpClient)
+    .addConverterFactory(GsonConverterFactory.create())
+    .build()
+    .create(ApiService::class.java)
     }
 }

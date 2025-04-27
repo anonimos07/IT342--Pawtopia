@@ -6,20 +6,26 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.widget.ArrayAdapter
-import android.widget.PopupMenu
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.example.pawtopia.databinding.ActivityBookAppointmentBinding
+import com.example.pawtopia.model.AppointmentRequest
+import com.example.pawtopia.repository.AppointmentRepository
 import com.example.pawtopia.util.SessionManager
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import com.example.pawtopia.util.Result
 
 class BookAppointmentActivity : AppCompatActivity() {
     private lateinit var binding: ActivityBookAppointmentBinding
     private lateinit var sessionManager: SessionManager
+    private lateinit var appointmentRepository: AppointmentRepository
     private val calendar = Calendar.getInstance()
+    private var selectedService = ""
+    private var selectedPrice = 0
 
     companion object {
         fun start(context: Context) {
@@ -34,6 +40,15 @@ class BookAppointmentActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         sessionManager = SessionManager(this)
+        appointmentRepository = AppointmentRepository(sessionManager)
+
+        // Check if user is logged in, if not redirect to login
+        if (!sessionManager.isLoggedIn()) {
+            Toast.makeText(this, "Please login to book an appointment", Toast.LENGTH_SHORT).show()
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+            return
+        }
 
         // Set up navigation icons
         binding.tvLogo.setOnClickListener {
@@ -72,27 +87,34 @@ class BookAppointmentActivity : AppCompatActivity() {
             showTimePicker()
         }
 
-        // Set up service selection
-        binding.layoutService.setOnClickListener {
-            showServiceMenu(it)
+        // Set up service radio buttons
+        binding.radioGroupService.setOnCheckedChangeListener { _, checkedId ->
+            when (checkedId) {
+                R.id.radio_grooming -> {
+                    selectedService = "Grooming"
+                    binding.radioGroupPrice.visibility = View.VISIBLE
+                    binding.textPriceTitle.visibility = View.VISIBLE
+                }
+                R.id.radio_boarding -> {
+                    selectedService = "Boarding"
+                    binding.radioGroupPrice.visibility = View.VISIBLE
+                    binding.textPriceTitle.visibility = View.VISIBLE
+                }
+            }
         }
 
-        // Set up payment method selection
-        binding.layoutPayment.setOnClickListener {
-            showPaymentMenu(it)
+        // Set up price radio buttons
+        binding.radioGroupPrice.setOnCheckedChangeListener { _, checkedId ->
+            when (checkedId) {
+                R.id.radio_500 -> selectedPrice = 500
+                R.id.radio_1000 -> selectedPrice = 1000
+            }
         }
 
         // Set up book appointment button
         binding.btnBookAppointment.setOnClickListener {
             if (validateInputs()) {
-                // Check if user is logged in
-                if (sessionManager.isLoggedIn()) {
-                    // TODO: Process appointment booking
-                    Toast.makeText(this, "Appointment booked successfully!", Toast.LENGTH_SHORT).show()
-                    finish()
-                } else {
-                    LoginRequiredActivity.startForBookAppointment(this)
-                }
+                bookAppointment()
             }
         }
     }
@@ -113,7 +135,6 @@ class BookAppointmentActivity : AppCompatActivity() {
 
         // Set minimum date to today
         datePickerDialog.datePicker.minDate = System.currentTimeMillis() - 1000
-
         datePickerDialog.show()
     }
 
@@ -144,60 +165,8 @@ class BookAppointmentActivity : AppCompatActivity() {
         binding.tvTime.text = sdf.format(calendar.time)
     }
 
-    private fun showServiceMenu(view: View) {
-        val popupMenu = PopupMenu(this, view)
-        val services = arrayOf(
-            "Basic Grooming - $30",
-            "Premium Grooming - $50",
-            "Deluxe Grooming - $70",
-            "Bath Only - $20",
-            "Nail Trimming - $15"
-        )
-
-        for (service in services) {
-            popupMenu.menu.add(service)
-        }
-
-        popupMenu.setOnMenuItemClickListener { menuItem ->
-            binding.tvService.text = menuItem.title
-            true
-        }
-
-        popupMenu.show()
-    }
-
-    private fun showPaymentMenu(view: View) {
-        val popupMenu = PopupMenu(this, view)
-        val paymentMethods = arrayOf(
-            "Credit Card",
-            "Debit Card",
-            "PayPal",
-            "Cash on Appointment"
-        )
-
-        for (method in paymentMethods) {
-            popupMenu.menu.add(method)
-        }
-
-        popupMenu.setOnMenuItemClickListener { menuItem ->
-            binding.tvPayment.text = menuItem.title
-            true
-        }
-
-        popupMenu.show()
-    }
-
     private fun validateInputs(): Boolean {
         var isValid = true
-
-        // Validate email
-        if (binding.etEmail.text.toString().trim().isEmpty()) {
-            binding.etEmail.error = "Email is required"
-            isValid = false
-        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(binding.etEmail.text.toString().trim()).matches()) {
-            binding.etEmail.error = "Invalid email format"
-            isValid = false
-        }
 
         // Validate contact number
         if (binding.etContactNumber.text.toString().trim().isEmpty()) {
@@ -218,17 +187,64 @@ class BookAppointmentActivity : AppCompatActivity() {
         }
 
         // Validate service
-        if (binding.tvService.text.toString() == "Select service") {
-            Toast.makeText(this, "Please select a grooming service", Toast.LENGTH_SHORT).show()
+        if (selectedService.isEmpty()) {
+            Toast.makeText(this, "Please select a service", Toast.LENGTH_SHORT).show()
             isValid = false
         }
 
-        // Validate payment method
-        if (binding.tvPayment.text.toString() == "Select payment") {
-            Toast.makeText(this, "Please select a payment method", Toast.LENGTH_SHORT).show()
+        // Validate price
+        if (selectedPrice == 0) {
+            Toast.makeText(this, "Please select a price", Toast.LENGTH_SHORT).show()
             isValid = false
         }
 
         return isValid
+    }
+
+    private fun bookAppointment() {
+        val userId = sessionManager.getUserId().takeIf { it != 0L } ?: run {
+            Toast.makeText(this, "User not found", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val userEmail = sessionManager.getUserEmail() ?: run {
+            Toast.makeText(this, "User email not found", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val contactNumber = binding.etContactNumber.text.toString().trim()
+        val date = SimpleDateFormat("MM/dd/yyyy", Locale.US).parse(binding.tvDate.text.toString())
+        val time = SimpleDateFormat("hh:mm a", Locale.US).parse(binding.tvTime.text.toString())
+
+        val appointmentRequest = AppointmentRequest(
+            userId = userId,  // Make sure this is included
+            email = userEmail,
+            contactNo = contactNumber,
+            date = date?.time,
+            time = SimpleDateFormat("HH:mm", Locale.US).format(time!!),
+            groomService = selectedService,
+            price = selectedPrice
+        )
+
+        lifecycleScope.launch {
+            when (val result = appointmentRepository.bookAppointment(appointmentRequest)) {
+                is Result.Success -> {
+                    val appointment = result.data
+                    Toast.makeText(
+                        this@BookAppointmentActivity,
+                        "Appointment booked! ID: ${appointment.appointmentId}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    finish()
+                }
+                is Result.Error -> {
+                    Toast.makeText(
+                        this@BookAppointmentActivity,
+                        "Error: ${result.exception.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        }
     }
 }
