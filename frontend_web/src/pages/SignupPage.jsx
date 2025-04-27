@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Label } from '../components/ui/Label';
-import { Checkbox } from '../components/ui/Checkbox';
 import { PawPrint } from 'lucide-react';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL_USER;
 
