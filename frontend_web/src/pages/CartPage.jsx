@@ -6,11 +6,11 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import axios from 'axios';
 import { toast } from 'sonner';
+
 const API_BASE_URL_USER_CART = import.meta.env.VITE_API_BASE_URL_CART;
 const API_BASE_URL_USER_CART_ITEM = import.meta.env.VITE_API_BASE_URL_CART_ITEM;
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL_USER;
 const API_BASE_URL_ORDER = import.meta.env.VITE_API_BASE_URL_ORDER;
-const API_BASE_URL_ADDRESS = import.meta.env.VITE_API_BASE_URL_ADDRESS;
 
 export default function CartPage() {
   const [authChecked, setAuthChecked] = useState(false);
@@ -20,11 +20,16 @@ export default function CartPage() {
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [openDialog, setOpenDialog] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
+  const [showAddressAlert, setShowAddressAlert] = useState(false);
   const navigate = useNavigate();
 
   const user = JSON.parse(localStorage.getItem('user')) || JSON.parse(localStorage.getItem('googleuser'));
   const userId = user?.id || user?.userId;
   const token = localStorage.getItem('token');
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   const fetchCartItems = useCallback(async () => {
     setLoading(true);
@@ -38,7 +43,7 @@ export default function CartPage() {
 
       const cartResponse = await axios.get(
         `${API_BASE_URL_USER_CART}/getCartById/${userId}`,
-        { headers: { 'Authorization': `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (!cartResponse.data?.cartItems?.length) {
@@ -55,12 +60,12 @@ export default function CartPage() {
           if (currentQuantity > availableQuantity) {
             try {
               await axios.put(
-                `${API_BASE_URL_USER_CART_ITEM}/systemUpdateCartItem/${item.cartItemId}`,
+                `http://localhost:8080/api/cartItem/systemUpdateCartItem/${item.cartItemId}`,
                 {
                   quantity: availableQuantity,
                   lastUpdated: new Date().toISOString()
                 },
-                { headers: { 'Authorization': `Bearer ${token}` } }
+                { headers: { Authorization: `Bearer ${token}` } }
               );
               return {
                 ...item,
@@ -94,9 +99,9 @@ export default function CartPage() {
       if (err.response?.status === 404) {
         try {
           await axios.post(
-            `${API_BASE_URL_USER_CART}/postCartRecord`,
+            `http://localhost:8080/api/cart/postCartRecord`,
             { userId: userId },
-            { headers: { 'Authorization': `Bearer ${token}` } }
+            { headers: { Authorization: `Bearer ${token}` } }
           );
           setCartItems([]);
           return;
@@ -138,12 +143,12 @@ export default function CartPage() {
       }
 
       await axios.put(
-        `${API_BASE_URL_USER_CART_ITEM}/updateCartItem/${itemId}`,
+        `http://localhost:8080/api/cartItem/updateCartItem/${itemId}`,
         {
           quantity: newQuantity,
           lastUpdated: new Date().toISOString()
         },
-        { headers: { 'Authorization': `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       setCartItems(prev => prev.map(item =>
@@ -171,7 +176,7 @@ export default function CartPage() {
     try {
       await axios.delete(
         `${API_BASE_URL_USER_CART_ITEM}/deleteCartItem/${itemToDelete}`,
-        { headers: { 'Authorization': `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       setCartItems(prev => prev.filter(item => item.cartItemId !== itemToDelete));
@@ -229,27 +234,23 @@ export default function CartPage() {
     }
 
     try {
-      const userRes = await axios.get(`${API_BASE_URL_ADDRESS}/get-users/${userId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+      const userRes = await axios.get(`http://localhost:8080/adresses/get-users/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
       });
 
       console.log('Full user data:', userRes.data);
-      const address = userRes.data;
+      const userData = userRes.data;
 
+      // Check for required address fields
       const requiredFields = ['region', 'province', 'city', 'barangay', 'postalCode'];
-      const hasValidAddress = requiredFields.every(field =>
-        address?.[field] && address[field].toString().trim() !== ''
-      );
+      const missingFields = requiredFields.filter(field => !userData?.[field] || userData[field].toString().trim() === '');
+      const hasValidAddress = missingFields.length === 0;
+
+      console.log('Missing address fields:', missingFields);
+      console.log('Has valid address:', hasValidAddress);
 
       if (!hasValidAddress) {
-        toast.error('Please complete all required address fields in your profile');
-        navigate('/profile', {
-          state: {
-            fromCheckout: true,
-            missingFields: requiredFields.filter(field => !address?.[field]),
-            initialAddress: address
-          }
-        });
+        setShowAddressAlert(true);
         return;
       }
 
@@ -496,6 +497,29 @@ export default function CartPage() {
                 onClick={confirmRemoveItem}
               >
                 Remove
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showAddressAlert && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full">
+            <h3 className="text-lg font-medium mb-4">No Address Found</h3>
+            <p className="mb-6">No address found. Please fill up address in the profile page.</p>
+            <div className="flex justify-end space-x-4">
+              <Button
+                variant="outline"
+                onClick={() => setShowAddressAlert(false)}
+              >
+                Close
+              </Button>
+              <Button
+                asChild
+                onClick={() => setShowAddressAlert(false)}
+              >
+                <Link to="/profile">Go to Profile</Link>
               </Button>
             </div>
           </div>
