@@ -30,7 +30,6 @@ public class Appointment {
     private boolean canceled = false;
     private boolean confirmed;
     private String groomService;
-    private String paymentMethod;
     private int price;
 
     @ManyToOne
