@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.pawtopia.LoginActivity
 import com.example.pawtopia.LoginRequiredActivity
+import com.example.pawtopia.ProductDetailActivity
 import com.example.pawtopia.R
 import com.example.pawtopia.api.ApiClient
 import com.example.pawtopia.databinding.FragmentHomeBinding
@@ -134,15 +135,14 @@ class HomeFragment : Fragment() {
         private val sessionManager: SessionManager
     ) : RecyclerView.Adapter<ProductAdapter.ProductViewHolder>() {
 
-        inner class ProductViewHolder(val binding: ItemProductBinding) :
-            RecyclerView.ViewHolder(binding.root)
+        inner class ProductViewHolder(val binding: ItemProductBinding) : RecyclerView.ViewHolder(binding.root) {
+            init {
+                binding.btnAddToCart.text = "View Details" // Change button text
+            }
+        }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ProductViewHolder {
-            val binding = ItemProductBinding.inflate(
-                LayoutInflater.from(parent.context),
-                parent,
-                false
-            )
+            val binding = ItemProductBinding.inflate(LayoutInflater.from(parent.context), parent, false)
             return ProductViewHolder(binding)
         }
 
@@ -157,17 +157,12 @@ class HomeFragment : Fragment() {
                     .placeholder(R.drawable.placeholder_product)
                     .into(ivProductImage)
 
+                // In your ProductAdapter's onBindViewHolder:
                 btnAddToCart.setOnClickListener {
-                    if (sessionManager.isLoggedIn()) {
-                        // TODO: Implement add to cart functionality
-                        Toast.makeText(
-                            root.context,
-                            "${product.productName} added to cart",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    } else {
-                        LoginRequiredActivity.start(root.context)
+                    val intent = Intent(root.context, ProductDetailActivity::class.java).apply {
+                        putExtra("product", product) // Make sure 'product' is not null here
                     }
+                    startActivity(intent)
                 }
             }
         }

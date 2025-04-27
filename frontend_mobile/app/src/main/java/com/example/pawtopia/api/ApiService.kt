@@ -19,6 +19,7 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
+import retrofit2.http.Query
 import java.util.concurrent.TimeUnit
 
 object ApiClient {
@@ -40,6 +41,8 @@ object ApiClient {
         suspend fun bookAppointment(@Body request: AppointmentRequest): Response<AppointmentResponse>
         @GET("/api/product/getProduct")
         suspend fun getProducts(): Response<List<Product>>
+        @GET("/api/product/getProduct")
+        suspend fun getProducts(@Query("type") type: String? = null): Response<List<Product>>
     }
 
     fun createApiService(sessionManager: SessionManager): ApiService {

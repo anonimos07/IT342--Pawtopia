@@ -50,6 +50,11 @@
             android:exported="false"
             android:theme="@style/Theme.Pawtopia" />
 
+        <activity
+            android:name=".ProductDetailActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Pawtopia" />
+
     </application>
 
 </manifest>
