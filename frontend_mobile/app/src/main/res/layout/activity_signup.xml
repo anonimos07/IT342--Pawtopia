@@ -1,0 +1,408 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    tools:context=".SignupActivity">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="24dp">
+
+        <ImageView
+            android:id="@+id/ivPawIcon"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="24dp"
+            android:src="@drawable/ic_paw"
+            android:contentDescription="Paw icon"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@color/purple" />
+
+        <TextView
+            android:id="@+id/tvJoin"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Join Pawtopia"
+            android:textColor="@color/purple"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/ivPawIcon" />
+
+        <TextView
+            android:id="@+id/tvSubtitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:gravity="center"
+            android:text="Create an account to access exclusive pet care services and products"
+            android:textColor="@color/purple"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvJoin" />
+
+        <View
+            android:id="@+id/divider1"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_marginTop="24dp"
+            android:background="@color/light_gray"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvSubtitle" />
+
+        <TextView
+            android:id="@+id/tvCreateAccount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Create an Account"
+            android:textColor="@color/black"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/divider1" />
+
+        <TextView
+            android:id="@+id/tvCreateSubtitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Fill in your details to join our pet-loving community"
+            android:textColor="@color/dark_gray"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvCreateAccount" />
+
+
+        <TextView
+            android:id="@+id/tvUsernameLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Username:"
+            android:textColor="@color/black"
+            android:textSize="16sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvCreateSubtitle" />
+
+        <EditText
+            android:id="@+id/etUsername"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="Enter your username"
+            android:inputType="text"
+            android:padding="12dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvUsernameLabel" />
+
+        <TextView
+            android:id="@+id/tvFirstNameLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="First Name:"
+            android:textColor="@color/black"
+            android:textSize="16sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/etUsername" />
+
+        <EditText
+            android:id="@+id/etFirstName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="8dp"
+            android:hint="Enter first name"
+            android:inputType="textPersonName"
+            android:padding="12dp"
+            app:layout_constraintEnd_toStartOf="@+id/etLastName"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvFirstNameLabel" />
+
+        <TextView
+            android:id="@+id/tvLastNameLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Last Name:"
+            android:textColor="@color/black"
+            android:textSize="16sp"
+            app:layout_constraintStart_toStartOf="@+id/etLastName"
+            app:layout_constraintTop_toBottomOf="@+id/etUsername" />
+
+        <EditText
+            android:id="@+id/etLastName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:hint="Enter last name"
+            android:inputType="textPersonName"
+            android:padding="12dp"
+            app:layout_constraintBaseline_toBaselineOf="@+id/etFirstName"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/etFirstName" />
+
+        <TextView
+            android:id="@+id/tvEmailLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Email:"
+            android:textColor="@color/black"
+            android:textSize="16sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/etFirstName" />
+
+        <EditText
+            android:id="@+id/etEmail"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/edit_text_background"
+            android:hint="Enter your email"
+            android:inputType="textEmailAddress"
+            android:padding="12dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvEmailLabel" />
+
+        <TextView
+            android:id="@+id/tvPasswordLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Password:"
+            android:textColor="@color/black"
+            android:textSize="16sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/etEmail" />
+
+        <EditText
+            android:id="@+id/etPassword"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/edit_text_background"
+            android:hint="Enter your password"
+            android:inputType="textPassword"
+            android:padding="12dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvPasswordLabel" />
+
+        <TextView
+            android:id="@+id/tvConfirmPasswordLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Confirm Password:"
+            android:textColor="@color/black"
+            android:textSize="16sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/etPassword" />
+
+        <EditText
+            android:id="@+id/etConfirmPassword"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/edit_text_background"
+            android:hint="Confirm your password"
+            android:inputType="textPassword"
+            android:padding="12dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvConfirmPasswordLabel" />
+
+        <CheckBox
+            android:id="@+id/cbAgreeTerms"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/etConfirmPassword" />
+
+        <TextView
+            android:id="@+id/tvAgree"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="I agree to the "
+            android:textColor="@color/black"
+            android:textSize="14sp"
+            app:layout_constraintBottom_toBottomOf="@+id/cbAgreeTerms"
+            app:layout_constraintStart_toEndOf="@+id/cbAgreeTerms"
+            app:layout_constraintTop_toTopOf="@+id/cbAgreeTerms" />
+
+        <TextView
+            android:id="@+id/tvTerms"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Terms of Service"
+            android:textColor="@color/purple"
+            android:textSize="14sp"
+            app:layout_constraintBaseline_toBaselineOf="@+id/tvAgree"
+            app:layout_constraintStart_toEndOf="@+id/tvAgree" />
+
+        <TextView
+            android:id="@+id/tvAnd"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:text="and"
+            android:textColor="@color/black"
+            android:textSize="14sp"
+            app:layout_constraintBaseline_toBaselineOf="@+id/tvTerms"
+            app:layout_constraintStart_toEndOf="@+id/tvTerms" />
+
+        <TextView
+            android:id="@+id/tvPrivacy"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:text="Privacy Policy"
+            android:textColor="@color/purple"
+            android:textSize="14sp"
+            app:layout_constraintBaseline_toBaselineOf="@+id/tvAnd"
+            app:layout_constraintStart_toEndOf="@+id/tvAnd" />
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@+id/btnSignUp"
+            app:layout_constraintEnd_toEndOf="@+id/btnSignUp"
+            app:layout_constraintStart_toStartOf="@+id/btnSignUp"
+            app:layout_constraintTop_toTopOf="@+id/btnSignUp" />
+
+        <Button
+            android:id="@+id/btnSignUp"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/button_background"
+            android:padding="12dp"
+            android:text="Sign Up"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/cbAgreeTerms" />
+
+        <TextView
+            android:id="@+id/tvHaveAccount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Already have an account? "
+            android:textColor="@color/black"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toStartOf="@+id/tvLogin"
+            app:layout_constraintHorizontal_chainStyle="packed"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/btnSignUp" />
+
+        <TextView
+            android:id="@+id/tvLogin"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Login"
+            android:textColor="@color/purple"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:layout_constraintBaseline_toBaselineOf="@+id/tvHaveAccount"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/tvHaveAccount" />
+
+        <TextView
+            android:id="@+id/tvOr"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="OR SIGN UP WITH"
+            android:textColor="@color/dark_gray"
+            android:textSize="12sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvHaveAccount" />
+
+        <View
+            android:id="@+id/dividerLeft"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_marginEnd="16dp"
+            android:background="@color/light_gray"
+            app:layout_constraintBottom_toBottomOf="@+id/tvOr"
+            app:layout_constraintEnd_toStartOf="@+id/tvOr"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/tvOr" />
+
+        <View
+            android:id="@+id/dividerRight"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_marginStart="16dp"
+            android:background="@color/light_gray"
+            app:layout_constraintBottom_toBottomOf="@+id/tvOr"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/tvOr"
+            app:layout_constraintTop_toTopOf="@+id/tvOr" />
+
+        <Button
+            android:id="@+id/btnGoogle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/button_outline_background"
+            android:drawableStart="@drawable/ic_google"
+            android:drawablePadding="8dp"
+            android:padding="12dp"
+            android:text="Google"
+            android:textAllCaps="false"
+            android:textColor="@color/black"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvOr" />
+
+        <View
+            android:id="@+id/divider2"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_marginTop="24dp"
+            android:background="@color/light_gray"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/btnGoogle" />
+
+        <TextView
+            android:id="@+id/tvFooter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:drawableStart="@drawable/ic_paw_small"
+            android:drawablePadding="8dp"
+            android:text="Pawtopia"
+            android:textColor="@color/purple"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/divider2" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>
