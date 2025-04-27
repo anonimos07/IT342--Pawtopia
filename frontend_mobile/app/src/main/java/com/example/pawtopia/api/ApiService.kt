@@ -38,6 +38,8 @@ object ApiClient {
         ): Response<Unit>
         @POST("/appointments/postAppointment")
         suspend fun bookAppointment(@Body request: AppointmentRequest): Response<AppointmentResponse>
+        @GET("/api/product/getProduct")
+        suspend fun getProducts(): Response<List<Product>>
     }
 
     fun createApiService(sessionManager: SessionManager): ApiService {

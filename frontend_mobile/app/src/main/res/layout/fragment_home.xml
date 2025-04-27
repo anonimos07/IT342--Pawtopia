@@ -91,168 +91,17 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tv_featured_products" />
 
-        <HorizontalScrollView
-            android:id="@+id/scroll_products"
+        <!-- Replace HorizontalScrollView with RecyclerView -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvFeaturedProducts"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:scrollbars="none"
-            app:layout_constraintTop_toBottomOf="@+id/tv_featured_products_subtitle">
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp">
-
-                <!-- Product 1 -->
-                <androidx.cardview.widget.CardView
-                    android:layout_width="150dp"
-                    android:layout_height="200dp"
-                    android:layout_marginEnd="16dp"
-                    app:cardCornerRadius="8dp"
-                    app:cardElevation="2dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:orientation="vertical"
-                        android:padding="8dp">
-
-                        <ImageView
-                            android:layout_width="match_parent"
-                            android:layout_height="100dp"
-                            android:scaleType="centerCrop"
-                            android:src="@drawable/placeholder_product" />
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:text="Product Name"
-                            android:textColor="@color/black"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="$19.99"
-                            android:textColor="@color/dark_gray"
-                            android:textSize="12sp" />
-
-                        <Button
-                            android:layout_width="match_parent"
-                            android:layout_height="32dp"
-                            android:layout_marginTop="8dp"
-                            android:background="@drawable/button_background"
-                            android:text="Add to Cart"
-                            android:textAllCaps="false"
-                            android:textColor="@color/white"
-                            android:textSize="12sp" />
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-
-                <!-- Product 2 -->
-                <androidx.cardview.widget.CardView
-                    android:layout_width="150dp"
-                    android:layout_height="200dp"
-                    android:layout_marginEnd="16dp"
-                    app:cardCornerRadius="8dp"
-                    app:cardElevation="2dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:orientation="vertical"
-                        android:padding="8dp">
-
-                        <ImageView
-                            android:layout_width="match_parent"
-                            android:layout_height="100dp"
-                            android:scaleType="centerCrop"
-                            android:src="@drawable/placeholder_product" />
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:text="Product Name"
-                            android:textColor="@color/black"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="$24.99"
-                            android:textColor="@color/dark_gray"
-                            android:textSize="12sp" />
-
-                        <Button
-                            android:layout_width="match_parent"
-                            android:layout_height="32dp"
-                            android:layout_marginTop="8dp"
-                            android:background="@drawable/button_background"
-                            android:text="Add to Cart"
-                            android:textAllCaps="false"
-                            android:textColor="@color/white"
-                            android:textSize="12sp" />
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-
-                <!-- Product 3 -->
-                <androidx.cardview.widget.CardView
-                    android:layout_width="150dp"
-                    android:layout_height="200dp"
-                    app:cardCornerRadius="8dp"
-                    app:cardElevation="2dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:orientation="vertical"
-                        android:padding="8dp">
-
-                        <ImageView
-                            android:layout_width="match_parent"
-                            android:layout_height="100dp"
-                            android:scaleType="centerCrop"
-                            android:src="@drawable/placeholder_product" />
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:text="Product Name"
-                            android:textColor="@color/black"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="$29.99"
-                            android:textColor="@color/dark_gray"
-                            android:textSize="12sp" />
-
-                        <Button
-                            android:layout_width="match_parent"
-                            android:layout_height="32dp"
-                            android:layout_marginTop="8dp"
-                            android:background="@drawable/button_background"
-                            android:text="Add to Cart"
-                            android:textAllCaps="false"
-                            android:textColor="@color/white"
-                            android:textSize="12sp" />
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-            </LinearLayout>
-        </HorizontalScrollView>
+            android:orientation="horizontal"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            app:layout_constraintTop_toBottomOf="@+id/tv_featured_products_subtitle" />
 
         <Button
             android:id="@+id/btn_view_all_products"
@@ -267,7 +116,7 @@
             android:textColor="@color/purple"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/scroll_products" />
+            app:layout_constraintTop_toBottomOf="@+id/rvFeaturedProducts" />
 
         <!-- Our Services Section -->
         <TextView
