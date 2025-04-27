@@ -94,7 +94,7 @@ const CheckoutPage = () => {
     const token = localStorage.getItem("token");
     const storedUser = JSON.parse(localStorage.getItem("user")) || JSON.parse(localStorage.getItem("googleuser"));
     const userId = storedUser?.id || storedUser?.userId;
-    const username = storedUser?.name || storedUser?.logemail;
+    const username = storedUser?.username || storedUser?.logemail;
 
     console.log("Submitting order with:", { userId, username, token, selectedItems });
 

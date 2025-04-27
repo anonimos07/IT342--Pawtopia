@@ -31,7 +31,6 @@ public class PaymentController {
         try {
             String secret = Base64.encodeBase64String((paymongoSecretKey + ":").getBytes());
 
-
             String bodyJson = "{ \"data\": { \"attributes\": { " +
                     "\"amount\": " + (int) (order.getTotalPrice() * 100) + "," +
                     "\"description\": \"" + order.getDescription() + "\"," +
@@ -42,14 +41,12 @@ public class PaymentController {
                     " }" +
                     "} } }";
 
-            // Use your secret PayMongo URL here
             HttpResponse<String> response = Unirest.post(paymongoUrl)
                     .header("Accept", "application/json")
                     .header("Content-Type", "application/json")
                     .header("Authorization", "Basic " + secret)
                     .body(bodyJson)
                     .asString();
-
 
             if (response.getStatus() >= 200 && response.getStatus() < 300) {
                 String responseBody = response.getBody();
@@ -59,7 +56,6 @@ public class PaymentController {
                         .getJSONObject("data")
                         .getJSONObject("attributes")
                         .getString("checkout_url");
-
 
                 return ResponseEntity.ok(Map.of("checkoutUrl", checkoutUrl));
 
@@ -74,6 +70,5 @@ public class PaymentController {
         }
     }
 
+
 }
-
-

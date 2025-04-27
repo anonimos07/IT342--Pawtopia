@@ -35,7 +35,11 @@ export default function OAuthSuccess() {
             userData.name = payload.name || userData.name;
             userData.avatar = payload.picture || userData.avatar;
             if (payload.googleId) userData.googleId = payload.googleId;
-            if (payload.email) userData.email = payload.email;
+            if (payload.email) {
+             
+              userData.username = payload.email.split('@')[0];
+              
+            }
             if (payload.userId) userData.userId = payload.userId;
             if (payload.role) userData.role = payload.role;
           }
