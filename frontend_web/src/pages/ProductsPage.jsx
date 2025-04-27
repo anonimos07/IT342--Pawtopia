@@ -196,7 +196,7 @@ export default function ProductsPage() {
                     />
                   </div>
 
-                  <Select 
+                  {/* <Select 
                     value={sortOption}
                     onValueChange={(value) => {
                       console.log('Selection changed:', value);
@@ -214,7 +214,7 @@ export default function ProductsPage() {
                       <SelectItem value="price-high">Price: High to Low</SelectItem>
                       <SelectItem value="newest">Newest</SelectItem>
                     </SelectContent>
-                  </Select>
+                  </Select> */}
                 </div>
               </div>
 

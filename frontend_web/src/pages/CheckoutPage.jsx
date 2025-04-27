@@ -146,7 +146,7 @@ const CheckoutPage = () => {
     try {
         // Step 1: Create the order
         const response = await axios.post(
-            `http://localhost:8080/api/order/postOrderRecord`,
+            `${API_BASE_URL_ORDER}/postOrderRecord`,
             orderData,
             { headers: { Authorization: `Bearer ${token}` } }
         );
