@@ -24,18 +24,22 @@ public class PaymentController {
     private String paymongoSecretKey;
 
     @Value("${PAYMONGO_URL}")
-    private String paymongoUrl; // renamed to make it clear
+    private String paymongoUrl;
 
     @PostMapping("/create-payment")
     public ResponseEntity<?> payOrder(@RequestBody Order order) {
         try {
             String secret = Base64.encodeBase64String((paymongoSecretKey + ":").getBytes());
 
-            // Properly build the JSON body
+
             String bodyJson = "{ \"data\": { \"attributes\": { " +
                     "\"amount\": " + (int) (order.getTotalPrice() * 100) + "," +
                     "\"description\": \"" + order.getDescription() + "\"," +
-                    "\"remarks\": \"" + order.getRemarks() + "\"" +
+                    "\"remarks\": \"" + order.getRemarks() + "\"," +
+                    "\"redirect\": { " +
+                    "\"success\": \"http://localhost:5173\"," +
+                    "\"failed\": \"http://localhost:5173\"" +
+                    " }" +
                     "} } }";
 
             // Use your secret PayMongo URL here
@@ -46,18 +50,17 @@ public class PaymentController {
                     .body(bodyJson)
                     .asString();
 
-            // Parse the PayMongo response (assuming it's a JSON object with a 'data' object)
+
             if (response.getStatus() >= 200 && response.getStatus() < 300) {
-                // Here you would parse the response and get the checkoutUrl or paymentLink
                 String responseBody = response.getBody();
-                // You might need a library like Jackson or Gson to parse this JSON properly
+
                 JSONObject jsonResponse = new JSONObject(responseBody);
                 String checkoutUrl = jsonResponse
                         .getJSONObject("data")
                         .getJSONObject("attributes")
-                        .getString("checkout_url");  // Assuming the URL is under 'attributes.checkout_url'
+                        .getString("checkout_url");
 
-                // Now return the checkoutUrl as part of the response
+
                 return ResponseEntity.ok(Map.of("checkoutUrl", checkoutUrl));
 
             } else {
