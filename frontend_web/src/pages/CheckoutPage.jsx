@@ -99,7 +99,7 @@ const CheckoutPage = () => {
     const token = localStorage.getItem("token");
     const storedUser = JSON.parse(localStorage.getItem("user")) || JSON.parse(localStorage.getItem("googleuser"));
     const userId = storedUser?.id || storedUser?.userId;
-    const username = storedUser?.username || storedUser?.logemail;
+    const username = storedUser?.username || storedUser?.name;
 
     console.log("Submitting order with:", { userId, username, token, selectedItems });
 
@@ -146,7 +146,7 @@ const CheckoutPage = () => {
     try {
         // Step 1: Create the order
         const response = await axios.post(
-            `${ API_BASE_URL_ORDER}/postOrderRecord`,
+            `http://localhost:8080/api/order/postOrderRecord`,
             orderData,
             { headers: { Authorization: `Bearer ${token}` } }
         );
