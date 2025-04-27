@@ -14,12 +14,12 @@ import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsers from './pages/AdminUsers';
 import AdminProducts from "./pages/AdminProducts";
-import OAuthSuccess from "./pages/OauthSuccess";
 import CartPage from "./pages/CartPage";
 import AdminAppointments from "./pages/AdminAppoinments";
 import OrderDetails from "./pages/OrderDetails";
 import CheckoutPage from "./pages/CheckoutPage";
 import Orders from "./pages/Orders";
+import OAuthSuccess from "./pages/OAuthSuccess";
 
 // Protected route component to handle authentication
 function ProtectedRoute({ children }) {
