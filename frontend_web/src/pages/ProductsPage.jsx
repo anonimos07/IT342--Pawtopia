@@ -1,162 +1,308 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Button } from '../components/ui/Button';
+import { useEffect, useState } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import axios from 'axios';
-import { toast } from 'sonner';
+import { Button } from '../components/ui/Button';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '../components/ui/Breadcrumb';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"; // or "../components/ui/select"
+import { Filter, ChevronDown, Search } from 'lucide-react';
 
-export default function ProfilePage() {
-  const [orders, setOrders] = useState([]);
-  const [appointments, setAppointments] = useState([]);
+import animation from '../assets/animation.gif';
+
+export default function ProductsPage() {
+  const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [sortOption, setSortOption] = useState('featured');
+  const [showFilters, setShowFilters] = useState(false);
+  const API_BASE_URL_PRODUCT = import.meta.env.VITE_API_BASE_URL_PRODUCT;
 
-  const user = JSON.parse(localStorage.getItem('user')) || JSON.parse(localStorage.getItem('googleuser'));
-  const userId = user?.id || user?.userId;
-  const token = localStorage.getItem('token');
+ 
 
   useEffect(() => {
-    if (!userId || !token) {
-      toast.error('Please log in to view your profile');
-      window.location.href = '/login';
-      return;
-    }
-
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-
+    const fetchProducts = async () => {
       try {
-        // Fetch orders
-        const ordersResponse = await axios.get(
-          `http://localhost:8080/api/order/getAllOrdersByUserId?userId=${userId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        console.log('Orders response:', ordersResponse.data);
-        setOrders(ordersResponse.data);
-
-        // Fetch appointments (hypothetical endpoint)
-        const appointmentsResponse = await axios.get(
-          `http://localhost:8080/api/appointments/get-appointments?userId=${userId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        console.log('Appointments response:', appointmentsResponse.data);
-        setAppointments(appointmentsResponse.data.filter(app => !app.canceled && new Date(app.date) >= new Date()));
+        const response = await fetch(`${API_BASE_URL_PRODUCT}/getProduct`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch products');
+        }
+        const data = await response.json();
+        // Ensure data is an array
+        if (!Array.isArray(data)) {
+          throw new Error('Invalid data format: expected array');
+        }
+        setProducts(data);
+        setFilteredProducts(data);
       } catch (err) {
         console.error('Fetch error:', err);
-        setError(err.response?.data?.message || 'Failed to load data');
-        toast.error(err.response?.data?.message || 'Failed to load data');
-        if (err.response?.status === 401) {
-          toast.error('Session expired. Please log in again.');
-          localStorage.removeItem('token');
-          window.location.href = '/login';
-        }
+        setError(err.message);
+        setProducts([]); // Ensure it's always an array
+        setFilteredProducts([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
-  }, [userId, token]);
+    fetchProducts();
+  }, []);
+
+  useEffect(() => {
+    let result = [...products];
+
+    // Apply category filter
+    if (categoryFilter !== 'all') {
+      result = result.filter(product => product.productType === categoryFilter);
+    }
+
+    // Apply search filter
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter(product => 
+        product.productName.toLowerCase().includes(term) || 
+        product.description.toLowerCase().includes(term)
+      );
+    }
+
+    // Apply sorting
+    switch (sortOption) {
+      case 'price-low':
+        result.sort((a, b) => a.productPrice - b.productPrice);
+        break;
+      case 'price-high':
+        result.sort((a, b) => b.productPrice - a.productPrice);
+        break;
+      case 'newest':
+        // Assuming you have a createdAt field in your Product entity
+        // result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        break;
+      default:
+        // 'featured' or default sorting
+        break;
+    }
+
+    setFilteredProducts(result);
+  }, [products, categoryFilter, searchTerm, sortOption]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-1 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-1 flex items-center justify-center">
-          <div className="text-center p-6 max-w-md">
-            <h2 className="text-xl font-medium text-red-600 mb-4">Error</h2>
-            <p className="mb-6">{error}</p>
-            <Button asChild>
-              <Link to="/">Return to Home</Link>
-            </Button>
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-start pt-20 bg-gray-50 p-4">
+          <div className="max-w-lg text-center">
+            <img 
+              src={animation} 
+              alt="Loading..." 
+              className="w-64 h-64 md:w-80 md:h-80 mx-auto mb-8"
+            />
+            <h2 className="text-3xl font-bold text-primary mb-4">Welcome to Pawtopia</h2>
+            <p className="text-gray-600 mb-3 text-lg">
+              Your pet's paradise is loading...
+            </p>
+            <p className="text-gray-500 text-base">
+              We're preparing the best pet care products and services for your furry friends.
+              At Pawtopia, we believe every pet deserves happiness, health, and love.
+            </p>
           </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
+        </div>
+      );
+    }
+  
+    if (error) {
+      return <div className="min-h-screen flex items-center justify-center text-red-500">Error: {error}</div>;
+    }
+
+  // Extract unique product types for filter options
+  const productTypes = [...new Set(products.map(product => product.productType))];
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
-      <main className="flex-1 container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6">Your Profile</h1>
+      <main className="flex-1">
+        <section className="bg-gradient-to-r from-primary/10 to-primary/5 py-8 md:py-12">
+          <div className="container mx-auto px-4">
+            <h1 className="text-3xl md:text-4xl font-bold text-center">Our Products</h1>
+            <p className="text-gray-600 text-center mt-2 max-w-2xl mx-auto">
+              Quality food, treats, and accessories for your beloved pets
+            </p>
 
-        {/* Recent Orders Section */}
-        <section className="mb-12">
-          <h2 className="text-2xl font-semibold mb-4">Recent Orders</h2>
-          {orders.length > 0 ? (
-            <div className="grid gap-4">
-              {orders.map((order) => (
-                <div key={order.orderID} className="bg-white border rounded-lg p-4 shadow-sm">
-                  <div className="flex justify-between">
-                    <div>
-                      <p className="font-medium">Order #{order.orderID}</p>
-                      <p className="text-gray-600">Date: {order.orderDate}</p>
-                      <p className="text-gray-600">Items: {order.orderItems?.length || 0}</p>
-                      <p className="text-gray-600">Status: {order.orderStatus}</p>
-                    </div>
-                    <p className="font-semibold">₱{order.totalPrice?.toFixed(2) || '0.00'}</p>
-                  </div>
-                  <Button variant="outline" size="sm" className="mt-2">
-                    <Link to={`/orders/${order.orderID}`}>View Details</Link>
-                  </Button>
-                </div>
-              ))}
+            <div className="mt-6">
+              <Breadcrumb className="justify-center">
+                <BreadcrumbList>
+                  <BreadcrumbItem>
+                    <BreadcrumbLink href="/">Home</BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbLink href="/products" className="font-medium">
+                      Products
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
             </div>
-          ) : (
-            <p className="text-gray-500">No recent orders found.</p>
-          )}
+          </div>
         </section>
 
-        {/* Upcoming Appointments Section */}
-        <section>
-          <h2 className="text-2xl font-semibold mb-4">Upcoming Appointments</h2>
-          {appointments.length > 0 ? (
-            <div className="grid gap-4">
-              {appointments.map((appointment) => (
-                <div
-                  key={appointment.appId}
-                  className="bg-white border rounded-lg p-4 shadow-sm"
+        <section className="py-6 border-b">
+          <div className="container mx-auto px-4">
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex items-center gap-2"
+                  onClick={() => setShowFilters(!showFilters)}
                 >
-                  <div className="flex justify-between">
-                    <div>
-                      <p className="font-medium">{appointment.groomService}</p>
-                      <p className="text-gray-600">
-                        Date: {new Date(appointment.date).toLocaleDateString()}
-                      </p>
-                      <p className="text-gray-600">Time: {appointment.time}</p>
-                      <p className="text-gray-600">
-                        Status: {appointment.confirmed ? 'Confirmed' : 'Pending'}
-                      </p>
-                    </div>
-                    <p className="font-semibold">₱{appointment.price?.toFixed(2) || '0.00'}</p>
+                  <Filter className="h-4 w-4" />
+                  Filters
+                  <ChevronDown className={`h-4 w-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+                </Button>
+
+                <div className="flex items-center gap-4 w-full md:w-auto">
+                  <div className="relative w-full md:w-auto">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search products..."
+                      className="pl-10 pr-4 py-2 border rounded-full w-full md:w-[250px] focus:outline-none focus:ring-2 focus:ring-primary"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
                   </div>
-                  <Button variant="outline" size="sm" className="mt-2">
-                    <Link to={`/appointments/${appointment.appId}`}>View Details</Link>
-                  </Button>
+
+                  <Select 
+  value={sortOption}
+  onChange={(value) => {
+    console.log('Selection changed:', value);
+    setSortOption(value);
+  }}
+  className="w-[180px] border rounded-md"
+>
+  <SelectTrigger className="flex items-center justify-between p-2 w-full">
+    <SelectValue placeholder="Sort by" />
+    <ChevronDown className="h-4 w-4" />
+  </SelectTrigger>
+  <SelectContent className="z-50 bg-white shadow-lg rounded-md mt-1">
+    <SelectItem value="featured">Featured</SelectItem>
+    <SelectItem value="price-low">Price: Low to High</SelectItem>
+    <SelectItem value="price-high">Price: High to Low</SelectItem>
+    <SelectItem value="newest">Newest</SelectItem>
+  </SelectContent>
+</Select>
                 </div>
-              ))}
+              </div>
+
+              {showFilters && (
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    <Button
+                      variant={categoryFilter === 'all' ? 'default' : 'outline'}
+                      size="sm"
+                      className="rounded-full"
+                      onClick={() => setCategoryFilter('all')}
+                    >
+                      All Products
+                    </Button>
+                    {productTypes.map((type) => (
+                      <Button
+                        key={type}
+                        variant={categoryFilter === type ? 'default' : 'outline'}
+                        size="sm"
+                        className="rounded-full"
+                        onClick={() => setCategoryFilter(type)}
+                      >
+                        {type}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-          ) : (
-            <p className="text-gray-500">No upcoming appointments found.</p>
-          )}
+          </div>
+        </section>
+
+        <section className="py-12 bg-gray-50">
+          <div className="container mx-auto px-4">
+            {filteredProducts.length > 0 ? (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {filteredProducts.map((product) => (
+                    <div
+                      key={product.productID}
+                      className="bg-white rounded-xl shadow-sm border p-6 transition-all hover:shadow-md"
+                    >
+                      <Link to={`/products/${product.productID}`} className="block">
+                        <div className="aspect-square mb-4 bg-gray-100 rounded-lg overflow-hidden">
+                          {product.productImage ? (
+                            <img
+                              src={product.productImage}
+                              alt={product.productName}
+                              className="object-cover w-full h-full"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                              No Image Available
+                            </div>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-start">
+                            <h3 className="font-semibold text-lg">{product.productName}</h3>
+                            <span className="text-primary font-bold">₱{product.productPrice}</span>
+                          </div>
+                          <p className="text-sm text-gray-500 line-clamp-2">{product.description}</p>
+                        </div>
+                      </Link>
+                      <Button className="w-full rounded-full mt-2">
+                      <Link to={`/products/${product.productID}`}>View Details</Link>
+                        </Button>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Pagination would go here */}
+                <div className="flex justify-center mt-12">
+                  <nav className="flex items-center gap-1">
+                    <Button variant="outline" size="icon" className="rounded-full">
+                      <ChevronDown className="h-4 w-4 rotate-90" />
+                    </Button>
+                    <Button variant="outline" size="sm" className="rounded-full">
+                      1
+                    </Button>
+                    <Button variant="outline" size="sm" className="rounded-full">
+                      2
+                    </Button>
+                    <Button variant="outline" size="icon" className="rounded-full">
+                      <ChevronDown className="h-4 w-4 -rotate-90" />
+                    </Button>
+                  </nav>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-gray-500">No products found matching your criteria.</p>
+                <Button 
+                  variant="outline" 
+                  className="mt-4 rounded-full"
+                  onClick={() => {
+                    setCategoryFilter('all');
+                    setSearchTerm('');
+                  }}
+                >
+                  Clear filters
+                </Button>
+              </div>
+            )}
+          </div>
         </section>
       </main>
+
       <Footer />
     </div>
   );

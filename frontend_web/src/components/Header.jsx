@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';  
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from './ui/Button';
-import { Search, ShoppingBag, Menu, PawPrint, LogOut, User } from 'lucide-react';
+import { Search, ShoppingBag, Menu, PawPrint, LogOut } from 'lucide-react';
 
 import logout from '../assets/logout.gif';
 
@@ -14,10 +14,8 @@ export default function Header({ activePage = 'home' }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false); // New state for logout animation
 
+  
   const navigate = useNavigate();
-
-  // Debug activePage
-  console.log('Header activePage:', activePage);
 
   useEffect(() => {
     const checkAuth = () => {
@@ -128,32 +126,32 @@ export default function Header({ activePage = 'home' }) {
       
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <PawPrint className="h-8 w-8 text-indigo-600" />
-          <span className="font-bold text-2xl text-indigo-600">Pawtopia</span>
+          <PawPrint className="h-8 w-8 text-primary" />
+          <span className="font-bold text-2xl text-primary">Pawtopia</span>
         </div>
 
         <nav className="hidden md:flex items-center space-x-8">
           <Link
             to="/"
-            className={`font-medium ${activePage === 'home' ? 'text-indigo-600 hover:text-indigo-500' : 'text-gray-600 hover:text-indigo-600'}`}
+            className={`font-medium ${activePage === 'home' ? 'text-primary hover:text-primary/80' : 'text-gray-600 hover:text-primary'}`}
           >
             Home
           </Link>
           <Link
             to="/products"
-            className={`font-medium ${activePage === 'products' ? 'text-indigo-600 hover:text-indigo-500' : 'text-gray-600 hover:text-indigo-600'}`}
+            className={`font-medium ${activePage === 'products' ? 'text-primary hover:text-primary/80' : 'text-gray-600 hover:text-primary'}`}
           >
             Products
           </Link>
           <Link
             to="/services"
-            className={`font-medium ${activePage === 'services' ? 'text-indigo-600 hover:text-indigo-500' : 'text-gray-600 hover:text-indigo-600'}`}
+            className={`font-medium ${activePage === 'services' ? 'text-primary hover:text-primary/80' : 'text-gray-600 hover:text-primary'}`}
           >
             Services
           </Link>
           <Link
             to="/about"
-            className={`font-medium ${activePage === 'about' ? 'text-indigo-600 hover:text-indigo-500' : 'text-gray-600 hover:text-indigo-600'}`}
+            className={`font-medium ${activePage === 'about' ? 'text-primary hover:text-primary/80' : 'text-gray-600 hover:text-primary'}`}
           >
             About Us
           </Link>
@@ -161,7 +159,7 @@ export default function Header({ activePage = 'home' }) {
 
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" className="text-gray-600">
-            <Link to="/cart" className="text-gray-600 inline-flex items-center justify-center p-2 rounded-full hover:bg-gray-100 focus:ring focus:ring-indigo-200">
+            <Link to="/cart" className="text-gray-600 inline-flex items-center justify-center p-2 rounded-full hover:bg-gray-100 focus:ring focus:ring-gray-200">
               <ShoppingBag className="h-5 w-5" />
             </Link>
           </Button>
@@ -174,8 +172,8 @@ export default function Header({ activePage = 'home' }) {
                 className="cursor-pointer" 
                 onClick={() => setShowDropdown(!showDropdown)}
               >
-                <Avatar className="h-9 w-9 flex items-center justify-center">
-                  <User className="h-5 w-5 text-gray-600" />
+                <Avatar className="h-9 w-9">
+                  <Avatar.Image src={user?.avatar || '/default-avatar.png'} alt={user?.name || 'User'} />
                   <Avatar.Fallback>{(user?.name?.[0] || 'U').toUpperCase()}</Avatar.Fallback>
                 </Avatar>
               </div>
@@ -211,7 +209,7 @@ export default function Header({ activePage = 'home' }) {
               )}
             </div>
           ) : (
-            <Button className="hidden md:flex bg-indigo-600 hover:bg-indigo-500 text-white" asChild>
+            <Button className="hidden md:flex" asChild>
               <Link to="/login">Login</Link>
             </Button>
           )}

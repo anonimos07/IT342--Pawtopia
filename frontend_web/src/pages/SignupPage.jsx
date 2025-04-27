@@ -291,7 +291,7 @@ export default function SignupPage() {
                 </div>
               </div>
 
-              <div className="flex justify-center">
+              <div className="grid grid-cols-2 gap-4">
                 <Button 
                   type="button"
                   variant="outline" 
