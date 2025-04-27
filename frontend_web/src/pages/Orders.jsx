@@ -6,6 +6,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { Button } from "../components/ui/Button";
 import { toast } from 'sonner';
+const API_BASE_URL_ORDER = import.meta.env.VITE_API_BASE_URL_ORDER;
 
 function Orders() {
   const [orders, setOrders] = useState([]);
@@ -25,7 +26,7 @@ function Orders() {
           return;
         }
 
-        const response = await axios.get(`http://localhost:8080/api/order/getAllOrdersByUserId`, {
+        const response = await axios.get(`${API_BASE_URL_ORDER}/getAllOrdersByUserId`, {
           params: { userId },
           headers: { Authorization: `Bearer ${token}` },
         });

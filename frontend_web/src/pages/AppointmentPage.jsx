@@ -6,28 +6,54 @@ import { Calendar, Clock, X } from 'lucide-react';
 const API_BASE_URL_USER_APPOINTMENT = import.meta.env.VITE_API_BASE_URL_APPOINTMENT;
 
 export default function AppointmentPage() {
-  const [email, setEmail] = useState("");
   const [contactNo, setContactNo] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [service, setService] = useState("");
   const [price, setPrice] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("");
+  const [modalData, setModalData] = useState({ service: "", date: "", time: "", price: "" });
   
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(false);
 
+  // Get current date and time for restrictions
+  const today = new Date();
+  const currentTime = today.toTimeString().slice(0, 5); // Format: HH:MM
+  const shopOpenTime = "08:00"; // Shop opens at 8:00 AM
+  const shopCloseTime = "20:00"; // Shop closes at 8:00 PM
+  // Set minDate to tomorrow if current time is after 8:00 PM
+  const minDate = currentTime > shopCloseTime 
+    ? new Date(today.setDate(today.getDate() + 1)).toISOString().split("T")[0]
+    : today.toISOString().split("T")[0]; // Format: YYYY-MM-DD
+
   const validateForm = () => {
     let formErrors = {};
     
-    if (!email) formErrors.email = "Email is required";
     if (!contactNo) formErrors.contactNo = "Contact number is required";
     if (!service) formErrors.service = "Please select a service";
     if (!price) formErrors.price = "Please select a price";
-    if (!paymentMethod) formErrors.paymentMethod = "Please select a payment method";
-    if (!date) formErrors.date = "Date is required";
-    if (!time) formErrors.time = "Time is required";
+    if (!date) {
+      formErrors.date = "Date is required";
+    } else {
+      const selectedDate = new Date(date);
+      const minDateObj = new Date(minDate);
+      if (selectedDate < minDateObj.setHours(0, 0, 0, 0)) {
+        formErrors.date = "Date cannot be in the past";
+      }
+    }
+    if (!time) {
+      formErrors.time = "Time is required";
+    } else {
+      // Ensure time is within shop hours (8:00 AM to 8:00 PM)
+      if (time < shopOpenTime || time > shopCloseTime) {
+        formErrors.time = "Time must be between 8:00 AM and 8:00 PM";
+      }
+      // If today is selected, ensure time is not in the past
+      if (date === minDate && time < currentTime) {
+        formErrors.time = "Time cannot be in the past for today";
+      }
+    }
     
     return formErrors;
   };
@@ -40,15 +66,6 @@ export default function AppointmentPage() {
   
     // Unified token from localStorage
     const token = localStorage.getItem("token");
-  
-    // Validate email match
-    if (
-      (localUser && email !== localUser.logemail) || 
-      (googleUser && email !== googleUser.email)
-    ) {
-      window.alert('You can only book an appointment using your registered email.');
-      return;
-    }
   
     if (!localUser && !googleUser) {
       window.alert('No user found. Please log in first.');
@@ -67,17 +84,16 @@ export default function AppointmentPage() {
         }
   
         const appointmentData = {
-          email,
+          email: localUser ? localUser.logemail : googleUser.email,
           contactNo,
           date,
           time,
           groomService: service,
-          paymentMethod,
           price,
           confirmed: false,
           canceled: false,
           user: {
-            userId: localUser ? localUser.id : (googleUser ? googleUser.userId : null),
+            userId: localUser ? localUser.id : googleUser.userId,
           },
         };
   
@@ -91,20 +107,20 @@ export default function AppointmentPage() {
             "Authorization": `Bearer ${token}`,
           },
           body: JSON.stringify(appointmentData),
-          // credentials: "include",
         });
   
         const responseData = await response.json();
   
         if (response.ok) {
+          // Save form data for the modal before resetting
+          setModalData({ service, date, time, price });
           setBookingSuccess(true);
-          setEmail("");
+          // Reset form state
           setContactNo("");
           setDate("");
           setTime("");
           setService("");
-          setPaymentMethod("");
-          setPrice(0);
+          setPrice("");
         } else {
           console.error("Failed to book appointment:", responseData.message);
           alert(responseData.message || "Failed to book appointment");
@@ -117,20 +133,9 @@ export default function AppointmentPage() {
       }
     }
   };
-   
 
   const handleServiceChange = (value) => {
     setService(value);
-    switch(value) {
-      case 'Grooming':
-        setPrice(500);
-        break;
-      case 'Boarding':
-        setPrice(800);
-        break;
-      default:
-        setPrice(0);
-    }
   };
 
   return (
@@ -153,19 +158,19 @@ export default function AppointmentPage() {
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <p className="text-sm text-gray-500">Service:</p>
-                  <p className="font-medium">{service}</p>
+                  <p className="font-medium">{modalData.service}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Date:</p>
-                  <p className="font-medium">{date}</p>
+                  <p className="font-medium">{modalData.date}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Time:</p>
-                  <p className="font-medium">{time}</p>
+                  <p className="font-medium">{modalData.time}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Total:</p>
-                  <p className="font-medium">₱{price}</p>
+                  <p className="font-medium">₱{modalData.price}</p>
                 </div>
               </div>
               <Button 
@@ -191,23 +196,12 @@ export default function AppointmentPage() {
                     <h2 className="text-2xl font-bold mb-6">Personal Information</h2>
                     <div className="space-y-4">
                       <div className="grid gap-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input 
-                          id="email" 
-                          type="email" 
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          className={`rounded-lg ${errors.email ? 'border-red-500' : ''}`}
-                        />
-                        {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
-                      </div>
-                      <div className="grid gap-2">
                         <Label htmlFor="contactNo">Contact Number</Label>
                         <Input 
                           id="contactNo" 
                           value={contactNo}
                           onChange={(e) => setContactNo(e.target.value)}
-                          className={`rounded-lg ${errors.contactNo ? 'border-red-500' : ''}`}
+                          className={`pl-10 rounded-lg ${errors.contactNo ? 'border-red-500' : ''}`}
                         />
                         {errors.contactNo && <p className="text-red-500 text-xs mt-1">{errors.contactNo}</p>}
                       </div>
@@ -232,7 +226,7 @@ export default function AppointmentPage() {
                               name="service"
                               value="Grooming"
                               checked={service === "Grooming"}
-                              onChange={() => setService("Grooming")}
+                              onChange={() => handleServiceChange("Grooming")}
                               className="h-4 w-4 text-primary focus:ring-primary"
                             />
                             <Label htmlFor="grooming" className="font-normal">
@@ -246,7 +240,7 @@ export default function AppointmentPage() {
                               name="service"
                               value="Boarding"
                               checked={service === "Boarding"}
-                              onChange={() => setService("Boarding")}
+                              onChange={() => handleServiceChange("Boarding")}
                               className="h-4 w-4 text-primary focus:ring-primary"
                             />
                             <Label htmlFor="boarding" className="font-normal">
@@ -292,42 +286,6 @@ export default function AppointmentPage() {
                         </div>
                         {errors.price && <p className="text-red-500 text-xs mt-1">{errors.price}</p>}
                       </div>
-
-                      {/* Payment Method */}
-                      <div className="grid gap-2">
-                        <Label>Payment Method</Label>
-                        <div className="space-y-3">
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="radio"
-                              id="gcash"
-                              name="paymentMethod"
-                              value="GCash"
-                              checked={paymentMethod === "GCash"}
-                              onChange={() => setPaymentMethod("GCash")}
-                              className="h-4 w-4 text-primary focus:ring-primary"
-                            />
-                            <Label htmlFor="gcash" className="font-normal">
-                              GCash
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="radio"
-                              id="counter"
-                              name="paymentMethod"
-                              value="Over the Counter"
-                              checked={paymentMethod === "Over the Counter"}
-                              onChange={() => setPaymentMethod("Over the Counter")}
-                              className="h-4 w-4 text-primary focus:ring-primary"
-                            />
-                            <Label htmlFor="counter" className="font-normal">
-                              Over the Counter
-                            </Label>
-                          </div>
-                        </div>
-                        {errors.paymentMethod && <p className="text-red-500 text-xs mt-1">{errors.paymentMethod}</p>}
-                      </div>
                     </div>
                   </div>
 
@@ -344,6 +302,7 @@ export default function AppointmentPage() {
                             type="date" 
                             value={date}
                             onChange={(e) => setDate(e.target.value)}
+                            min={minDate}
                             className={`pl-10 rounded-lg ${errors.date ? 'border-red-500' : ''}`}
                           />
                           {errors.date && <p className="text-red-500 text-xs mt-1">{errors.date}</p>}
@@ -358,6 +317,9 @@ export default function AppointmentPage() {
                             type="time" 
                             value={time}
                             onChange={(e) => setTime(e.target.value)}
+                            min={shopOpenTime}
+                            max={shopCloseTime}
+                            step="300" // 5-minute intervals (300 seconds)
                             className={`pl-10 rounded-lg ${errors.time ? 'border-red-500' : ''}`}
                           />
                           {errors.time && <p className="text-red-500 text-xs mt-1">{errors.time}</p>}

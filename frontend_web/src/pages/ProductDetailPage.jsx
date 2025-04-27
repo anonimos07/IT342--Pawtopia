@@ -23,6 +23,11 @@ export default function ProductDetailPage() {
   const [showCartToast, setShowCartToast] = useState(false);
   const [toastProduct, setToastProduct] = useState(null);
 
+  // Scroll to top when the page loads or the product ID changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [id]);
+
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -309,6 +314,7 @@ export default function ProductDetailPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      
       {showCartToast && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white rounded-xl p-6 shadow-xl max-w-sm w-full mx-4">
@@ -573,10 +579,10 @@ export default function ProductDetailPage() {
                   </Link>
                   <Button 
                     className="w-full rounded-full gap-2" 
-                   
+                    onClick={() => addRelatedToCart(relatedProduct)}
                   >
                     <ShoppingCart className="h-4 w-4" />
-                    <Link to={`/products/${relatedProduct.productID}`}>View Details</Link>
+                    Add to Cart
                   </Button>
                 </div>
               ))}
