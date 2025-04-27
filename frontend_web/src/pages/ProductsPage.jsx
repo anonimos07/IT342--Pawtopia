@@ -24,9 +24,14 @@ export default function ProductsPage() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [sortOption, setSortOption] = useState('featured');
   const [showFilters, setShowFilters] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const productsPerPage = 8;
   const API_BASE_URL_PRODUCT = import.meta.env.VITE_API_BASE_URL_PRODUCT;
 
- 
+  // Scroll to top when the page loads
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -90,39 +95,54 @@ export default function ProductsPage() {
     }
 
     setFilteredProducts(result);
+    // Reset to first page when filters change
+    setCurrentPage(1);
   }, [products, categoryFilter, searchTerm, sortOption]);
 
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
+  const indexOfLastProduct = currentPage * productsPerPage;
+  const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
+  const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    // Scroll to top of products section
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   if (loading) {
-      return (
-        <div className="min-h-screen flex flex-col items-center justify-start pt-20 bg-gray-50 p-4">
-          <div className="max-w-lg text-center">
-            <img 
-              src={animation} 
-              alt="Loading..." 
-              className="w-64 h-64 md:w-80 md:h-80 mx-auto mb-8"
-            />
-            <h2 className="text-3xl font-bold text-primary mb-4">Welcome to Pawtopia</h2>
-            <p className="text-gray-600 mb-3 text-lg">
-              Your pet's paradise is loading...
-            </p>
-            <p className="text-gray-500 text-base">
-              We're preparing the best pet care products and services for your furry friends.
-              At Pawtopia, we believe every pet deserves happiness, health, and love.
-            </p>
-          </div>
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-start pt-20 bg-gray-50 p-4">
+        <div className="max-w-lg text-center">
+          <img 
+            src={animation} 
+            alt="Loading..." 
+            className="w-64 h-64 md:w-80 md:h-80 mx-auto mb-8"
+          />
+          <h2 className="text-3xl font-bold text-primary mb-4">Welcome to Pawtopia</h2>
+          <p className="text-gray-600 mb-3 text-lg">
+            Your pet's paradise is loading...
+          </p>
+          <p className="text-gray-500 text-base">
+            We're preparing the best pet care products and services for your furry friends.
+            At Pawtopia, we believe every pet deserves happiness, health, and love.
+          </p>
         </div>
-      );
-    }
+      </div>
+    );
+  }
   
-    if (error) {
-      return <div className="min-h-screen flex items-center justify-center text-red-500">Error: {error}</div>;
-    }
+  if (error) {
+    return <div className="min-h-screen flex items-center justify-center text-red-500">Error: {error}</div>;
+  }
 
   // Extract unique product types for filter options
   const productTypes = [...new Set(products.map(product => product.productType))];
 
   return (
     <div className="min-h-screen flex flex-col">
+      
       <main className="flex-1">
         <section className="bg-gradient-to-r from-primary/10 to-primary/5 py-8 md:py-12">
           <div className="container mx-auto px-4">
@@ -177,24 +197,24 @@ export default function ProductsPage() {
                   </div>
 
                   <Select 
-  value={sortOption}
-  onChange={(value) => {
-    console.log('Selection changed:', value);
-    setSortOption(value);
-  }}
-  className="w-[180px] border rounded-md"
->
-  <SelectTrigger className="flex items-center justify-between p-2 w-full">
-    <SelectValue placeholder="Sort by" />
-    <ChevronDown className="h-4 w-4" />
-  </SelectTrigger>
-  <SelectContent className="z-50 bg-white shadow-lg rounded-md mt-1">
-    <SelectItem value="featured">Featured</SelectItem>
-    <SelectItem value="price-low">Price: Low to High</SelectItem>
-    <SelectItem value="price-high">Price: High to Low</SelectItem>
-    <SelectItem value="newest">Newest</SelectItem>
-  </SelectContent>
-</Select>
+                    value={sortOption}
+                    onValueChange={(value) => {
+                      console.log('Selection changed:', value);
+                      setSortOption(value);
+                    }}
+                    className="w-[180px]"
+                  >
+                    <SelectTrigger className="flex items-center justify-between p-2 w-full border rounded-md">
+                      <SelectValue placeholder="Sort by" />
+                      <ChevronDown className="h-4 w-4" />
+                    </SelectTrigger>
+                    <SelectContent className="z-50 bg-white shadow-lg rounded-md mt-1">
+                      <SelectItem value="featured">Featured</SelectItem>
+                      <SelectItem value="price-low">Price: Low to High</SelectItem>
+                      <SelectItem value="price-high">Price: High to Low</SelectItem>
+                      <SelectItem value="newest">Newest</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
@@ -229,10 +249,10 @@ export default function ProductsPage() {
 
         <section className="py-12 bg-gray-50">
           <div className="container mx-auto px-4">
-            {filteredProducts.length > 0 ? (
+            {currentProducts.length > 0 ? (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {filteredProducts.map((product) => (
+                  {currentProducts.map((product) => (
                     <div
                       key={product.productID}
                       className="bg-white rounded-xl shadow-sm border p-6 transition-all hover:shadow-md"
@@ -260,25 +280,42 @@ export default function ProductsPage() {
                         </div>
                       </Link>
                       <Button className="w-full rounded-full mt-2">
-                      <Link to={`/products/${product.productID}`}>View Details</Link>
-                        </Button>
+                        <Link to={`/products/${product.productID}`}>View Details</Link>
+                      </Button>
                     </div>
                   ))}
                 </div>
 
-                {/* Pagination would go here */}
+                {/* Pagination */}
                 <div className="flex justify-center mt-12">
                   <nav className="flex items-center gap-1">
-                    <Button variant="outline" size="icon" className="rounded-full">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="rounded-full"
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                    >
                       <ChevronDown className="h-4 w-4 rotate-90" />
                     </Button>
-                    <Button variant="outline" size="sm" className="rounded-full">
-                      1
-                    </Button>
-                    <Button variant="outline" size="sm" className="rounded-full">
-                      2
-                    </Button>
-                    <Button variant="outline" size="icon" className="rounded-full">
+                    {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? 'default' : 'outline'}
+                        size="sm"
+                        className="rounded-full"
+                        onClick={() => handlePageChange(page)}
+                      >
+                        {page}
+                      </Button>
+                    ))}
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="rounded-full"
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                    >
                       <ChevronDown className="h-4 w-4 -rotate-90" />
                     </Button>
                   </nav>
@@ -293,6 +330,7 @@ export default function ProductsPage() {
                   onClick={() => {
                     setCategoryFilter('all');
                     setSearchTerm('');
+                    setCurrentPage(1);
                   }}
                 >
                   Clear filters
