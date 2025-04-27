@@ -7,7 +7,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL_USER;
 const API_BASE_URL_ADDRESS = import.meta.env.VITE_API_BASE_URL_ADDRESS;
 
 export default function ProfilePage() {
-   
+  
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)

@@ -3,8 +3,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { CheckCircle, Clock, ChevronLeft } from 'lucide-react';
 import Footer from '../components/Footer';
-import { toast } from 'sonner';
-const API_BASE_URL_ORDER = import.meta.env.VITE_API_BASE_URL_ORDER;
 
 export default function OrderDetails() {
   const { state } = useLocation();

@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import Footer from '../components/Footer';
 import { Button } from '../components/ui/Button';
 import { useEffect, useState } from 'react';
-
 import petgrooming from '../assets/petgrooming.jpg';
 import petboarding from '../assets/petboarding.png';
 import happypets from '../assets/happypets.webp';

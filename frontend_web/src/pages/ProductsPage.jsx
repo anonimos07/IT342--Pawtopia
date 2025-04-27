@@ -1,16 +1,8 @@
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { Button } from '../components/ui/Button';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '../components/ui/Breadcrumb';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"; // or "../components/ui/select"
 import { Filter, ChevronDown, Search } from 'lucide-react';
 
 import animation from '../assets/animation.gif';
@@ -196,25 +188,7 @@ export default function ProductsPage() {
                     />
                   </div>
 
-                  {/* <Select 
-                    value={sortOption}
-                    onValueChange={(value) => {
-                      console.log('Selection changed:', value);
-                      setSortOption(value);
-                    }}
-                    className="w-[180px]"
-                  >
-                    <SelectTrigger className="flex items-center justify-between p-2 w-full border rounded-md">
-                      <SelectValue placeholder="Sort by" />
-                      <ChevronDown className="h-4 w-4" />
-                    </SelectTrigger>
-                    <SelectContent className="z-50 bg-white shadow-lg rounded-md mt-1">
-                      <SelectItem value="featured">Featured</SelectItem>
-                      <SelectItem value="price-low">Price: Low to High</SelectItem>
-                      <SelectItem value="price-high">Price: High to Low</SelectItem>
-                      <SelectItem value="newest">Newest</SelectItem>
-                    </SelectContent>
-                  </Select> */}
+        
                 </div>
               </div>
 

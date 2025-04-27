@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { ArrowLeft, ShoppingBag } from "lucide-react";
-import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { Button } from "../components/ui/Button";
 import { toast } from 'sonner';
