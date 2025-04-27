@@ -323,7 +323,7 @@ export default function ProfilePage() {
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No appointments</h3>
                   <p className="text-gray-600 mb-4">You don't have any upcoming appointments.</p>
                   <Link
-                    to="/appointment"
+                    to="/services/appointment"
                     className="inline-block bg-primary text-white px-4 py-2 rounded-full font-medium hover:bg-primary/90"
                   >
                     Book Appointment
