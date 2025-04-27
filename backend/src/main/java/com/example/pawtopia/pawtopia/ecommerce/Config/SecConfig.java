@@ -53,6 +53,7 @@ public class SecConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(
+                                "/",
                                 "/users/signup",
                                 "/users/login",
                                 "/admin/login",
