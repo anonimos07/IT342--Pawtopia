@@ -10,6 +10,7 @@ const API_BASE_URL_USER_CART = import.meta.env.VITE_API_BASE_URL_CART;
 const API_BASE_URL_USER_CART_ITEM = import.meta.env.VITE_API_BASE_URL_CART_ITEM;
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL_USER;
 const API_BASE_URL_ORDER = import.meta.env.VITE_API_BASE_URL_ORDER;
+const API_BASE_URL_ADDRESS = import.meta.env.VITE_API_BASE_URL_ADDRESS;
 
 export default function CartPage() {
   const [authChecked, setAuthChecked] = useState(false);
@@ -54,7 +55,7 @@ export default function CartPage() {
           if (currentQuantity > availableQuantity) {
             try {
               await axios.put(
-                `http://localhost:8080/api/cartItem/systemUpdateCartItem/${item.cartItemId}`,
+                `${API_BASE_URL_USER_CART_ITEM}/systemUpdateCartItem/${item.cartItemId}`,
                 {
                   quantity: availableQuantity,
                   lastUpdated: new Date().toISOString()
@@ -93,7 +94,7 @@ export default function CartPage() {
       if (err.response?.status === 404) {
         try {
           await axios.post(
-            `http://localhost:8080/api/cart/postCartRecord`,
+            `${API_BASE_URL_USER_CART}/postCartRecord`,
             { userId: userId },
             { headers: { 'Authorization': `Bearer ${token}` } }
           );
@@ -137,7 +138,7 @@ export default function CartPage() {
       }
 
       await axios.put(
-        `http://localhost:8080/api/cartItem/updateCartItem/${itemId}`,
+        `${API_BASE_URL_USER_CART_ITEM}/updateCartItem/${itemId}`,
         {
           quantity: newQuantity,
           lastUpdated: new Date().toISOString()
@@ -228,7 +229,7 @@ export default function CartPage() {
     }
 
     try {
-      const userRes = await axios.get(`http://localhost:8080/adresses/get-users/${userId}`, {
+      const userRes = await axios.get(`${API_BASE_URL_ADDRESS}/get-users/${userId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 

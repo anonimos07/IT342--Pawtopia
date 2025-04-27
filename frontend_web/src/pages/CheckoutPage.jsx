@@ -6,6 +6,11 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { Button } from "../components/ui/Button";
 import { toast } from 'sonner';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL_USER; 
+const API_BASE_URL_ADDRESS = import.meta.env.VITE_API_BASE_URL_ADDRESS;
+const API_BASE_URL_USER_CART_ITEM = import.meta.env.VITE_API_BASE_URL_CART_ITEM;
+const API_BASE_URL_PAYMENT = import.meta.env.VITE_API_BASE_URL_PAYMENT;
+const API_BASE_URL_ORDER = import.meta.env.VITE_API_BASE_URL_ORDER;
 
 const CheckoutPage = () => {
   const [user, setUser] = useState(null);
@@ -63,12 +68,12 @@ const CheckoutPage = () => {
           return;
         }
 
-        const response = await axios.get(`http://localhost:8080/users/me`, {
+        const response = await axios.get(`${API_BASE_URL}/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setUser(response.data);
 
-        const addressResponse = await axios.get(`http://localhost:8080/adresses/get-users/${userId}`, {
+        const addressResponse = await axios.get(`${API_BASE_URL_ADDRESS}/get-users/${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!addressResponse.data || !addressResponse.data.region) {
@@ -141,7 +146,7 @@ const CheckoutPage = () => {
     try {
         // Step 1: Create the order
         const response = await axios.post(
-            "http://localhost:8080/api/order/postOrderRecord",
+            `${ API_BASE_URL_ORDER}/postOrderRecord`,
             orderData,
             { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -156,7 +161,7 @@ const CheckoutPage = () => {
         try {
             await Promise.all(
                 selectedItems.map((item) =>
-                    axios.delete(`http://localhost:8080/api/cartItem/deleteCartItem/${item.cartItemId}`, {
+                    axios.delete(`${API_BASE_URL_USER_CART_ITEM}/deleteCartItem/${item.cartItemId}`, {
                         headers: { Authorization: `Bearer ${token}` },
                     })
                 )
@@ -177,7 +182,7 @@ const CheckoutPage = () => {
                 console.log("Creating payment link for order:", orderId);
 
                 const paymentResponse = await axios.post(
-                  `http://localhost:8080/api/payment/create-payment`,
+                  `${API_BASE_URL_PAYMENT}/create-payment`,
                   {
                     totalPrice: orderSummary.total,
                     description: "A Great Way to Spend Money to your Pets!",
