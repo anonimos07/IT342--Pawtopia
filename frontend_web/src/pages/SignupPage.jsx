@@ -122,7 +122,7 @@ export default function SignupPage() {
           
   
           setTimeout(() => {
-            window.location.href = "/login";
+            navigate('/login');
           }, 2000);
         } else {
     
