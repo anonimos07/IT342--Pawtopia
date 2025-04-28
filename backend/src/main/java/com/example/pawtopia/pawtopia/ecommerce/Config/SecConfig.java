@@ -124,7 +124,7 @@ public class SecConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("https://it-342-pawtopia-snct-hh0d2ktqi-charles-projects-33b5c828.vercel.app")); // Frontend origin
+        configuration.setAllowedOrigins(Arrays.asList("https://it-342-pawtopia-snct-q08tkzyph-charles-projects-33b5c828.vercel.app/")); // Frontend origin
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         configuration.setExposedHeaders(Arrays.asList("Authorization"));
