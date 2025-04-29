@@ -14,18 +14,17 @@ import com.example.pawtopia.fragments.ServicesFragment
 import com.example.pawtopia.util.SessionManager
 
 class MainActivity : AppCompatActivity() {
+
     private lateinit var binding: ActivityMainBinding
     private lateinit var sessionManager: SessionManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Fix: Use inflate method directly from the binding class
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         sessionManager = SessionManager(this)
 
-        // Set up bottom navigation
         binding.bottomNavigation.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_home -> {
@@ -44,7 +43,7 @@ class MainActivity : AppCompatActivity() {
                     loadFragment(AboutFragment())
                     true
                 }
-                R.id.nav_profile -> {  // Add this if you want a profile tab
+                R.id.nav_profile -> {
                     if (sessionManager.isLoggedIn()) {
                         loadFragment(ProfileFragment())
                         true
@@ -57,7 +56,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Set up top navigation icons
         binding.tvLogo.setOnClickListener {
             binding.bottomNavigation.selectedItemId = R.id.nav_home
         }
@@ -79,37 +77,30 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.ivCart.setOnClickListener {
-            // Check if user is logged in before accessing cart
             if (sessionManager.isLoggedIn()) {
-                // TODO: Navigate to cart
-                Toast.makeText(this, "Cart functionality coming soon", Toast.LENGTH_SHORT).show()
+                CartActivity.start(this)
             } else {
-                // Show login required screen
                 LoginRequiredActivity.startForCart(this)
             }
         }
 
         binding.btnLogin.setOnClickListener {
             if (sessionManager.isLoggedIn()) {
-                // Show profile fragment when user is logged in
                 loadFragment(ProfileFragment())
             } else {
                 startActivity(Intent(this, LoginActivity::class.java))
             }
         }
 
-        // Set home as default fragment
         if (savedInstanceState == null) {
             binding.bottomNavigation.selectedItemId = R.id.nav_home
         }
 
-        // Update login button text if user is logged in
         updateLoginButtonState()
     }
 
     override fun onResume() {
         super.onResume()
-        // Update login button state when returning to the activity
         updateLoginButtonState()
     }
 
@@ -127,10 +118,6 @@ class MainActivity : AppCompatActivity() {
             .commit()
     }
 
-    /**
-     * Helper method to check if login is required for a feature
-     * This can be called from any fragment or activity
-     */
     fun checkLoginRequired(): Boolean {
         if (!sessionManager.isLoggedIn()) {
             LoginRequiredActivity.start(this)

@@ -55,6 +55,16 @@
             android:exported="false"
             android:theme="@style/Theme.Pawtopia" />
 
+        <activity
+            android:name=".CartActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Pawtopia" />
+
+        <activity
+            android:name=".CheckoutActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Pawtopia" />
+
     </application>
 
 </manifest>

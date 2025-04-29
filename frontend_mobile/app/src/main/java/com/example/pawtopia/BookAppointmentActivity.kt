@@ -19,6 +19,7 @@ import java.util.Calendar
 import java.util.Locale
 import com.example.pawtopia.util.Result
 
+
 class BookAppointmentActivity : AppCompatActivity() {
     private lateinit var binding: ActivityBookAppointmentBinding
     private lateinit var sessionManager: SessionManager
@@ -48,33 +49,6 @@ class BookAppointmentActivity : AppCompatActivity() {
             startActivity(Intent(this, LoginActivity::class.java))
             finish()
             return
-        }
-
-        // Set up navigation icons
-        binding.tvLogo.setOnClickListener {
-            finish()
-        }
-
-        binding.ivHome.setOnClickListener {
-            finish()
-        }
-
-        binding.ivCart.setOnClickListener {
-            if (sessionManager.isLoggedIn()) {
-                // TODO: Navigate to cart
-                Toast.makeText(this, "Cart functionality coming soon", Toast.LENGTH_SHORT).show()
-            } else {
-                LoginRequiredActivity.startForCart(this)
-            }
-        }
-
-        binding.ivPerson.setOnClickListener {
-            if (!sessionManager.isLoggedIn()) {
-                startActivity(Intent(this, LoginActivity::class.java))
-            } else {
-                // TODO: Navigate to profile
-                Toast.makeText(this, "Profile functionality coming soon", Toast.LENGTH_SHORT).show()
-            }
         }
 
         // Set up date picker

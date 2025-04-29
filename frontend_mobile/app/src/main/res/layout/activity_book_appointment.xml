@@ -4,88 +4,53 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/very_light_purple"
     tools:context=".BookAppointmentActivity">
 
-    <!-- Header -->
+    <!-- Header with Back Button -->
     <LinearLayout
         android:id="@+id/header"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_height="?attr/actionBarSize"
         android:background="@color/white"
+        android:elevation="4dp"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:padding="12dp"
+        android:paddingHorizontal="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
+        <ImageButton
+            android:id="@+id/btn_back"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="12dp"
+            android:src="@drawable/ic_back"
+            app:tint="@color/purple" />
+
         <TextView
-            android:id="@+id/tv_logo"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:drawableStart="@drawable/ic_paw_small"
-            android:drawablePadding="8dp"
-            android:text="Pawtopia"
-            android:textColor="@color/purple"
-            android:textSize="18sp"
-            android:textStyle="bold" />
-
-        <ImageView
-            android:id="@+id/iv_home"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
             android:layout_marginStart="8dp"
-            android:src="@drawable/ic_home"
-            app:tint="@color/dark_gray" />
-
-        <ImageView
-            android:id="@+id/iv_cart"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginStart="16dp"
-            android:src="@drawable/ic_cart"
-            app:tint="@color/dark_gray" />
-
-        <ImageView
-            android:id="@+id/iv_calendar"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginStart="16dp"
-            android:src="@drawable/ic_calendar"
-            app:tint="@color/dark_gray" />
-
-        <ImageView
-            android:id="@+id/iv_pets"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginStart="16dp"
-            android:src="@drawable/ic_pets"
-            app:tint="@color/dark_gray" />
-
-        <ImageView
-            android:id="@+id/iv_shopping"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginStart="16dp"
-            android:src="@drawable/ic_shopping"
-            app:tint="@color/dark_gray" />
-
-        <ImageView
-            android:id="@+id/iv_person"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginStart="16dp"
-            android:src="@drawable/ic_person"
-            app:tint="@color/dark_gray" />
+            android:text="Appointment"
+            android:textColor="@color/purple"
+            android:textSize="20sp"
+            android:textStyle="bold" />
     </LinearLayout>
 
     <!-- Title Section -->
     <LinearLayout
         android:id="@+id/title_section"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:background="@color/light_purple"
         android:orientation="vertical"
-        android:padding="16dp"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="20dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/header">
 
         <TextView
@@ -99,6 +64,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
             android:text="Professional care for your furry friends"
             android:textColor="@color/dark_gray"
             android:textSize="14sp" />
@@ -106,7 +72,7 @@
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="12dp"
             android:orientation="horizontal">
 
             <TextView
@@ -152,10 +118,14 @@
 
     <!-- Form Content -->
     <ScrollView
-        android:layout_width="match_parent"
+        android:id="@+id/scrollView"
+        android:layout_width="0dp"
         android:layout_height="0dp"
         android:fillViewport="true"
-        app:layout_constraintBottom_toTopOf="@id/footer"
+        android:scrollbars="none"
+        app:layout_constraintBottom_toTopOf="@id/divider"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/title_section">
 
         <androidx.cardview.widget.CardView
@@ -169,7 +139,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="20dp">
 
                 <!-- Contact Number -->
                 <TextView
@@ -177,7 +147,7 @@
                     android:layout_height="wrap_content"
                     android:text="Contact Number:"
                     android:textColor="@color/black"
-                    android:textSize="14sp" />
+                    android:textSize="16sp" />
 
                 <EditText
                     android:id="@+id/et_contact_number"
@@ -187,17 +157,17 @@
                     android:background="@drawable/edit_text_background"
                     android:hint="Enter your phone number"
                     android:inputType="phone"
-                    android:padding="12dp"
+                    android:padding="14dp"
                     android:textSize="14sp" />
 
                 <!-- Appointment Date -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="20dp"
                     android:text="Appointment Date:"
                     android:textColor="@color/black"
-                    android:textSize="14sp" />
+                    android:textSize="16sp" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -206,19 +176,19 @@
                     android:background="@drawable/edit_text_background"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:padding="12dp">
+                    android:padding="14dp">
 
                     <ImageView
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:src="@drawable/ic_calendar"
-                        app:tint="@color/dark_gray" />
+                        app:tint="@color/purple" />
 
                     <TextView
                         android:id="@+id/tv_date"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
+                        android:layout_marginStart="12dp"
                         android:hint="Select date"
                         android:textSize="14sp" />
                 </LinearLayout>
@@ -227,10 +197,10 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="20dp"
                     android:text="Appointment Time:"
                     android:textColor="@color/black"
-                    android:textSize="14sp" />
+                    android:textSize="16sp" />
 
                 <LinearLayout
                     android:id="@+id/layout_time"
@@ -240,19 +210,19 @@
                     android:background="@drawable/edit_text_background"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:padding="12dp">
+                    android:padding="14dp">
 
                     <ImageView
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:src="@drawable/ic_time"
-                        app:tint="@color/dark_gray" />
+                        app:tint="@color/purple" />
 
                     <TextView
                         android:id="@+id/tv_time"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
+                        android:layout_marginStart="12dp"
                         android:layout_weight="1"
                         android:hint="Select time"
                         android:textSize="14sp" />
@@ -268,10 +238,10 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="20dp"
                     android:text="Service Type:"
                     android:textColor="@color/black"
-                    android:textSize="14sp" />
+                    android:textSize="16sp" />
 
                 <RadioGroup
                     android:id="@+id/radioGroupService"
@@ -284,13 +254,20 @@
                         android:id="@+id/radio_grooming"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Grooming" />
+                        android:buttonTint="@color/purple"
+                        android:paddingStart="8dp"
+                        android:text="Grooming"
+                        android:textSize="16sp" />
 
                     <RadioButton
                         android:id="@+id/radio_boarding"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Boarding" />
+                        android:layout_marginTop="4dp"
+                        android:buttonTint="@color/purple"
+                        android:paddingStart="8dp"
+                        android:text="Boarding"
+                        android:textSize="16sp" />
                 </RadioGroup>
 
                 <!-- Price Selection -->
@@ -298,10 +275,10 @@
                     android:id="@+id/textPriceTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="20dp"
                     android:text="Price:"
                     android:textColor="@color/black"
-                    android:textSize="14sp"
+                    android:textSize="16sp"
                     android:visibility="gone" />
 
                 <RadioGroup
@@ -316,14 +293,20 @@
                         android:id="@+id/radio_500"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginEnd="16dp"
-                        android:text="500" />
+                        android:layout_marginEnd="24dp"
+                        android:buttonTint="@color/purple"
+                        android:paddingStart="8dp"
+                        android:text="₱500"
+                        android:textSize="16sp" />
 
                     <RadioButton
                         android:id="@+id/radio_1000"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="1000" />
+                        android:buttonTint="@color/purple"
+                        android:paddingStart="8dp"
+                        android:text="₱1000"
+                        android:textSize="16sp" />
                 </RadioGroup>
 
                 <!-- Book Button -->
@@ -332,16 +315,16 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="24dp"
+                    android:indeterminateTint="@color/purple"
                     android:visibility="gone" />
 
                 <Button
                     android:id="@+id/btn_book_appointment"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="24dp"
+                    android:layout_height="56dp"
+                    android:layout_marginTop="28dp"
                     android:background="@drawable/button_background"
-                    android:padding="12dp"
                     android:text="Book an Appointment"
                     android:textAllCaps="false"
                     android:textColor="@color/white"
@@ -350,16 +333,28 @@
         </androidx.cardview.widget.CardView>
     </ScrollView>
 
+    <!-- Divider -->
+    <View
+        android:id="@+id/divider"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:background="@color/light_gray"
+        app:layout_constraintBottom_toTopOf="@id/footer"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
     <!-- Footer -->
     <LinearLayout
         android:id="@+id/footer"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:background="@color/white"
         android:gravity="center"
         android:orientation="horizontal"
         android:padding="16dp"
-        app:layout_constraintBottom_toBottomOf="parent">
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
 
         <ImageView
             android:layout_width="24dp"
@@ -376,11 +371,5 @@
             android:textSize="16sp"
             android:textStyle="bold" />
     </LinearLayout>
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/light_gray"
-        app:layout_constraintBottom_toTopOf="@id/footer" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -9,10 +9,13 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.example.pawtopia.api.ApiClient
 import com.example.pawtopia.databinding.ActivityProductDetailBinding
 import com.example.pawtopia.databinding.ItemProductSimpleBinding
+import com.example.pawtopia.model.Cart
+import com.example.pawtopia.model.CartItem
 import com.example.pawtopia.model.Product
+import com.example.pawtopia.repository.CartRepository
+import com.example.pawtopia.util.Result
 import com.example.pawtopia.util.SessionManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,12 +24,13 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONArray
-import java.util.Collections
 import java.util.concurrent.TimeUnit
 
 class ProductDetailActivity : AppCompatActivity() {
+
     private lateinit var binding: ActivityProductDetailBinding
     private lateinit var sessionManager: SessionManager
+    private lateinit var cartRepository: CartRepository
     private var product: Product? = null
     private var quantity = 1
     private var maxQuantity = Int.MAX_VALUE // Will be set based on product stock
@@ -38,6 +42,7 @@ class ProductDetailActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         sessionManager = SessionManager(this)
+        cartRepository = CartRepository(sessionManager)
         product = intent.getSerializableExtra("product") as? Product
 
         if (product == null) {
@@ -56,7 +61,7 @@ class ProductDetailActivity : AppCompatActivity() {
         product?.let {
             binding.apply {
                 tvProductName.text = it.productName
-                tvProductPrice.text = "$${it.productPrice}"
+                tvProductPrice.text = "₱${it.productPrice}"
                 tvProductDescription.text = it.description
                 tvProductType.text = "Category: ${it.productType}"
                 tvQuantity.text = quantity.toString()
@@ -82,12 +87,7 @@ class ProductDetailActivity : AppCompatActivity() {
                         return@setOnClickListener
                     }
 
-                    // TODO: Implement add to cart functionality with quantity
-                    Toast.makeText(
-                        this,
-                        "${quantity} ${product.productName} added to cart",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    addToCart(product, quantity)
                 } else {
                     LoginRequiredActivity.startForAddToCart(this)
                 }
@@ -119,6 +119,61 @@ class ProductDetailActivity : AppCompatActivity() {
         }
     }
 
+    private fun addToCart(product: Product, quantity: Int) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val userId = sessionManager.getUserId()
+            val cartResult = cartRepository.getCartByUserId(userId)
+            withContext(Dispatchers.Main) {
+                when (cartResult) {
+                    is Result.Success -> {
+                        val cart = cartResult.data
+                        val cartItem = CartItem(
+                            cartItemId = 0, // Will be set by backend
+                            quantity = quantity,
+                            lastUpdated = null,
+                            cart = cart,
+                            product = product
+                        )
+                        addCartItem(cartItem)
+                    }
+
+                    is Result.Error -> {
+                        Toast.makeText(
+                            this@ProductDetailActivity,
+                            "Error accessing cart: ${cartResult.exception.message}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun addCartItem(cartItem: CartItem) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val result = cartRepository.addCartItem(cartItem)
+            withContext(Dispatchers.Main) {
+                when (result) {
+                    is Result.Success -> {
+                        Toast.makeText(
+                            this@ProductDetailActivity,
+                            "${quantity} ${cartItem.product.productName} added to cart",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        // Remove the CartActivity.start() line
+                    }
+                    is Result.Error -> {
+                        Toast.makeText(
+                            this@ProductDetailActivity,
+                            "Error adding to cart: ${result.exception.message}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }
+        }
+    }
+
     private fun loadAllProducts() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -131,7 +186,6 @@ class ProductDetailActivity : AppCompatActivity() {
                     .url("https://it342-pawtopia-10.onrender.com/api/product/getProduct")
                     .get()
 
-                // Only add authorization if logged in
                 sessionManager.getToken()?.let { token ->
                     requestBuilder.addHeader("Authorization", "Bearer $token")
                 }
@@ -185,7 +239,6 @@ class ProductDetailActivity : AppCompatActivity() {
     }
 
     private fun setupRelatedProducts() {
-        // Filter out current product and get random 5 products
         val relatedProducts = allProducts
             .filter { it.productID != product?.productID }
             .shuffled()
@@ -208,7 +261,10 @@ class ProductDetailActivity : AppCompatActivity() {
         inner class RelatedProductViewHolder(val binding: ItemProductSimpleBinding) :
             RecyclerView.ViewHolder(binding.root)
 
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RelatedProductViewHolder {
+        override fun onCreateViewHolder(
+            parent: ViewGroup,
+            viewType: Int
+        ): RelatedProductViewHolder {
             val binding = ItemProductSimpleBinding.inflate(
                 LayoutInflater.from(parent.context),
                 parent,
@@ -221,7 +277,7 @@ class ProductDetailActivity : AppCompatActivity() {
             val product = products[position]
             holder.binding.apply {
                 tvProductName.text = product.productName
-                tvProductPrice.text = "$${product.productPrice}"
+                tvProductPrice.text = "₱${product.productPrice}"
 
                 Glide.with(root.context)
                     .load(product.productImage)
