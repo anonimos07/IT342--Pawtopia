@@ -217,7 +217,7 @@ class BookAppointmentActivity : AppCompatActivity() {
         val time = SimpleDateFormat("hh:mm a", Locale.US).parse(binding.tvTime.text.toString())
 
         val appointmentRequest = AppointmentRequest(
-            userId = userId,  // Make sure this is included
+            userId = userId,
             email = userEmail,
             contactNo = contactNumber,
             date = date?.time,
@@ -227,12 +227,12 @@ class BookAppointmentActivity : AppCompatActivity() {
         )
 
         lifecycleScope.launch {
+            binding.progressBar.visibility = View.VISIBLE
             when (val result = appointmentRepository.bookAppointment(appointmentRequest)) {
                 is Result.Success -> {
-                    val appointment = result.data
                     Toast.makeText(
                         this@BookAppointmentActivity,
-                        "Appointment booked! ID: ${appointment.appointmentId}",
+                        "Appointment booked! ${result.data.message}",
                         Toast.LENGTH_SHORT
                     ).show()
                     finish()
@@ -245,6 +245,7 @@ class BookAppointmentActivity : AppCompatActivity() {
                     ).show()
                 }
             }
+            binding.progressBar.visibility = View.GONE
         }
     }
 }

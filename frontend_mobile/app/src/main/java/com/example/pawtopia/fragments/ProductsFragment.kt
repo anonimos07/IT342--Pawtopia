@@ -2,6 +2,8 @@ package com.example.pawtopia.fragments
 
 import android.content.Intent
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,17 +15,16 @@ import com.bumptech.glide.Glide
 import com.example.pawtopia.LoginRequiredActivity
 import com.example.pawtopia.ProductDetailActivity
 import com.example.pawtopia.R
-import com.example.pawtopia.api.ApiClient
 import com.example.pawtopia.databinding.FragmentProductsBinding
 import com.example.pawtopia.databinding.ItemProductBinding
 import com.example.pawtopia.model.Product
+import com.example.pawtopia.repository.ProductRepository
+import com.example.pawtopia.util.Result
 import com.example.pawtopia.util.SessionManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import retrofit2.Response
-import kotlin.jvm.java
 
 class ProductsFragment : Fragment() {
     private var _binding: FragmentProductsBinding? = null
@@ -32,6 +33,10 @@ class ProductsFragment : Fragment() {
     private lateinit var productAdapter: ProductAdapter
     private var currentPage = 1
     private var selectedType: String? = null
+    private var allProducts: List<Product> = emptyList()
+    private var filteredProducts: List<Product> = emptyList()
+
+    private val productRepository by lazy { ProductRepository(sessionManager) }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -48,13 +53,26 @@ class ProductsFragment : Fragment() {
         sessionManager = SessionManager(requireContext())
         setupRecyclerView()
         setupClickListeners()
+        setupSearch()
         loadProducts()
     }
 
     private fun setupRecyclerView() {
         productAdapter = ProductAdapter(emptyList(), sessionManager)
         binding.gridProducts.apply {
-            layoutManager = GridLayoutManager(requireContext(), 2)
+            // Center the products in the grid
+            val gridLayoutManager = GridLayoutManager(requireContext(), 2)
+            gridLayoutManager.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
+                override fun getSpanSize(position: Int): Int {
+                    // Make items span full width if there's only one item in the last row
+                    return if (productAdapter.itemCount % 2 != 0 && position == productAdapter.itemCount - 1) {
+                        2
+                    } else {
+                        1
+                    }
+                }
+            }
+            layoutManager = gridLayoutManager
             adapter = productAdapter
         }
     }
@@ -71,6 +89,18 @@ class ProductsFragment : Fragment() {
         binding.page4.setOnClickListener { updatePagination(4) }
     }
 
+    private fun setupSearch() {
+        binding.etSearch.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+            override fun afterTextChanged(s: Editable?) {
+                filterProducts(s.toString())
+            }
+        })
+    }
+
     private fun showFilterDialog() {
         val types = arrayOf("All", "Fur Clothing", "Toys", "Food", "Care Products")
         androidx.appcompat.app.AlertDialog.Builder(requireContext())
@@ -78,51 +108,56 @@ class ProductsFragment : Fragment() {
             .setItems(types) { _, which ->
                 selectedType = if (which == 0) null else types[which]
                 currentPage = 1
-                loadProducts()
+                filterProducts(binding.etSearch.text.toString())
             }
             .show()
     }
 
+    private fun filterProducts(searchQuery: String) {
+        filteredProducts = allProducts.filter { product ->
+            // Filter by type if selected
+            val matchesType = selectedType?.let {
+                product.productType.equals(it, ignoreCase = true)
+            } ?: true
+
+            // Filter by search query if not empty
+            val matchesSearch = searchQuery.isEmpty() ||
+                    product.productName.contains(searchQuery, ignoreCase = true) ||
+                    product.description.contains(searchQuery, ignoreCase = true)
+
+            matchesType && matchesSearch
+        }
+
+        updatePaginatedProducts()
+    }
+
     private fun loadProducts() {
         CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val apiService = ApiClient.createApiService(sessionManager)
-                val response: Response<List<Product>> = apiService.getProducts()
-
-                withContext(Dispatchers.Main) {
-                    if (response.isSuccessful) {
-                        val allProducts = response.body() ?: emptyList()
-                        val filteredProducts = if (selectedType != null) {
-                            allProducts.filter { it.productType == selectedType }
-                        } else {
-                            allProducts
-                        }
-
-                        // Paginate the results
-                        val startIndex = (currentPage - 1) * 8
-                        val endIndex = minOf(startIndex + 8, filteredProducts.size)
-                        val paginatedProducts = filteredProducts.subList(startIndex, endIndex)
-
-                        productAdapter.updateProducts(paginatedProducts)
-                        updatePaginationUI(filteredProducts.size)
-                    } else {
+            val result = productRepository.getProducts()
+            withContext(Dispatchers.Main) {
+                when (result) {
+                    is Result.Success -> {
+                        allProducts = result.data
+                        filterProducts(binding.etSearch.text.toString())
+                    }
+                    is Result.Error -> {
                         Toast.makeText(
                             requireContext(),
-                            "Failed to load products",
+                            "Error: ${result.exception.message}",
                             Toast.LENGTH_SHORT
                         ).show()
                     }
                 }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(
-                        requireContext(),
-                        "Error: ${e.message}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
             }
         }
+    }
+
+    private fun updatePaginatedProducts() {
+        val startIndex = (currentPage - 1) * 8
+        val endIndex = minOf(startIndex + 8, filteredProducts.size)
+        val paginatedProducts = filteredProducts.subList(startIndex, endIndex)
+        productAdapter.updateProducts(paginatedProducts)
+        updatePaginationUI(filteredProducts.size)
     }
 
     private fun updatePaginationUI(totalItems: Int) {
@@ -140,7 +175,7 @@ class ProductsFragment : Fragment() {
 
     private fun updatePagination(page: Int) {
         currentPage = page
-        loadProducts()
+        updatePaginatedProducts()
     }
 
     override fun onDestroyView() {
@@ -176,10 +211,15 @@ class ProductsFragment : Fragment() {
                     .into(ivProductImage)
 
                 btnAddToCart.setOnClickListener {
-                    val intent = Intent(root.context, ProductDetailActivity::class.java).apply {
-                        putExtra("product", product)
+                    if (sessionManager.isLoggedIn()) {
+                        val intent = Intent(root.context, ProductDetailActivity::class.java).apply {
+                            putExtra("product", product)
+                        }
+                        startActivity(intent)
+                    } else {
+                        val intent = Intent(root.context, LoginRequiredActivity::class.java)
+                        startActivity(intent)
                     }
-                    startActivity(intent)
                 }
             }
         }

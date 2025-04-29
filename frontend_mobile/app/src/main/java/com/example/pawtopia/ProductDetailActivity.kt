@@ -18,7 +18,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.json.JSONArray
 import java.util.Collections
+import java.util.concurrent.TimeUnit
 
 class ProductDetailActivity : AppCompatActivity() {
     private lateinit var binding: ActivityProductDetailBinding
@@ -118,20 +122,61 @@ class ProductDetailActivity : AppCompatActivity() {
     private fun loadAllProducts() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val apiService = ApiClient.createApiService(sessionManager)
-                val response = apiService.getProducts()
+                val client = OkHttpClient.Builder()
+                    .connectTimeout(30, TimeUnit.SECONDS)
+                    .readTimeout(30, TimeUnit.SECONDS)
+                    .build()
+
+                val requestBuilder = Request.Builder()
+                    .url("https://it342-pawtopia-10.onrender.com/api/product/getProduct")
+                    .get()
+
+                // Only add authorization if logged in
+                sessionManager.getToken()?.let { token ->
+                    requestBuilder.addHeader("Authorization", "Bearer $token")
+                }
+
+                val request = requestBuilder.build()
+
+                val response = client.newCall(request).execute()
+                val responseBody = response.body?.string()
 
                 withContext(Dispatchers.Main) {
-                    if (response.isSuccessful) {
-                        allProducts = response.body() ?: emptyList()
+                    if (response.isSuccessful && !responseBody.isNullOrEmpty()) {
+                        val jsonArray = JSONArray(responseBody)
+                        val productsList = mutableListOf<Product>()
+
+                        for (i in 0 until jsonArray.length()) {
+                            val jsonObject = jsonArray.getJSONObject(i)
+                            productsList.add(
+                                Product(
+                                    productID = jsonObject.getInt("productID"),
+                                    description = jsonObject.getString("description"),
+                                    productPrice = jsonObject.getDouble("productPrice"),
+                                    productName = jsonObject.getString("productName"),
+                                    productType = jsonObject.getString("productType"),
+                                    quantity = jsonObject.getInt("quantity"),
+                                    quantitySold = jsonObject.getInt("quantitySold"),
+                                    productImage = jsonObject.getString("productImage")
+                                )
+                            )
+                        }
+
+                        allProducts = productsList
                         setupRelatedProducts()
+                    } else {
+                        Toast.makeText(
+                            this@ProductDetailActivity,
+                            "Error loading related products",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(
                         this@ProductDetailActivity,
-                        "Error loading related products",
+                        "Error loading related products: ${e.message}",
                         Toast.LENGTH_SHORT
                     ).show()
                 }

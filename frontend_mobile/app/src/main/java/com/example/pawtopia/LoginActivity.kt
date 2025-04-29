@@ -98,7 +98,7 @@ class LoginActivity : AppCompatActivity() {
 
         // For emulator to connect to localhost (use your actual backend URL in production)
         val request = Request.Builder()
-            .url("http://10.0.2.2:8080/users/login") // Same base URL as signup
+            .url("https://it342-pawtopia-10.onrender.com/users/login") // Same base URL as signup
             .post(requestBody)
             .addHeader("Content-Type", "application/json")
             .build()
