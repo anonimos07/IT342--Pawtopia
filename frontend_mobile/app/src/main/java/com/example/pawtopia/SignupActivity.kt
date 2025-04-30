@@ -123,30 +123,29 @@ class SignupActivity : AppCompatActivity() {
         val email = binding.etEmail.text.toString().trim()
         val password = binding.etPassword.text.toString().trim()
 
-        // Create JSON request body matching your backend User entity
+        // Show loading state (animation)
+        binding.btnSignUp.text = "" // Clear button text temporarily
+        binding.btnSignUp.isEnabled = false
+        binding.signupProgressBar.visibility = View.VISIBLE
+
+        // Create JSON request body
         val jsonObject = JSONObject().apply {
             put("username", username)
             put("password", password)
             put("firstName", firstName)
             put("lastName", lastName)
             put("email", email)
-            put("role", "CUSTOMER") // Default role
+            put("role", "CUSTOMER")
             put("googleId", JSONObject.NULL)
             put("authProvider", JSONObject.NULL)
         }
 
         val requestBody = jsonObject.toString().toRequestBody(JSON_MEDIA_TYPE)
-
-        // For emulator to connect to localhost (use your actual backend URL in production)
         val request = Request.Builder()
-            .url("https://it342-pawtopia-10.onrender.com/users/signup") // Replace with your actual backend URL
+            .url("https://it342-pawtopia-10.onrender.com/users/signup")
             .post(requestBody)
             .addHeader("Content-Type", "application/json")
             .build()
-
-        // Show loading state
-        binding.btnSignUp.isEnabled = false
-        binding.progressBar.visibility = View.VISIBLE
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {
@@ -154,9 +153,10 @@ class SignupActivity : AppCompatActivity() {
                 val responseBody = response.body?.string()
 
                 withContext(Dispatchers.Main) {
-                    // Restore UI state
+                    // Hide loading state (animation)
+                    binding.btnSignUp.text = "Sign Up" // Restore button text
                     binding.btnSignUp.isEnabled = true
-                    binding.progressBar.visibility = View.GONE
+                    binding.signupProgressBar.visibility = View.GONE
 
                     if (response.isSuccessful) {
                         Toast.makeText(
@@ -164,7 +164,7 @@ class SignupActivity : AppCompatActivity() {
                             "Registration successful! Please login.",
                             Toast.LENGTH_LONG
                         ).show()
-                        finish() // Return to login screen
+                        finish()
                     } else {
                         val errorMessage = parseErrorMessage(responseBody)
                         Toast.makeText(
@@ -176,9 +176,10 @@ class SignupActivity : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    // Restore UI state
+                    // Hide loading state on error
+                    binding.btnSignUp.text = "Sign Up"
                     binding.btnSignUp.isEnabled = true
-                    binding.progressBar.visibility = View.GONE
+                    binding.signupProgressBar.visibility = View.GONE
 
                     Log.e(TAG, "Signup error: ${e.message}", e)
                     Toast.makeText(

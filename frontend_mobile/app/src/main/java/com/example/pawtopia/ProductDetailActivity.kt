@@ -162,6 +162,7 @@ class ProductDetailActivity : AppCompatActivity() {
                         ).show()
                         // Remove the CartActivity.start() line
                     }
+
                     is Result.Error -> {
                         Toast.makeText(
                             this@ProductDetailActivity,
@@ -259,7 +260,24 @@ class ProductDetailActivity : AppCompatActivity() {
     ) : RecyclerView.Adapter<RelatedProductsAdapter.RelatedProductViewHolder>() {
 
         inner class RelatedProductViewHolder(val binding: ItemProductSimpleBinding) :
-            RecyclerView.ViewHolder(binding.root)
+            RecyclerView.ViewHolder(binding.root) {
+
+            init {
+                binding.root.setOnClickListener {
+                    val position = adapterPosition
+                    if (position != RecyclerView.NO_POSITION) {
+                        val product = products[position]
+                        val intent = Intent(binding.root.context, ProductDetailActivity::class.java).apply {
+                            putExtra("product", product)
+                            if (!sessionManager.isLoggedIn()) {
+                                putExtra("show_login_prompt", true)
+                            }
+                        }
+                        binding.root.context.startActivity(intent)
+                    }
+                }
+            }
+        }
 
         override fun onCreateViewHolder(
             parent: ViewGroup,
@@ -283,13 +301,6 @@ class ProductDetailActivity : AppCompatActivity() {
                     .load(product.productImage)
                     .placeholder(R.drawable.placeholder_product)
                     .into(ivProductImage)
-
-                root.setOnClickListener {
-                    val intent = Intent(root.context, ProductDetailActivity::class.java).apply {
-                        putExtra("product", product)
-                    }
-                    startActivity(intent)
-                }
             }
         }
 

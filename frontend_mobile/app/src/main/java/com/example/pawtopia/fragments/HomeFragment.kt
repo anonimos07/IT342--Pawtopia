@@ -1,32 +1,31 @@
+// HomeFragment.kt
 package com.example.pawtopia.fragments
 
 import android.content.Intent
+import android.graphics.Rect
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.example.pawtopia.LoginActivity
 import com.example.pawtopia.LoginRequiredActivity
 import com.example.pawtopia.ProductDetailActivity
 import com.example.pawtopia.R
-import com.example.pawtopia.api.ApiClient
 import com.example.pawtopia.databinding.FragmentHomeBinding
 import com.example.pawtopia.databinding.ItemProductBinding
 import com.example.pawtopia.model.Product
 import com.example.pawtopia.util.SessionManager
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONArray
-import retrofit2.Response
 import java.util.concurrent.TimeUnit
 
 class HomeFragment : Fragment() {
@@ -58,6 +57,8 @@ class HomeFragment : Fragment() {
         binding.rvFeaturedProducts.apply {
             layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
             adapter = productAdapter
+            setHasFixedSize(true)
+            addItemDecoration(HorizontalSpacingItemDecoration(16))
         }
     }
 
@@ -100,60 +101,59 @@ class HomeFragment : Fragment() {
     }
 
     private fun loadFeaturedProducts() {
-        CoroutineScope(Dispatchers.IO).launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             try {
-                val client = OkHttpClient.Builder()
-                    .connectTimeout(30, TimeUnit.SECONDS)
-                    .readTimeout(30, TimeUnit.SECONDS)
-                    .build()
+                val response = withContext(Dispatchers.IO) {
+                    val client = OkHttpClient.Builder()
+                        .connectTimeout(30, TimeUnit.SECONDS)
+                        .readTimeout(30, TimeUnit.SECONDS)
+                        .build()
 
-                val requestBuilder = Request.Builder()
-                    .url("https://it342-pawtopia-10.onrender.com/api/product/getProduct")
-                    .get()
+                    val requestBuilder = Request.Builder()
+                        .url("https://it342-pawtopia-10.onrender.com/api/product/getProduct")
+                        .get()
 
-                // Only add authorization if logged in
-                sessionManager.getToken()?.let { token ->
-                    requestBuilder.addHeader("Authorization", "Bearer $token")
+                    sessionManager.getToken()?.let { token ->
+                        requestBuilder.addHeader("Authorization", "Bearer $token")
+                    }
+
+                    val request = requestBuilder.build()
+                    client.newCall(request).execute()
                 }
 
-                val request = requestBuilder.build()
+                if (!isAdded) return@launch
 
-                val response = client.newCall(request).execute()
                 val responseBody = response.body?.string()
+                if (response.isSuccessful && !responseBody.isNullOrEmpty()) {
+                    val jsonArray = JSONArray(responseBody)
+                    val products = mutableListOf<Product>()
 
-                withContext(Dispatchers.Main) {
-                    if (response.isSuccessful && !responseBody.isNullOrEmpty()) {
-                        val jsonArray = JSONArray(responseBody)
-                        val products = mutableListOf<Product>()
-
-                        for (i in 0 until jsonArray.length()) {
-                            val jsonObject = jsonArray.getJSONObject(i)
-                            products.add(
-                                Product(
-                                    productID = jsonObject.getInt("productID"),
-                                    description = jsonObject.getString("description"),
-                                    productPrice = jsonObject.getDouble("productPrice"),
-                                    productName = jsonObject.getString("productName"),
-                                    productType = jsonObject.getString("productType"),
-                                    quantity = jsonObject.getInt("quantity"),
-                                    quantitySold = jsonObject.getInt("quantitySold"),
-                                    productImage = jsonObject.getString("productImage")
-                                )
+                    for (i in 0 until jsonArray.length()) {
+                        val jsonObject = jsonArray.getJSONObject(i)
+                        products.add(
+                            Product(
+                                productID = jsonObject.getInt("productID"),
+                                description = jsonObject.getString("description"),
+                                productPrice = jsonObject.getDouble("productPrice"),
+                                productName = jsonObject.getString("productName"),
+                                productType = jsonObject.getString("productType"),
+                                quantity = jsonObject.getInt("quantity"),
+                                quantitySold = jsonObject.getInt("quantitySold"),
+                                productImage = jsonObject.getString("productImage")
                             )
-                        }
-
-                        // Take first 3 products as featured
-                        productAdapter.updateProducts(products.take(3))
-                    } else {
-                        Toast.makeText(
-                            requireContext(),
-                            "Failed to load products",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        )
                     }
+
+                    productAdapter.updateProducts(products.take(3))
+                } else if (isAdded) {
+                    Toast.makeText(
+                        requireContext(),
+                        "Failed to load products",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
+                if (isAdded) {
                     Toast.makeText(
                         requireContext(),
                         "Error: ${e.message}",
@@ -176,34 +176,45 @@ class HomeFragment : Fragment() {
 
         inner class ProductViewHolder(val binding: ItemProductBinding) : RecyclerView.ViewHolder(binding.root) {
             init {
-                binding.btnAddToCart.text = "View Details" // Change button text
+                binding.root.setOnClickListener {
+                    val position = adapterPosition
+                    if (position != RecyclerView.NO_POSITION) {
+                        val product = products[position]
+                        val intent = Intent(binding.root.context, ProductDetailActivity::class.java).apply {
+                            putExtra("product", product)
+                            if (!sessionManager.isLoggedIn()) {
+                                putExtra("show_login_prompt", true)
+                            }
+                        }
+                        binding.root.context.startActivity(intent)
+                    }
+                }
+            }
+
+            fun bind(product: Product) {
+                binding.apply {
+                    tvProductName.text = product.productName
+                    tvProductPrice.text = "₱${product.productPrice}"
+
+                    Glide.with(root.context)
+                        .load(product.productImage)
+                        .placeholder(R.drawable.placeholder_product)
+                        .into(ivProductImage)
+                }
             }
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ProductViewHolder {
-            val binding = ItemProductBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+            val binding = ItemProductBinding.inflate(
+                LayoutInflater.from(parent.context),
+                parent,
+                false
+            )
             return ProductViewHolder(binding)
         }
 
         override fun onBindViewHolder(holder: ProductViewHolder, position: Int) {
-            val product = products[position]
-            holder.binding.apply {
-                tvProductName.text = product.productName
-                tvProductPrice.text = "$${product.productPrice}"
-
-                Glide.with(root.context)
-                    .load(product.productImage)
-                    .placeholder(R.drawable.placeholder_product)
-                    .into(ivProductImage)
-
-                // In your ProductAdapter's onBindViewHolder:
-                btnAddToCart.setOnClickListener {
-                    val intent = Intent(root.context, ProductDetailActivity::class.java).apply {
-                        putExtra("product", product) // Make sure 'product' is not null here
-                    }
-                    startActivity(intent)
-                }
-            }
+            holder.bind(products[position])
         }
 
         override fun getItemCount() = products.size
@@ -211,6 +222,17 @@ class HomeFragment : Fragment() {
         fun updateProducts(newProducts: List<Product>) {
             products = newProducts
             notifyDataSetChanged()
+        }
+    }
+
+    class HorizontalSpacingItemDecoration(private val space: Int) : RecyclerView.ItemDecoration() {
+        override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
+            with(outRect) {
+                right = space
+                if (parent.getChildAdapterPosition(view) == 0) {
+                    left = space
+                }
+            }
         }
     }
 }
