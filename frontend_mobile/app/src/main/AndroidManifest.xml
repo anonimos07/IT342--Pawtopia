@@ -43,7 +43,7 @@
         <activity
             android:name=".BookAppointmentActivity"
             android:exported="false"
-            android:theme="@style/Theme.Pawtopia" />
+            android:theme="@style/ActivityAnimation"/>
 
         <activity
             android:name=".LoginRequiredActivity"

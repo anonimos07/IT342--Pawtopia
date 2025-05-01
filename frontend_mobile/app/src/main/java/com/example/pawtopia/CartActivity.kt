@@ -1,5 +1,6 @@
 package com.example.pawtopia
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -88,12 +89,16 @@ class CartActivity : AppCompatActivity() {
 
     private fun updateOrderSummary() {
         val decimalFormat = DecimalFormat("₱#,##0.00")
-        val subtotal = cartAdapter.getSelectedItems().sumOf { it.product.productPrice * it.quantity }
+        val selectedItems = cartAdapter.getSelectedItems()
+        val subtotal = selectedItems.sumOf { it.product.productPrice * it.quantity }
         val total = subtotal + SHIPPING_FEE
 
         binding.tvSubtotal.text = decimalFormat.format(subtotal)
         binding.tvShipping.text = decimalFormat.format(SHIPPING_FEE)
         binding.tvTotal.text = decimalFormat.format(total)
+
+        // Update checkout button state
+        binding.btnCheckout.isEnabled = selectedItems.isNotEmpty()
     }
 
     private fun setupClickListeners() {
@@ -102,11 +107,20 @@ class CartActivity : AppCompatActivity() {
         }
 
         binding.btnCheckout.setOnClickListener {
+            val selectedItems = cartAdapter.getSelectedItems()
+
+            if (selectedItems.isEmpty()) {
+                Toast.makeText(this, "Please select at least one item to checkout", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
             if (cartItems.isEmpty()) {
                 Toast.makeText(this, "Your cart is empty", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            CheckoutActivity.start(this)
+
+            // Pass only the selected items to CheckoutActivity
+            CheckoutActivity.start(this, selectedItems)
         }
     }
 
@@ -159,12 +173,15 @@ class CartActivity : AppCompatActivity() {
             }
         }
     }
-
     private inner class CartAdapter(
         private var cartItems: List<CartItem>,
         private val onQuantityChanged: (Int, Int) -> Unit,
         private val onRemoveClick: (Int) -> Unit
     ) : RecyclerView.Adapter<CartAdapter.CartViewHolder>() {
+
+        // Get context from parent
+        private val context: Context
+            get() = binding.root.context
 
         private val selectedItems = mutableSetOf<Int>()
 
@@ -185,8 +202,7 @@ class CartActivity : AppCompatActivity() {
             holder.binding.apply {
                 tvProductName.text = cartItem.product.productName
                 tvQuantity.text = cartItem.quantity.toString()
-                tvPrice.text =
-                    "₱${DecimalFormat("#,##0.00").format(cartItem.product.productPrice * cartItem.quantity)}"
+                tvPrice.text = "₱${DecimalFormat("#,##0.00").format(cartItem.product.productPrice * cartItem.quantity)}"
 
                 cbSelect.isChecked = selectedItems.contains(cartItem.cartItemId)
                 cbSelect.setOnCheckedChangeListener { _, isChecked ->
@@ -196,6 +212,7 @@ class CartActivity : AppCompatActivity() {
                         selectedItems.remove(cartItem.cartItemId)
                     }
                     updateOrderSummary()
+                    updateCheckoutButton()
                 }
 
                 Glide.with(root.context)
@@ -204,6 +221,8 @@ class CartActivity : AppCompatActivity() {
                     .into(ivProductImage)
 
                 btnRemove.setOnClickListener {
+                    // Remove from selected items if it was selected
+                    selectedItems.remove(cartItem.cartItemId)
                     onRemoveClick(cartItem.cartItemId)
                 }
 
@@ -230,6 +249,11 @@ class CartActivity : AppCompatActivity() {
 
         fun getSelectedItems(): List<CartItem> {
             return cartItems.filter { selectedItems.contains(it.cartItemId) }
+        }
+
+        private fun updateCheckoutButton() {
+            val activity = context as? CartActivity
+            activity?.binding?.btnCheckout?.isEnabled = selectedItems.isNotEmpty()
         }
     }
 }

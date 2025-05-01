@@ -82,13 +82,22 @@ class MainActivity : AppCompatActivity() {
             binding.bottomNavigation.selectedItemId = R.id.nav_home
         }
 
-        // Cart icon click
-        binding.ivCart.setOnClickListener {
+        // Cart container click
+        binding.cartContainer.setOnClickListener {
             if (sessionManager.isLoggedIn()) {
                 startActivity(Intent(this, CartActivity::class.java))
             } else {
                 LoginRequiredActivity.startForCart(this)
             }
+            // Change color temporarily when clicked
+            binding.ivCart.setColorFilter(ContextCompat.getColor(this, R.color.purple))
+            binding.tvCart.setTextColor(ContextCompat.getColor(this, R.color.purple))
+
+            // Reset color after a short delay (optional)
+            binding.cartContainer.postDelayed({
+                binding.ivCart.setColorFilter(ContextCompat.getColor(this, R.color.dark_gray))
+                binding.tvCart.setTextColor(ContextCompat.getColor(this, R.color.dark_gray))
+            }, 200)
         }
     }
 

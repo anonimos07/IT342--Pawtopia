@@ -1,5 +1,6 @@
 package com.example.pawtopia
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -11,7 +12,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.pawtopia.databinding.ActivityCheckoutBinding
-import com.example.pawtopia.databinding.ItemCartBinding
+import com.example.pawtopia.databinding.ItemOrderSummaryBinding  // Changed from ItemCartBinding
 import com.example.pawtopia.fragments.EditProfileFragment
 import com.example.pawtopia.model.CartItem
 import com.example.pawtopia.model.Order
@@ -31,17 +32,20 @@ import java.text.DecimalFormat
 class CheckoutActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityCheckoutBinding
-    private lateinit var sessionManager: SessionManager
-    private lateinit var cartRepository: CartRepository
-    private lateinit var userRepository: UserRepository
-    private lateinit var orderRepository: OrderRepository
+    private val sessionManager by lazy { SessionManager(this) }
+    private val cartRepository by lazy { CartRepository(sessionManager) }
+    private val userRepository by lazy { UserRepository(sessionManager) }
+    private val orderRepository by lazy { OrderRepository(sessionManager) }
+
     private var cartItems: List<CartItem> = emptyList()
     private val SHIPPING_FEE = 30.0
     private var hasAddress = false
+    private var selectedPaymentMethod = "Cash on Delivery"
 
     companion object {
-        fun start(context: android.content.Context) {
+        fun start(context: Context, selectedItems: List<CartItem>) {
             val intent = Intent(context, CheckoutActivity::class.java)
+            intent.putExtra("selected_items", ArrayList(selectedItems))
             context.startActivity(intent)
         }
     }
@@ -51,21 +55,21 @@ class CheckoutActivity : AppCompatActivity() {
         binding = ActivityCheckoutBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        sessionManager = SessionManager(this)
-        cartRepository = CartRepository(sessionManager)
-        userRepository = UserRepository(sessionManager)
-        orderRepository = OrderRepository(sessionManager)
+        // Initialize cart items from intent
+        @Suppress("UNCHECKED_CAST")
+        cartItems = (intent.getSerializableExtra("selected_items") as? ArrayList<CartItem>) ?: emptyList()
 
         setupRecyclerView()
         setupClickListeners()
-        loadCartItems()
-        loadUserAddress()
+        loadUserAddress() // Now safe to call
+        updateOrderSummary()
     }
 
     private fun setupRecyclerView() {
         binding.rvOrderItems.apply {
             layoutManager = LinearLayoutManager(this@CheckoutActivity)
-            adapter = OrderItemAdapter(emptyList())
+            adapter = OrderItemAdapter(cartItems) // Initialize with cartItems
+            setHasFixedSize(true) // Improve performance if items have fixed size
         }
     }
 
@@ -90,34 +94,20 @@ class CheckoutActivity : AppCompatActivity() {
 
             placeOrder()
         }
+
+        // Handle payment method selection
+        binding.radioGroupPayment.setOnCheckedChangeListener { group, checkedId ->
+            selectedPaymentMethod = when (checkedId) {
+                R.id.radio_cod -> "Cash on Delivery"
+                R.id.radio_gcash -> "GCash"
+                else -> "Cash on Delivery"
+            }
+        }
     }
 
     override fun onResume() {
         super.onResume()
         loadUserAddress()
-    }
-
-    private fun loadCartItems() {
-        CoroutineScope(Dispatchers.IO).launch {
-            val userId = sessionManager.getUserId()
-            val result = cartRepository.getCartByUserId(userId)
-            withContext(Dispatchers.Main) {
-                when (result) {
-                    is Result.Success -> {
-                        cartItems = result.data.cartItems ?: emptyList()
-                        (binding.rvOrderItems.adapter as OrderItemAdapter).updateOrderItems(cartItems)
-                        updateOrderSummary()
-                    }
-                    is Result.Error -> {
-                        Toast.makeText(
-                            this@CheckoutActivity,
-                            "Error loading cart: ${result.exception.message}",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                }
-            }
-        }
     }
 
     private fun loadUserAddress() {
@@ -174,7 +164,7 @@ class CheckoutActivity : AppCompatActivity() {
         val order = Order(
             orderID = 0,
             orderDate = "",
-            paymentMethod = "Cash on Delivery",
+            paymentMethod = selectedPaymentMethod,  // Use the selected payment method
             paymentStatus = "Pending",
             orderStatus = "Pending",
             totalPrice = totalPrice,
@@ -183,13 +173,10 @@ class CheckoutActivity : AppCompatActivity() {
         )
 
         CoroutineScope(Dispatchers.IO).launch {
-            // 1. First, place the order
             val orderResult = orderRepository.placeOrder(order)
-
             withContext(Dispatchers.Main) {
                 when (orderResult) {
                     is Result.Success -> {
-                        // 2. If order succeeds, set all cart item quantities to 0
                         CoroutineScope(Dispatchers.IO).launch {
                             var allUpdatesSuccessful = true
                             val errorMessages = mutableListOf<String>()
@@ -197,7 +184,7 @@ class CheckoutActivity : AppCompatActivity() {
                             cartItems.forEach { cartItem ->
                                 val updateResult = cartRepository.updateCartItemQuantity(
                                     cartItem.cartItemId,
-                                    0 // Set quantity to 0
+                                    0
                                 )
                                 if (updateResult is Result.Error) {
                                     allUpdatesSuccessful = false
@@ -239,10 +226,15 @@ class CheckoutActivity : AppCompatActivity() {
         private var orderItems: List<CartItem>
     ) : RecyclerView.Adapter<OrderItemAdapter.OrderItemViewHolder>() {
 
-        inner class OrderItemViewHolder(val binding: ItemCartBinding) : RecyclerView.ViewHolder(binding.root)
+        inner class OrderItemViewHolder(val binding: ItemOrderSummaryBinding) :
+            RecyclerView.ViewHolder(binding.root)
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): OrderItemViewHolder {
-            val binding = ItemCartBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+            val binding = ItemOrderSummaryBinding.inflate(
+                LayoutInflater.from(parent.context),
+                parent,
+                false
+            )
             return OrderItemViewHolder(binding)
         }
 
@@ -253,12 +245,12 @@ class CheckoutActivity : AppCompatActivity() {
                 tvQuantity.text = "Qty: ${orderItem.quantity}"
                 tvPrice.text = DecimalFormat("₱#,##0.00").format(orderItem.product.productPrice * orderItem.quantity)
 
+                // Load image with Glide
                 Glide.with(root.context)
                     .load(orderItem.product.productImage)
                     .placeholder(R.drawable.placeholder_product)
+                    .error(R.drawable.placeholder_product)
                     .into(ivProductImage)
-
-                btnRemove.visibility = View.GONE
             }
         }
 
@@ -269,4 +261,5 @@ class CheckoutActivity : AppCompatActivity() {
             notifyDataSetChanged()
         }
     }
+
 }

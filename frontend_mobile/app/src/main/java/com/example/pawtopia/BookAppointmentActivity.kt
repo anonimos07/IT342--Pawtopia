@@ -40,6 +40,14 @@ class BookAppointmentActivity : AppCompatActivity() {
         binding = ActivityBookAppointmentBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        binding.btnBack.setOnClickListener {
+            if (supportFragmentManager.backStackEntryCount > 0) {
+                supportFragmentManager.popBackStack()
+            } else {
+                finish()
+            }
+        }
+
         sessionManager = SessionManager(this)
         appointmentRepository = AppointmentRepository(sessionManager)
 
