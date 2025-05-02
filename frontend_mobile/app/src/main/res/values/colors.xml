@@ -20,4 +20,8 @@
     <color name="gray_600">#757575</color>
     <color name="blue">#2196F3</color>
     <color name="light_blue">#E3F2FD</color>
+
+    <color name="primary">#6200EE</color>
+    <color name="background">#FAFAFA</color>
+    <color name="divider">#E0E0E0</color>
 </resources>

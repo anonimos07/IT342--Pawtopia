@@ -154,7 +154,7 @@ class CheckoutActivity : AppCompatActivity() {
                 price = cartItem.product.productPrice,
                 quantity = cartItem.quantity,
                 productId = cartItem.product.productID.toString(),
-                isRated = false,
+                isRated = false, // Consider removing if not used in backend
                 order = null
             )
         }
@@ -164,12 +164,24 @@ class CheckoutActivity : AppCompatActivity() {
         val order = Order(
             orderID = 0,
             orderDate = "",
-            paymentMethod = selectedPaymentMethod,  // Use the selected payment method
-            paymentStatus = "Pending",
-            orderStatus = "Pending",
+            paymentMethod = selectedPaymentMethod,
+            paymentStatus = "PENDING", // Match frontend
+            orderStatus = "To Receive", // Match frontend
             totalPrice = totalPrice,
             orderItems = orderItems,
-            user = User(userId = sessionManager.getUserId(), username = "", password = "", firstName = "", lastName = "", email = "", role = "", googleId = null, authProvider = null, address = null, cart = null)
+            user = User(
+                userId = sessionManager.getUserId(),
+                username = sessionManager.getUsername() ?: "", // Add username
+                password = "",
+                firstName = "",
+                lastName = "",
+                email = sessionManager.getEmail() ?: "",
+                role = "",
+                googleId = null,
+                authProvider = null,
+                address = null,
+                cart = null
+            )
         )
 
         CoroutineScope(Dispatchers.IO).launch {
@@ -177,38 +189,8 @@ class CheckoutActivity : AppCompatActivity() {
             withContext(Dispatchers.Main) {
                 when (orderResult) {
                     is Result.Success -> {
-                        CoroutineScope(Dispatchers.IO).launch {
-                            var allUpdatesSuccessful = true
-                            val errorMessages = mutableListOf<String>()
-
-                            cartItems.forEach { cartItem ->
-                                val updateResult = cartRepository.updateCartItemQuantity(
-                                    cartItem.cartItemId,
-                                    0
-                                )
-                                if (updateResult is Result.Error) {
-                                    allUpdatesSuccessful = false
-                                    errorMessages.add("Failed to update item ${cartItem.product.productName}")
-                                }
-                            }
-
-                            withContext(Dispatchers.Main) {
-                                if (allUpdatesSuccessful) {
-                                    Toast.makeText(
-                                        this@CheckoutActivity,
-                                        "Order placed successfully! Cart cleared.",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                    finish()
-                                } else {
-                                    Toast.makeText(
-                                        this@CheckoutActivity,
-                                        "Order placed, but some items couldn't be cleared: ${errorMessages.joinToString()}",
-                                        Toast.LENGTH_LONG
-                                    ).show()
-                                }
-                            }
-                        }
+                        // Enhanced cart clearance with better feedback
+                        clearCartItemsAfterOrder(orderResult.data.orderID)
                     }
                     is Result.Error -> {
                         Toast.makeText(
@@ -217,6 +199,53 @@ class CheckoutActivity : AppCompatActivity() {
                             Toast.LENGTH_SHORT
                         ).show()
                     }
+                }
+            }
+        }
+    }
+
+    private fun clearCartItemsAfterOrder(orderId: Int) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                // Delete all cart items for this user
+                val userId = sessionManager.getUserId()
+                val cartResult = cartRepository.getCartByUserId(userId)
+
+                if (cartResult is Result.Success) {
+                    val cartItemsToRemove = cartResult.data.cartItems ?: emptyList()
+
+                    // Delete each cart item
+                    cartItemsToRemove.forEach { cartItem ->
+                        cartRepository.deleteCartItem(cartItem.cartItemId)
+                    }
+
+                    withContext(Dispatchers.Main) {
+                        // Navigate to order confirmation
+                        OrderConfirmationActivity.start(
+                            this@CheckoutActivity,
+                            orderId,
+                            "Order placed successfully! Cart has been cleared."
+                        )
+                        finish()
+                    }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        OrderConfirmationActivity.start(
+                            this@CheckoutActivity,
+                            orderId,
+                            "Order placed, but couldn't clear cart: ${(cartResult as Result.Error).exception.message}"
+                        )
+                        finish()
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    OrderConfirmationActivity.start(
+                        this@CheckoutActivity,
+                        orderId,
+                        "Order placed, but encountered error clearing cart: ${e.message}"
+                    )
+                    finish()
                 }
             }
         }

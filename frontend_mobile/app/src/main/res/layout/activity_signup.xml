@@ -12,6 +12,20 @@
         android:layout_height="wrap_content"
         android:padding="24dp">
 
+        <!-- Back Button - Add this before the ivPawIcon -->
+        <ImageView
+            android:id="@+id/ivBackButton"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginStart="16dp"
+            android:src="@drawable/ic_back"
+            android:contentDescription="Back button"
+            app:layout_constraintBottom_toBottomOf="@id/ivPawIcon"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@id/ivPawIcon"
+            app:tint="@color/purple" />
+
+        <!-- Keep the existing ivPawIcon exactly as is -->
         <ImageView
             android:id="@+id/ivPawIcon"
             android:layout_width="48dp"

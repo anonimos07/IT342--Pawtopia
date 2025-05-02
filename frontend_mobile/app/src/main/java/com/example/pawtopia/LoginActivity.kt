@@ -38,6 +38,12 @@ class LoginActivity : AppCompatActivity() {
         sessionManager = SessionManager(this)
         redirectAction = intent.getStringExtra(LoginRequiredActivity.EXTRA_REDIRECT_ACTION) ?: ""
 
+        binding.ivBackButton.setOnClickListener {
+            startActivity(Intent(this, MainActivity::class.java))
+            finish()
+        }
+
+
         if (sessionManager.isLoggedIn()) {
             navigateToMainActivity()
             return

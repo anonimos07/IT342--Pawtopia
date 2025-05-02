@@ -29,7 +29,13 @@ class OrderRepository(private val sessionManager: SessionManager) {
 
     suspend fun placeOrder(order: Order): Result<Order> {
         return try {
-            val dateFormat = SimpleDateFormat("yyyy-MM-dd")
+            // Create simplified user JSON object
+            val userJson = JSONObject().apply {
+                put("userId", order.user?.userId)
+                put("username", order.user?.username ?: "")
+            }
+
+            // Prepare order items array
             val orderItemsJson = JSONArray()
             order.orderItems?.forEach { orderItem ->
                 val orderItemJson = JSONObject().apply {
@@ -38,20 +44,23 @@ class OrderRepository(private val sessionManager: SessionManager) {
                     put("price", orderItem.price)
                     put("quantity", orderItem.quantity)
                     put("productId", orderItem.productId)
-                    put("isRated", orderItem.isRated)
+                    // Removed isRated as it's not in the frontend implementation
                 }
                 orderItemsJson.put(orderItemJson)
             }
 
+            // Build the complete order JSON
             val jsonObject = JSONObject().apply {
-                put("orderDate", dateFormat.format(Date()))
+                put("orderDate", SimpleDateFormat("yyyy-MM-dd").format(Date()))
                 put("paymentMethod", order.paymentMethod)
-                put("paymentStatus", order.paymentStatus)
-                put("orderStatus", order.orderStatus)
+                put("paymentStatus", "PENDING")  // Matches frontend capitalization
+                put("orderStatus", "To Receive") // Matches frontend status
                 put("totalPrice", order.totalPrice)
                 put("orderItems", orderItemsJson)
-                put("user", JSONObject().apply { put("userId", order.user?.userId) })
+                put("user", userJson) // Simplified user object
             }
+
+            Log.d("OrderRepository", "Request payload: ${jsonObject.toString()}")
 
             val requestBody = jsonObject.toString().toRequestBody(JSON_MEDIA_TYPE)
 
@@ -59,6 +68,56 @@ class OrderRepository(private val sessionManager: SessionManager) {
                 .url("https://it342-pawtopia-10.onrender.com/api/order/postOrderRecord")
                 .post(requestBody)
                 .addHeader("Content-Type", "application/json")
+                .addHeader("Authorization", "Bearer ${sessionManager.getToken()}")
+                .build()
+
+            val response = withContext(Dispatchers.IO) {
+                client.newCall(request).execute()
+            }
+
+            // Enhanced response handling
+            if (response.isSuccessful) {
+                val responseBody = response.body?.string()
+                Log.d("OrderRepository", "Success response: $responseBody")
+
+                if (!responseBody.isNullOrEmpty()) {
+                    try {
+                        val jsonResponse = JSONObject(responseBody)
+                        Result.Success(
+                            Order(
+                                orderID = jsonResponse.getInt("orderID"),
+                                orderDate = jsonResponse.getString("orderDate"),
+                                paymentMethod = jsonResponse.getString("paymentMethod"),
+                                paymentStatus = jsonResponse.getString("paymentStatus"),
+                                orderStatus = jsonResponse.getString("orderStatus"),
+                                totalPrice = jsonResponse.getDouble("totalPrice"),
+                                orderItems = order.orderItems,
+                                user = order.user
+                            )
+                        )
+                    } catch (e: Exception) {
+                        Log.e("OrderRepository", "Error parsing response", e)
+                        Result.Error(Exception("Error parsing order response: ${e.message}"))
+                    }
+                } else {
+                    Result.Error(Exception("Empty response body"))
+                }
+            } else {
+                val errorBody = response.body?.string()
+                Log.e("OrderRepository", "Error ${response.code}: $errorBody")
+                Result.Error(Exception("Failed to place order: ${response.code} - $errorBody"))
+            }
+        } catch (e: Exception) {
+            Log.e("OrderRepository", "Error placing order", e)
+            Result.Error(e)
+        }
+    }
+
+    suspend fun getOrderById(orderId: Int): Result<Order> {
+        return try {
+            val request = Request.Builder()
+                .url("https://it342-pawtopia-10.onrender.com/api/order/getOrderDetails/$orderId") // Changed endpoint
+                .get()
                 .addHeader("Authorization", "Bearer ${sessionManager.getToken()}")
                 .build()
 
@@ -78,19 +137,39 @@ class OrderRepository(private val sessionManager: SessionManager) {
                             paymentStatus = jsonResponse.getString("paymentStatus"),
                             orderStatus = jsonResponse.getString("orderStatus"),
                             totalPrice = jsonResponse.getDouble("totalPrice"),
-                            orderItems = order.orderItems,
-                            user = order.user
+                            orderItems = parseOrderItems(jsonResponse.getJSONArray("orderItems")),
+                            user = null // Not needed for confirmation
                         )
                     )
                 } else {
                     Result.Error(Exception("Empty response body"))
                 }
             } else {
-                Result.Error(Exception("Failed to place order: ${response.code}"))
+                Result.Error(Exception("Failed to get order: ${response.code}"))
             }
         } catch (e: Exception) {
-            Log.e("OrderRepository", "Error placing order", e)
+            Log.e("OrderRepository", "Error getting order", e)
             Result.Error(e)
         }
+    }
+
+    private fun parseOrderItems(orderItemsJson: JSONArray): List<OrderItem> {
+        val orderItems = mutableListOf<OrderItem>()
+        for (i in 0 until orderItemsJson.length()) {
+            val itemJson = orderItemsJson.getJSONObject(i)
+            orderItems.add(
+                OrderItem(
+                    orderItemID = itemJson.getInt("orderItemID"),
+                    orderItemName = itemJson.getString("orderItemName"),
+                    orderItemImage = itemJson.getString("orderItemImage"),
+                    price = itemJson.getDouble("price"),
+                    quantity = itemJson.getInt("quantity"),
+                    productId = itemJson.getString("productId"),
+                    isRated = itemJson.optBoolean("isRated", false),
+                    order = null
+                )
+            )
+        }
+        return orderItems
     }
 }

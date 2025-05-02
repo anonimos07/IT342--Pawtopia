@@ -13,4 +13,13 @@
     <string name="street">Street/Building/House No.</string>
     <string name="save_address">Save Address</string>
     <string name="back">Back</string>
+    <string name="order_date">Order Date:</string>
+    <string name="payment_method">Payment Method:</string>
+    <string name="payment_status">Payment Status:</string>
+    <string name="order_status">Order Status:</string>
+    <string name="items_ordered">Items Ordered</string>
+    <string name="order_details">Order Details</string>
+    <string name="back_to_home">Back to Home</string>
+    <string name="view_my_orders">View My Orders</string>
+    <string name="order_confirmed">Order Confirmed</string>
 </resources>
