@@ -70,12 +70,14 @@ public class SecConfig {
                         .requestMatchers(
                                 "/users/user/{id}",  // Keep this for admin use
                                 "/appointments/postAppointment",
+                                "/appointments/byUserEmail{email}",
                                 "/adresses/get-users/{userId}",
                                 "/adresses/del-users/{userId}",
                                 "/api/cartItem/**",
                                 "/api/cart/**",
                                 "/api/order/postOrderRecord",
                                 "/api/order/test",
+                                "/api/order/getOrderDetails/{orderID}",
                                 "/api/order/putOrderDetails",
                                 "/api/order/deleteOrderDetails/{id}",
                                 "/api/orderItem/test",
@@ -83,7 +85,8 @@ public class SecConfig {
                                 "/api/orderItem/putOrderItemDetails",
                                 "/api/order/getAllOrdersByUserId",
                                 "/api/payment/create-payment-link/{orderId}",
-                                "/api/payment/verify/{orderId}"
+                                "/api/payment/verify/{orderId}",
+                                "/api/review/**"
 
                         ).hasRole("CUSTOMER")
                         // Admin-specific endpoints
