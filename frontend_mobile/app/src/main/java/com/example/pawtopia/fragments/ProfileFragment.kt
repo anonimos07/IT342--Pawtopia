@@ -19,6 +19,7 @@ import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.example.pawtopia.LoginActivity
+import com.example.pawtopia.OrdersActivity
 import com.example.pawtopia.R
 import com.example.pawtopia.databinding.FragmentProfileBinding
 import com.example.pawtopia.util.SessionManager
@@ -73,7 +74,8 @@ class ProfileFragment : Fragment() {
             showLoading(binding.progressOrders, binding.btnOrders, true)
             binding.root.postDelayed({
                 showLoading(binding.progressOrders, binding.btnOrders, false)
-                // Handle orders action
+                val intent = Intent(requireContext(), OrdersActivity::class.java)
+                startActivity(intent)
             }, 1500)
         }
 

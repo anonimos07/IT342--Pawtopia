@@ -58,7 +58,7 @@ class OrderConfirmationActivity : AppCompatActivity() {
         binding.tvStatusMessage.text = message
 
         setupClickListeners()
-        loadOrderDetails()
+        // loadOrderDetails()
     }
 
     private fun setupClickListeners() {
@@ -70,26 +70,31 @@ class OrderConfirmationActivity : AppCompatActivity() {
             startActivity(intent)
             finish()
         }
-    }
 
-    private fun loadOrderDetails() {
-        CoroutineScope(Dispatchers.IO).launch {
-            val result = orderRepository.getOrderById(orderId)
-            withContext(Dispatchers.Main) {
-                when (result) {
-                    is Result.Success -> displayOrderDetails(result.data)
-                    is Result.Error -> {
-                        binding.tvStatusMessage.text = "Error loading order details: ${result.exception.message}"
-                        Toast.makeText(
-                            this@OrderConfirmationActivity,
-                            "Error loading order details",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                }
-            }
+        binding.btnViewOrders.setOnClickListener {
+            OrdersActivity.start(this)
+            finish()
         }
     }
+
+//    private fun loadOrderDetails() {
+//        CoroutineScope(Dispatchers.IO).launch {
+//            val result = orderRepository.getOrderById(orderId)
+//            withContext(Dispatchers.Main) {
+//                when (result) {
+//                    is Result.Success -> displayOrderDetails(result.data)
+//                    is Result.Error -> {
+//                        binding.tvStatusMessage.text = "Error loading order details: ${result.exception.message}"
+//                        Toast.makeText(
+//                            this@OrderConfirmationActivity,
+//                            "Error loading order details",
+//                            Toast.LENGTH_SHORT
+//                        ).show()
+//                    }
+//                }
+//            }
+//        }
+//    }
 
     private fun displayOrderDetails(order: Order) {
         val decimalFormat = DecimalFormat("₱#,##0.00")

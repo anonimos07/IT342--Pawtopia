@@ -113,10 +113,10 @@ class OrderRepository(private val sessionManager: SessionManager) {
         }
     }
 
-    suspend fun getOrderById(orderId: Int): Result<Order> {
+    suspend fun getOrdersByUserId(userId: Long): Result<List<Order>> {
         return try {
             val request = Request.Builder()
-                .url("https://it342-pawtopia-10.onrender.com/api/order/getOrderDetails/$orderId") // Changed endpoint
+                .url("https://it342-pawtopia-10.onrender.com/api/order/getAllOrdersByUserId?userId=$userId")
                 .get()
                 .addHeader("Authorization", "Bearer ${sessionManager.getToken()}")
                 .build()
@@ -128,48 +128,33 @@ class OrderRepository(private val sessionManager: SessionManager) {
             if (response.isSuccessful) {
                 val responseBody = response.body?.string()
                 if (!responseBody.isNullOrEmpty()) {
-                    val jsonResponse = JSONObject(responseBody)
-                    Result.Success(
-                        Order(
-                            orderID = jsonResponse.getInt("orderID"),
-                            orderDate = jsonResponse.getString("orderDate"),
-                            paymentMethod = jsonResponse.getString("paymentMethod"),
-                            paymentStatus = jsonResponse.getString("paymentStatus"),
-                            orderStatus = jsonResponse.getString("orderStatus"),
-                            totalPrice = jsonResponse.getDouble("totalPrice"),
-                            orderItems = parseOrderItems(jsonResponse.getJSONArray("orderItems")),
-                            user = null // Not needed for confirmation
+                    val jsonArray = JSONArray(responseBody)
+                    val orders = mutableListOf<Order>()
+                    for (i in 0 until jsonArray.length()) {
+                        val jsonObject = jsonArray.getJSONObject(i)
+                        orders.add(
+                            Order(
+                                orderID = jsonObject.getInt("orderID"),
+                                orderDate = jsonObject.getString("orderDate"),
+                                paymentMethod = jsonObject.getString("paymentMethod"),
+                                paymentStatus = jsonObject.getString("paymentStatus"),
+                                orderStatus = jsonObject.getString("orderStatus"),
+                                totalPrice = jsonObject.getDouble("totalPrice"),
+                                orderItems = null, // We don't need items in the list view
+                                user = null
+                            )
                         )
-                    )
+                    }
+                    Result.Success(orders)
                 } else {
                     Result.Error(Exception("Empty response body"))
                 }
             } else {
-                Result.Error(Exception("Failed to get order: ${response.code}"))
+                Result.Error(Exception("Failed to get orders: ${response.code}"))
             }
         } catch (e: Exception) {
-            Log.e("OrderRepository", "Error getting order", e)
+            Log.e("OrderRepository", "Error getting orders", e)
             Result.Error(e)
         }
-    }
-
-    private fun parseOrderItems(orderItemsJson: JSONArray): List<OrderItem> {
-        val orderItems = mutableListOf<OrderItem>()
-        for (i in 0 until orderItemsJson.length()) {
-            val itemJson = orderItemsJson.getJSONObject(i)
-            orderItems.add(
-                OrderItem(
-                    orderItemID = itemJson.getInt("orderItemID"),
-                    orderItemName = itemJson.getString("orderItemName"),
-                    orderItemImage = itemJson.getString("orderItemImage"),
-                    price = itemJson.getDouble("price"),
-                    quantity = itemJson.getInt("quantity"),
-                    productId = itemJson.getString("productId"),
-                    isRated = itemJson.optBoolean("isRated", false),
-                    order = null
-                )
-            )
-        }
-        return orderItems
     }
 }
