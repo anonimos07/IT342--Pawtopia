@@ -24,4 +24,8 @@
     <color name="primary">#6200EE</color>
     <color name="background">#FAFAFA</color>
     <color name="divider">#E0E0E0</color>
+
+    <color name="red">#FF0000</color>
+    <color name="green">#4CAF50</color>
+    <color name="yellow">#FFC107</color>
 </resources>

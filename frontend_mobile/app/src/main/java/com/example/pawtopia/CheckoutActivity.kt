@@ -3,6 +3,7 @@ package com.example.pawtopia
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -207,43 +208,29 @@ class CheckoutActivity : AppCompatActivity() {
     private fun clearCartItemsAfterOrder(orderId: Int) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                // Delete all cart items for this user
-                val userId = sessionManager.getUserId()
-                val cartResult = cartRepository.getCartByUserId(userId)
-
-                if (cartResult is Result.Success) {
-                    val cartItemsToRemove = cartResult.data.cartItems ?: emptyList()
-
-                    // Delete each cart item
-                    cartItemsToRemove.forEach { cartItem ->
-                        cartRepository.deleteCartItem(cartItem.cartItemId)
+                // Only remove the cart items that were part of this order
+                cartItems.forEach { cartItem ->
+                    val result = cartRepository.deleteCartItem(cartItem.cartItemId)
+                    if (result is Result.Error) {
+                        Log.e("CheckoutActivity", "Failed to delete cart item ${cartItem.cartItemId}")
                     }
+                }
 
-                    withContext(Dispatchers.Main) {
-                        // Navigate to order confirmation
-                        OrderConfirmationActivity.start(
-                            this@CheckoutActivity,
-                            orderId,
-                            "Order placed successfully! Cart has been cleared."
-                        )
-                        finish()
-                    }
-                } else {
-                    withContext(Dispatchers.Main) {
-                        OrderConfirmationActivity.start(
-                            this@CheckoutActivity,
-                            orderId,
-                            "Order placed, but couldn't clear cart: ${(cartResult as Result.Error).exception.message}"
-                        )
-                        finish()
-                    }
+                withContext(Dispatchers.Main) {
+                    // Navigate to order confirmation
+                    OrderConfirmationActivity.start(
+                        this@CheckoutActivity,
+                        orderId,
+                        "Order placed successfully! Selected items have been removed from your cart."
+                    )
+                    finish()
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     OrderConfirmationActivity.start(
                         this@CheckoutActivity,
                         orderId,
-                        "Order placed, but encountered error clearing cart: ${e.message}"
+                        "Order placed, but encountered error clearing cart items: ${e.message}"
                     )
                     finish()
                 }

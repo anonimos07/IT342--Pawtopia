@@ -173,17 +173,18 @@ class CartActivity : AppCompatActivity() {
             }
         }
     }
+
     private inner class CartAdapter(
         private var cartItems: List<CartItem>,
         private val onQuantityChanged: (Int, Int) -> Unit,
         private val onRemoveClick: (Int) -> Unit
     ) : RecyclerView.Adapter<CartAdapter.CartViewHolder>() {
 
+        private val selectedItems = mutableSetOf<Int>()
+
         // Get context from parent
         private val context: Context
             get() = binding.root.context
-
-        private val selectedItems = mutableSetOf<Int>()
 
         inner class CartViewHolder(val binding: ItemCartBinding) :
             RecyclerView.ViewHolder(binding.root)
