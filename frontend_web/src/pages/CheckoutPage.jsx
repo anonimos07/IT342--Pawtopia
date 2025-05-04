@@ -70,11 +70,17 @@ const CheckoutPage = () => {
         const response = await axios.get(`${API_BASE_URL}/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setUser(response.data);
+        
+        const userData = response.data;
 
         const addressResponse = await axios.get(`${API_BASE_URL_ADDRESS}/get-users/${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+
+        
+userData.address = addressResponse.data; // <- Attach the fetched address to the user
+setUser(userData);
+        
         if (!addressResponse.data || !addressResponse.data.region) {
           toast.error("Please complete your address in your profile.");
           navigate("/profile", { state: { fromCheckout: true } });
@@ -135,7 +141,7 @@ const CheckoutPage = () => {
     const orderData = {
         orderItems,
         orderDate,
-        orderStatus: "To Receive",
+        orderStatus:"",
         paymentMethod: paymentMethod,
         paymentStatus: "PENDING",
         totalPrice: orderSummary.total,
@@ -190,7 +196,9 @@ const CheckoutPage = () => {
                   { headers: { Authorization: `Bearer ${token}` } }
                 );
 
-                window.location.href = paymentResponse.data.checkoutUrl;
+                // window.location.href = paymentResponse.data.checkoutUrl;
+                window.open(paymentResponse.data.checkoutUrl, "_blank");
+
                 console.log("Payment link response:", paymentResponse.data);
 
                 if (paymentResponse.data?.success || paymentResponse.data?.paymentLink) {
@@ -334,12 +342,18 @@ const CheckoutPage = () => {
     <p className="font-medium">{user.email}</p>
   </div>
   <div>
-    <p className="text-sm text-gray-500 mb-1">Address</p>
+  <p className="text-sm text-gray-500 mb-1">Address</p>
+  {user.address ? (
     <p className="font-medium">
-      {user.address?.streetBuildingHouseNo} {user.address?.barangay}, {user.address?.city} City,
-      Region {user.address?.region}, {user.address?.postalCode}
+      {user.address.streetBuildingHouseNo || ""} {user.address.barangay || ""},{" "}
+      {user.address.city || ""} City, Region {user.address.region || ""},{" "}
+      {user.address.postalCode || ""}
     </p>
-  </div>
+  ) : (
+    <p className="text-red-500 text-sm">No address available</p>
+  )}
+</div>
+
   
   {/* Payment Method Selector */}
   <div>

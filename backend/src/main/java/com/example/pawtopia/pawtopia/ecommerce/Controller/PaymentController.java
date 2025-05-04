@@ -35,8 +35,9 @@ public class PaymentController {
                     "\"amount\": " + (int) (order.getTotalPrice() * 100) + "," +
                     "\"description\": \"" + order.getDescription() + "\"," +
                     "\"remarks\": \"" + order.getRemarks() + "\"," +
+                    "\"payment_method_allowed\": [\"gcash\"]," +
                     "\"redirect\": { " +
-                    "\"success\": \"http://localhost:5173\"," +
+                    "\"success\": \"http://localhost:5173/payment-success\"," +
                     "\"failed\": \"http://localhost:5173\"" +
                     " }" +
                     "} } }";

@@ -112,10 +112,8 @@ export default function AppointmentPage() {
         const responseData = await response.json();
   
         if (response.ok) {
-          // Save form data for the modal before resetting
           setModalData({ service, date, time, price });
           setBookingSuccess(true);
-          // Reset form state
           setContactNo("");
           setDate("");
           setTime("");

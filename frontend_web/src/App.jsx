@@ -20,6 +20,7 @@ import OrderDetails from "./pages/OrderDetails";
 import CheckoutPage from "./pages/CheckoutPage";
 import Orders from "./pages/Orders";
 import OAuthSuccess from "./pages/OAuthSuccess";
+import PaymentSuccess from "./pages/PaymentSuccess";
 
 // Protected route component to handle authentication
 function ProtectedRoute({ children }) {
@@ -202,6 +203,20 @@ function App() {
           </ProtectedRoute>
         }
       />
+
+      <Route path="/payment-success"
+              element={
+                <ProtectedRoute>
+                  {shouldHideHeader ? (
+                    <PaymentSuccess />
+                  ) : (
+                    <Layout>
+                      <PaymentSuccess />
+                    </Layout>
+                  )}
+                </ProtectedRoute>
+              }
+            />
 
       <Route
         path="/Mypurchases"
