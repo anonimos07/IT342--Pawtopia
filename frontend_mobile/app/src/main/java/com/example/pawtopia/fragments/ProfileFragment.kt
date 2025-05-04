@@ -18,6 +18,7 @@ import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import com.example.pawtopia.AppointmentActivity
 import com.example.pawtopia.LoginActivity
 import com.example.pawtopia.OrdersActivity
 import com.example.pawtopia.R
@@ -79,13 +80,13 @@ class ProfileFragment : Fragment() {
             }, 1500)
         }
 
-//        binding.btnAppointments.setOnClickListener {
-//            showLoading(binding.progressAppointments, binding.btnAppointments, true)
-//            binding.root.postDelayed({
-//                val intent = Intent(requireContext(), AppointmentsActivity::class.java)
-//                startActivity(intent)
-//            }, 1500)
-//        }
+        binding.btnAppointments.setOnClickListener {
+            showLoading(binding.progressAppointments, binding.btnAppointments, true)
+            binding.root.postDelayed({
+                val intent = Intent(requireContext(), AppointmentActivity::class.java)
+                startActivity(intent)
+            }, 1500)
+        }
     }
 
     private fun showLoading(progressBar: ProgressBar, button: Button, show: Boolean) {

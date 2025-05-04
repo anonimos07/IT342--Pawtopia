@@ -75,10 +75,10 @@
             android:exported="false"
             android:theme="@style/Theme.Pawtopia" />
 
-<!--        <activity-->
-<!--            android:name=".AppointmentsActivity"-->
-<!--            android:exported="false"-->
-<!--            android:theme="@style/Theme.Pawtopia" />-->
+        <activity
+            android:name=".AppointmentActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Pawtopia" />
 
         <meta-data
             android:name="com.google.android.gms.version"
