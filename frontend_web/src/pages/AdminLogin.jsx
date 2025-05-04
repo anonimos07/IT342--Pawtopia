@@ -41,15 +41,19 @@ const AdminLogin = () => {
       }
   
       const token = await response.text();
-      localStorage.setItem('adminToken', token);
+      localStorage.setItem('token', token); // Store as 'token' to match AdminRoute
+      
+      // Store user data with role 'admin'
+      localStorage.setItem('user', JSON.stringify({
+        username,
+        role: 'admin',
+      }));
       
       // Show success loading screen
       setIsSuccess(true);
       
-      // Navigate after 2 seconds
-      setTimeout(() => {
-        navigate('/adminDashboard');
-      }, 2000);
+      // Navigate immediately after success
+      navigate('/adminDashboard');
     } catch (err) {
       setError(err.message || 'Login failed. Please try again.');
     } finally {
