@@ -1,12 +1,15 @@
 package com.example.pawtopia
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.pawtopia.databinding.ActivityLoginBinding
+import com.example.pawtopia.util.GoogleSignInHelper
 import com.example.pawtopia.util.SessionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -30,10 +33,20 @@ class LoginActivity : AppCompatActivity() {
     private val TAG = "LoginActivity"
     private var redirectAction = ""
 
+    private lateinit var googleSignInHelper: GoogleSignInHelper
+    private val googleSignInLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            handleGoogleSignInResult(result.data)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        googleSignInHelper = GoogleSignInHelper(this)
 
         sessionManager = SessionManager(this)
         redirectAction = intent.getStringExtra(LoginRequiredActivity.EXTRA_REDIRECT_ACTION) ?: ""
@@ -50,6 +63,122 @@ class LoginActivity : AppCompatActivity() {
         }
 
         setupListeners()
+    }
+
+    private fun handleGoogleSignInResult(data: Intent?) {
+        lifecycleScope.launch {
+            try {
+                val account = googleSignInHelper.handleSignInResult(data)
+                if (account != null) {
+                    authenticateWithBackend(account.idToken)
+                } else {
+                    Toast.makeText(this@LoginActivity, "Google sign in failed", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(this@LoginActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    // Update the authenticateWithBackend function in LoginActivity.kt
+    private fun authenticateWithBackend(idToken: String?) {
+        if (idToken == null) {
+            Toast.makeText(this, "Authentication error: No token received", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        binding.btnGoogle.isEnabled = false
+
+        val jsonObject = JSONObject().apply {
+            put("token", idToken)
+            // Add platform identifier
+            put("platform", "android")
+        }
+
+        val requestBody = jsonObject.toString().toRequestBody(JSON_MEDIA_TYPE)
+        val request = Request.Builder()
+            .url("https://it342-pawtopia-10.onrender.com/auth/google") // Make sure this matches your backend
+            .post(requestBody)
+            .addHeader("Content-Type", "application/json")
+            .build()
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                Log.d("GoogleAuth", "Sending token to backend: ${idToken.take(10)}...")
+                val response = client.newCall(request).execute()
+                val responseBody = response.body?.string()
+                Log.d("GoogleAuth", "Response code: ${response.code}, body: $responseBody")
+
+                withContext(Dispatchers.Main) {
+                    binding.btnGoogle.isEnabled = true
+
+                    if (response.isSuccessful) {
+                        responseBody?.let { body ->
+                            try {
+                                val jsonResponse = JSONObject(body)
+                                if (jsonResponse.has("token")) {
+                                    Log.d("GoogleAuth", "Authentication successful")
+
+                                    // Enhanced error handling for missing fields
+                                    try {
+                                        sessionManager.saveAuthSession(
+                                            token = jsonResponse.getString("token"),
+                                            userId = jsonResponse.getLong("userId"),
+                                            email = jsonResponse.getString("email"),
+                                            username = jsonResponse.getString("username"),
+                                            authProvider = "google",
+                                            googleId = jsonResponse.optString("googleId", "")
+                                        )
+
+                                        navigateToMainActivity()
+                                    } catch (e: Exception) {
+                                        Log.e("GoogleAuth", "Missing required field in response", e)
+                                        Toast.makeText(
+                                            this@LoginActivity,
+                                            "Authentication failed: Invalid response format",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                    }
+                                } else {
+                                    val errorMsg = jsonResponse.optString("message", "Authentication failed")
+                                    Log.e("GoogleAuth", errorMsg)
+                                    Toast.makeText(
+                                        this@LoginActivity,
+                                        errorMsg,
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
+                            } catch (e: Exception) {
+                                Log.e("GoogleAuth", "Error parsing response", e)
+                                Toast.makeText(
+                                    this@LoginActivity,
+                                    "Error: ${e.message ?: "Invalid response from server"}",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                        }
+                    } else {
+                        val errorMessage = try {
+                            JSONObject(responseBody).getString("message")
+                        } catch (e: Exception) {
+                            "Authentication failed: ${response.code}"
+                        }
+                        Log.e("GoogleAuth", errorMessage)
+                        Toast.makeText(this@LoginActivity, errorMessage, Toast.LENGTH_LONG).show()
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Log.e("GoogleAuth", "Network error", e)
+                    binding.btnGoogle.isEnabled = true
+                    Toast.makeText(
+                        this@LoginActivity,
+                        "Network error: ${e.message ?: "Please check your connection"}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        }
     }
 
     private fun setupListeners() {
@@ -71,7 +200,8 @@ class LoginActivity : AppCompatActivity() {
         }
 
         binding.btnGoogle.setOnClickListener {
-            Toast.makeText(this, "Google login not implemented yet", Toast.LENGTH_SHORT).show()
+            val signInIntent = googleSignInHelper.getSignInIntent()
+            googleSignInLauncher.launch(signInIntent)
         }
 
         binding.tvForgotPassword.setOnClickListener {

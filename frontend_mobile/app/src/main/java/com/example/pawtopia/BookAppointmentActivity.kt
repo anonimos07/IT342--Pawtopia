@@ -5,6 +5,7 @@ import android.app.TimePickerDialog
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.text.InputFilter
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -39,6 +40,9 @@ class BookAppointmentActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityBookAppointmentBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // Add input filter to limit contact number to 11 digits
+        binding.etContactNumber.filters = arrayOf<InputFilter>(InputFilter.LengthFilter(11))
 
         binding.btnBack.setOnClickListener {
             if (supportFragmentManager.backStackEntryCount > 0) {

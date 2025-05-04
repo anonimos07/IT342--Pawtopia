@@ -5,7 +5,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -58,43 +57,68 @@ class OrderConfirmationActivity : AppCompatActivity() {
         binding.tvStatusMessage.text = message
 
         setupClickListeners()
-        // loadOrderDetails()
+        loadOrderDetails()
     }
 
     private fun setupClickListeners() {
         binding.btnBackToHome.setOnClickListener {
-            // Clear back stack and go to main activity
+            // Navigate to MainActivity which should show HomeFragment
             val intent = Intent(this, MainActivity::class.java).apply {
+                // Clear back stack and set Home as the default
                 flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                // You can add extras if your MainActivity needs to know to show HomeFragment
+                putExtra("NAVIGATE_TO", "HOME")
             }
             startActivity(intent)
-            finish()
+            finish() // Finish current activity
         }
 
-        binding.btnViewOrders.setOnClickListener {
-            OrdersActivity.start(this)
-            finish()
+//        // Keep your existing view orders button if needed
+//        binding.btnViewOrders.setOnClickListener {
+//            OrdersActivity.start(this)
+//            finish()
+//        }
+    }
+
+    private fun loadOrderDetails() {
+        CoroutineScope(Dispatchers.IO).launch {
+            val result = orderRepository.getOrderById(orderId)
+            withContext(Dispatchers.Main) {
+                when (result) {
+                    is Result.Success -> {
+                        // Verify the order belongs to current user
+                        if (result.data.user?.userId == sessionManager.getUserId()) {
+                            displayOrderDetails(result.data)
+                        } else {
+                            showError("You don't have permission to view this order")
+                        }
+                    }
+                    is Result.Error -> {
+                        when {
+                            result.exception.message?.contains("Unauthorized") == true -> {
+                                // Token expired or invalid
+                                sessionManager.logout()
+                                showError("Session expired. Please login again") {
+                                    // Redirect to login
+                                    startActivity(Intent(this@OrderConfirmationActivity, LoginActivity::class.java))
+                                    finish()
+                                }
+                            }
+                            else -> {
+                                showError(result.exception.message ?: "Error loading order details")
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
-//    private fun loadOrderDetails() {
-//        CoroutineScope(Dispatchers.IO).launch {
-//            val result = orderRepository.getOrderById(orderId)
-//            withContext(Dispatchers.Main) {
-//                when (result) {
-//                    is Result.Success -> displayOrderDetails(result.data)
-//                    is Result.Error -> {
-//                        binding.tvStatusMessage.text = "Error loading order details: ${result.exception.message}"
-//                        Toast.makeText(
-//                            this@OrderConfirmationActivity,
-//                            "Error loading order details",
-//                            Toast.LENGTH_SHORT
-//                        ).show()
-//                    }
-//                }
-//            }
-//        }
-//    }
+    private fun showError(message: String, action: (() -> Unit)? = null) {
+        binding.tvStatusMessage.text = message
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+        action?.invoke()
+    }
 
     private fun displayOrderDetails(order: Order) {
         val decimalFormat = DecimalFormat("₱#,##0.00")

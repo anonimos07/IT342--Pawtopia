@@ -3,6 +3,7 @@ package com.example.pawtopia.repository
 import android.util.Log
 import com.example.pawtopia.model.Order
 import com.example.pawtopia.model.OrderItem
+import com.example.pawtopia.model.User
 import com.example.pawtopia.util.Result
 import com.example.pawtopia.util.SessionManager
 import kotlinx.coroutines.Dispatchers
@@ -154,6 +155,105 @@ class OrderRepository(private val sessionManager: SessionManager) {
             }
         } catch (e: Exception) {
             Log.e("OrderRepository", "Error getting orders", e)
+            Result.Error(e)
+        }
+    }
+
+    // Added getOrderById method to fetch a specific order with its details
+    suspend fun getOrderById(orderId: Int): Result<Order> {
+        return try {
+            val token = sessionManager.getToken()
+            if (token.isNullOrEmpty()) {
+                return Result.Error(Exception("Authentication required"))
+            }
+
+            val request = Request.Builder()
+                .url("https://it342-pawtopia-10.onrender.com/api/order/getOrderDetails/$orderId")
+                .get()
+                .addHeader("Authorization", "Bearer $token")
+                .build()
+
+            val response = withContext(Dispatchers.IO) {
+                client.newCall(request).execute()
+            }
+
+            when {
+                response.code == 401 -> {
+                    Result.Error(Exception("Unauthorized - Please login again"))
+                }
+
+                response.code == 403 -> {
+                    Result.Error(Exception("You don't have permission to view this order"))
+                }
+
+                response.isSuccessful -> {
+                    val responseBody = response.body?.string()
+                    if (!responseBody.isNullOrEmpty()) {
+                        try {
+                            val jsonObject = JSONObject(responseBody)
+
+                            // Parse order items
+                            val orderItemsJsonArray = jsonObject.getJSONArray("orderItems")
+                            val orderItems = mutableListOf<OrderItem>()
+
+                            for (i in 0 until orderItemsJsonArray.length()) {
+                                val orderItemJson = orderItemsJsonArray.getJSONObject(i)
+                                orderItems.add(
+                                    OrderItem(
+                                        orderItemID = orderItemJson.getInt("orderItemID"),
+                                        orderItemName = orderItemJson.getString("orderItemName"),
+                                        orderItemImage = orderItemJson.getString("orderItemImage"),
+                                        price = orderItemJson.getDouble("price"),
+                                        quantity = orderItemJson.getInt("quantity"),
+                                        productId = orderItemJson.getString("productId"),
+                                        isRated = orderItemJson.optBoolean("isRated", false),
+                                        order = null // Avoid circular reference
+                                    )
+                                )
+                            }
+
+                            // Parse user info
+                            val userJson = jsonObject.getJSONObject("user")
+                            val user = User(
+                                userId = userJson.getLong("userId"),
+                                username = userJson.getString("username"),
+                                password = "", // Don't store password
+                                firstName = userJson.optString("firstName", ""),
+                                lastName = userJson.optString("lastName", ""),
+                                email = userJson.optString("email", ""),
+                                role = userJson.optString("role", "USER"),
+                                googleId = userJson.optString("googleId", null),
+                                authProvider = userJson.optString("authProvider", null),
+                                address = null, // AddressResponse would need to be parsed separately if needed
+                                cart = null // Cart would need to be parsed separately if needed
+                            )
+
+                            // Create complete order object
+                            val order = Order(
+                                orderID = jsonObject.getInt("orderID"),
+                                orderDate = jsonObject.getString("orderDate"),
+                                paymentMethod = jsonObject.getString("paymentMethod"),
+                                paymentStatus = jsonObject.getString("paymentStatus"),
+                                orderStatus = jsonObject.getString("orderStatus"),
+                                totalPrice = jsonObject.getDouble("totalPrice"),
+                                orderItems = orderItems,
+                                user = user
+                            )
+
+                            Result.Success(order)
+                        } catch (e: Exception) {
+                            Result.Error(Exception("Error parsing response: ${e.message}"))
+                        }
+                    } else {
+                        Result.Error(Exception("Empty response body"))
+                    }
+                }
+
+                else -> {
+                    Result.Error(Exception("Failed to get order: ${response.code}"))
+                }
+            }
+        } catch (e: Exception) {
             Result.Error(e)
         }
     }

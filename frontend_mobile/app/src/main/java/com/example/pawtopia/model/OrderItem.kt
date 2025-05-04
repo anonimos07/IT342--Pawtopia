@@ -8,7 +8,7 @@ data class OrderItem(
     val orderItemImage: String,
     val price: Double,
     val quantity: Int,
-    val productId: String,
+    val productId: String,  
     val isRated: Boolean,
     val order: Order? )
     : Serializable
