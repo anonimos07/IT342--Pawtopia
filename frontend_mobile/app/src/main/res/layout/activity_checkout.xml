@@ -221,7 +221,7 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- Payment Method Section -->
+        <!-- Modified Payment Method Section -->
         <androidx.cardview.widget.CardView
             android:id="@+id/card_payment"
             android:layout_width="match_parent"
@@ -282,10 +282,21 @@
                         android:textColor="@color/dark_gray"
                         android:textSize="16sp" />
                 </RadioGroup>
+
+                <!-- Add GCash payment information text -->
+                <TextView
+                    android:id="@+id/tv_payment_info"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="You'll be redirected to GCash to complete your payment after placing the order."
+                    android:textSize="12sp"
+                    android:textColor="@color/gray_600"
+                    android:visibility="gone" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- Place Order Button -->
+        <!-- Add ProgressBar near Place Order button -->
         <Button
             android:id="@+id/btn_place_order"
             android:layout_width="0dp"
@@ -301,6 +312,16 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/card_payment" />
+
+        <ProgressBar
+            android:id="@+id/loading_progress_bar"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginEnd="8dp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@id/btn_place_order"
+            app:layout_constraintEnd_toStartOf="@id/btn_place_order"
+            app:layout_constraintTop_toTopOf="@id/btn_place_order" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

@@ -1,19 +1,26 @@
 package com.example.pawtopia
 
+import android.annotation.SuppressLint
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.RadioButton
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.browser.customtabs.CustomTabsIntent
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.pawtopia.databinding.ActivityCheckoutBinding
-import com.example.pawtopia.databinding.ItemOrderSummaryBinding  // Changed from ItemCartBinding
+import com.example.pawtopia.databinding.ItemOrderSummaryBinding
 import com.example.pawtopia.fragments.EditProfileFragment
 import com.example.pawtopia.model.CartItem
 import com.example.pawtopia.model.Order
@@ -21,6 +28,7 @@ import com.example.pawtopia.model.OrderItem
 import com.example.pawtopia.model.User
 import com.example.pawtopia.repository.CartRepository
 import com.example.pawtopia.repository.OrderRepository
+import com.example.pawtopia.repository.PaymentRepository
 import com.example.pawtopia.repository.UserRepository
 import com.example.pawtopia.util.Result
 import com.example.pawtopia.util.SessionManager
@@ -29,6 +37,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.DecimalFormat
+import android.os.Handler
+import android.os.Looper
 
 class CheckoutActivity : AppCompatActivity() {
 
@@ -37,11 +47,13 @@ class CheckoutActivity : AppCompatActivity() {
     private val cartRepository by lazy { CartRepository(sessionManager) }
     private val userRepository by lazy { UserRepository(sessionManager) }
     private val orderRepository by lazy { OrderRepository(sessionManager) }
+    private val paymentRepository by lazy { PaymentRepository(sessionManager) }
 
     private var cartItems: List<CartItem> = emptyList()
     private val SHIPPING_FEE = 30.0
     private var hasAddress = false
     private var selectedPaymentMethod = "Cash on Delivery"
+    private var isProcessingPayment = false
 
     companion object {
         fun start(context: Context, selectedItems: List<CartItem>) {
@@ -62,15 +74,16 @@ class CheckoutActivity : AppCompatActivity() {
 
         setupRecyclerView()
         setupClickListeners()
-        loadUserAddress() // Now safe to call
+        setupPaymentOptions()
+        loadUserAddress()
         updateOrderSummary()
     }
 
     private fun setupRecyclerView() {
         binding.rvOrderItems.apply {
             layoutManager = LinearLayoutManager(this@CheckoutActivity)
-            adapter = OrderItemAdapter(cartItems) // Initialize with cartItems
-            setHasFixedSize(true) // Improve performance if items have fixed size
+            adapter = OrderItemAdapter(cartItems)
+            setHasFixedSize(true)
         }
     }
 
@@ -93,22 +106,41 @@ class CheckoutActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
+            if (isProcessingPayment) {
+                Toast.makeText(this, "Payment is being processed, please wait", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
             placeOrder()
         }
+    }
 
+    private fun setupPaymentOptions() {
         // Handle payment method selection
-        binding.radioGroupPayment.setOnCheckedChangeListener { group, checkedId ->
+        binding.radioGroupPayment.setOnCheckedChangeListener { _, checkedId ->
             selectedPaymentMethod = when (checkedId) {
                 R.id.radio_cod -> "Cash on Delivery"
                 R.id.radio_gcash -> "GCash"
                 else -> "Cash on Delivery"
             }
+
+            // Update visibility of payment info text if needed
+            binding.tvPaymentInfo.visibility = if (selectedPaymentMethod == "GCash") {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
         }
+
+        // Make sure Cash on Delivery is selected by default
+        binding.radioCod.isChecked = true
+        binding.tvPaymentInfo.visibility = View.GONE
     }
 
     override fun onResume() {
         super.onResume()
         loadUserAddress()
+        isProcessingPayment = false
     }
 
     private fun loadUserAddress() {
@@ -147,6 +179,9 @@ class CheckoutActivity : AppCompatActivity() {
     }
 
     private fun placeOrder() {
+        binding.btnPlaceOrder.isEnabled = false
+        binding.loadingProgressBar.visibility = View.VISIBLE
+
         val orderItems = cartItems.map { cartItem ->
             OrderItem(
                 orderItemID = 0,
@@ -155,7 +190,7 @@ class CheckoutActivity : AppCompatActivity() {
                 price = cartItem.product.productPrice,
                 quantity = cartItem.quantity,
                 productId = cartItem.product.productID.toString(),
-                isRated = false, // Consider removing if not used in backend
+                isRated = false,
                 order = null
             )
         }
@@ -166,13 +201,13 @@ class CheckoutActivity : AppCompatActivity() {
             orderID = 0,
             orderDate = "",
             paymentMethod = selectedPaymentMethod,
-            paymentStatus = "PENDING", // Match frontend
-            orderStatus = "To Receive", // Match frontend
+            paymentStatus = "PENDING",
+            orderStatus = "To Receive",
             totalPrice = totalPrice,
             orderItems = orderItems,
             user = User(
                 userId = sessionManager.getUserId(),
-                username = sessionManager.getUsername() ?: "", // Add username
+                username = sessionManager.getUsername() ?: "",
                 password = "",
                 firstName = "",
                 lastName = "",
@@ -187,13 +222,23 @@ class CheckoutActivity : AppCompatActivity() {
 
         CoroutineScope(Dispatchers.IO).launch {
             val orderResult = orderRepository.placeOrder(order)
+
             withContext(Dispatchers.Main) {
                 when (orderResult) {
                     is Result.Success -> {
-                        // Enhanced cart clearance with better feedback
-                        clearCartItemsAfterOrder(orderResult.data.orderID)
+                        val createdOrder = orderResult.data
+
+                        if (selectedPaymentMethod == "GCash") {
+                            processGCashPayment(createdOrder)
+                        } else {
+                            // Regular COD flow
+                            clearCartItemsAfterOrder(createdOrder.orderID)
+                        }
                     }
                     is Result.Error -> {
+                        binding.btnPlaceOrder.isEnabled = true
+                        binding.loadingProgressBar.visibility = View.GONE
+
                         Toast.makeText(
                             this@CheckoutActivity,
                             "Error placing order: ${orderResult.exception.message}",
@@ -203,6 +248,129 @@ class CheckoutActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun processGCashPayment(order: Order) {
+        isProcessingPayment = true
+
+        CoroutineScope(Dispatchers.IO).launch {
+            val paymentResult = paymentRepository.createPaymentLink(order)
+
+            withContext(Dispatchers.Main) {
+                binding.btnPlaceOrder.isEnabled = true
+                binding.loadingProgressBar.visibility = View.GONE
+
+                when (paymentResult) {
+                    is Result.Success -> {
+                        val paymentLink = paymentResult.data
+
+                        // Save payment info to preferences for later verification
+                        savePaymentInfo(order.orderID, paymentLink.referenceNumber)
+
+                        // Clear cart items first
+                        clearCartItemsForGCashPayment(order.orderID, paymentLink.checkoutUrl)
+                    }
+                    is Result.Error -> {
+                        isProcessingPayment = false
+                        Toast.makeText(
+                            this@CheckoutActivity,
+                            "Error creating payment: ${paymentResult.exception.message}",
+                            Toast.LENGTH_LONG
+                        ).show()
+
+                        // Still navigate to confirmation but show error
+                        OrderConfirmationActivity.start(
+                            this@CheckoutActivity,
+                            order.orderID,
+                            "Order placed successfully, but payment link creation failed. Please contact support."
+                        )
+                        finish()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun savePaymentInfo(orderId: Int, referenceNumber: String) {
+        val sharedPrefs = getSharedPreferences("pawtopia_payments", Context.MODE_PRIVATE)
+        with(sharedPrefs.edit()) {
+            putInt("pending_order_id", orderId)
+            putString("reference_number", referenceNumber)
+            putLong("timestamp", System.currentTimeMillis())
+            apply()
+        }
+    }
+
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
+    private fun clearCartItemsForGCashPayment(orderId: Int, checkoutUrl: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                // Remove items from cart
+                cartItems.forEach { cartItem ->
+                    val result = cartRepository.deleteCartItem(cartItem.cartItemId)
+                    if (result is Result.Error) {
+                        Log.e("CheckoutActivity", "Failed to delete cart item ${cartItem.cartItemId}")
+                    }
+                }
+
+                withContext(Dispatchers.Main) {
+                    // Create an intent to open the GCash payment URL in a custom tab or browser
+                    val customTabsIntent = CustomTabsIntent.Builder()
+                        .setToolbarColor(ContextCompat.getColor(this@CheckoutActivity, R.color.purple))
+                        .setShowTitle(true)
+                        .build()
+
+                    try {
+                        // Try to open in Chrome Custom Tab first
+                        customTabsIntent.launchUrl(this@CheckoutActivity, Uri.parse(checkoutUrl))
+                    } catch (e: Exception) {
+                        // Fallback to regular browser if custom tabs not available
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(checkoutUrl))
+                        startActivity(intent)
+                    }
+
+                    // Set up a broadcast receiver to detect when the user returns to the app
+                    val filter = IntentFilter().apply {
+                        addAction(Intent.ACTION_MAIN)
+                        addCategory(Intent.CATEGORY_LAUNCHER)
+                    }
+
+                    val paymentCompleteReceiver = object : BroadcastReceiver() {
+                        override fun onReceive(context: Context?, intent: Intent?) {
+                            // When user returns to app, navigate to confirmation
+                            navigateToOrderConfirmation(orderId)
+                            unregisterReceiver(this)
+                        }
+                    }
+
+                    registerReceiver(paymentCompleteReceiver, filter)
+
+                    // Also navigate after 30 seconds in case broadcast isn't received
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        try {
+                            unregisterReceiver(paymentCompleteReceiver)
+                        } catch (e: IllegalArgumentException) {
+                            // Receiver was already unregistered
+                        }
+                        navigateToOrderConfirmation(orderId)
+                    }, 30000)
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    isProcessingPayment = false
+                    navigateToOrderConfirmation(orderId, "Order placed successfully!")
+                }
+            }
+        }
+    }
+
+    private fun navigateToOrderConfirmation(orderId: Int, message: String? = null) {
+        OrderConfirmationActivity.start(
+            this@CheckoutActivity,
+            orderId,
+            message ?: "Order placed successfully! Please complete your GCash payment."
+        )
+        finish()
     }
 
     private fun clearCartItemsAfterOrder(orderId: Int) {
@@ -221,7 +389,7 @@ class CheckoutActivity : AppCompatActivity() {
                     OrderConfirmationActivity.start(
                         this@CheckoutActivity,
                         orderId,
-                        "Order placed successfully! Selected items have been removed from your cart."
+                        "Order placed successfully!"
                     )
                     finish()
                 }
@@ -277,5 +445,4 @@ class CheckoutActivity : AppCompatActivity() {
             notifyDataSetChanged()
         }
     }
-
 }
