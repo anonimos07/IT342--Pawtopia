@@ -31,16 +31,24 @@ class AppointmentRepository(private val sessionManager: SessionManager) {
     suspend fun bookAppointment(request: AppointmentRequest): Result<AppointmentResponse> {
         return try {
             val jsonObject = JSONObject().apply {
-                put("userId", request.userId)
                 put("email", request.email)
                 put("contactNo", request.contactNo)
                 put("date", request.date)
                 put("time", request.time)
                 put("groomService", request.groomService)
                 put("price", request.price)
+                put("confirmed", request.confirmed)
+                put("canceled", request.canceled)
+
+                // Create nested user object with userId
+                val userObject = JSONObject()
+                userObject.put("userId", request.user.userId)
+                put("user", userObject)
             }
 
             val requestBody = jsonObject.toString().toRequestBody(JSON_MEDIA_TYPE)
+
+            Log.d("AppointmentRepository", "Request body: ${jsonObject.toString()}")
 
             val request = Request.Builder()
                 .url("https://it342-pawtopia-10.onrender.com/appointments/postAppointment")
@@ -55,18 +63,22 @@ class AppointmentRepository(private val sessionManager: SessionManager) {
 
             if (response.isSuccessful) {
                 val responseBody = response.body?.string()
+                Log.d("AppointmentRepository", "Response body: $responseBody")
+
                 if (!responseBody.isNullOrEmpty()) {
                     val jsonResponse = JSONObject(responseBody)
                     val appointmentResponse = AppointmentResponse(
-                        success = jsonResponse.optBoolean("success", false),
-                        message = jsonResponse.optString("message", ""),
-                        appointmentId = jsonResponse.optLong("appointmentId", 0L)
+                        success = jsonResponse.optBoolean("success", true),
+                        message = jsonResponse.optString("message", "Appointment created successfully"),
+                        appointmentId = jsonResponse.optLong("appId", 0L)
                     )
                     Result.Success(appointmentResponse)
                 } else {
                     Result.Error(Exception("Empty response body"))
                 }
             } else {
+                val errorBody = response.body?.string()
+                Log.e("AppointmentRepository", "Failed to book appointment: ${response.code}, Error: $errorBody")
                 Result.Error(Exception("Failed to book appointment: ${response.code}"))
             }
         } catch (e: Exception) {

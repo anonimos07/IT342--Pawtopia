@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.pawtopia.databinding.ActivityBookAppointmentBinding
 import com.example.pawtopia.model.AppointmentRequest
+import com.example.pawtopia.model.UserReference
 import com.example.pawtopia.repository.AppointmentRepository
 import com.example.pawtopia.util.SessionManager
 import kotlinx.coroutines.launch
@@ -203,13 +204,13 @@ class BookAppointmentActivity : AppCompatActivity() {
         val time = SimpleDateFormat("hh:mm a", Locale.US).parse(binding.tvTime.text.toString())
 
         val appointmentRequest = AppointmentRequest(
-            userId = userId,
             email = userEmail,
             contactNo = contactNumber,
             date = date?.time,
             time = SimpleDateFormat("HH:mm", Locale.US).format(time!!),
             groomService = selectedService,
-            price = selectedPrice
+            price = selectedPrice,
+            user = UserReference(userId)  // This creates the nested user object with userId
         )
 
         lifecycleScope.launch {
