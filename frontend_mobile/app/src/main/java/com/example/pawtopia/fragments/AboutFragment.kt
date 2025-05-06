@@ -23,10 +23,6 @@ class AboutFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Set up learn more button
-        binding.btnLearnMore.setOnClickListener {
-            // TODO: Navigate to detailed mission page
-        }
     }
 
     override fun onDestroyView() {

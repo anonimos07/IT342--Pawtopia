@@ -1,5 +1,7 @@
 package com.example.pawtopia.model
 
+import java.io.Serializable
+
 data class Product(
     val productID: Int,
     val description: String,
@@ -9,4 +11,4 @@ data class Product(
     val quantity: Int,
     val quantitySold: Int,
     val productImage: String
-)
+) : Serializable

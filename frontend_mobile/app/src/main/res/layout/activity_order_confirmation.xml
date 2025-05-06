@@ -1,0 +1,377 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="@color/white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Header with Pawtopia branding -->
+        <LinearLayout
+            android:id="@+id/header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/light_purple"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:paddingTop="16dp"
+            android:paddingBottom="16dp">
+
+            <ImageView
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/ic_paw"
+                app:tint="@color/purple" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Pawtopia"
+                android:textColor="@color/purple"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Order Confirmation"
+                android:textColor="@color/dark_gray"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/light_gray" />
+
+        <!-- Order confirmation content -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <!-- Order confirmation header -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:paddingBottom="24dp">
+
+                <androidx.cardview.widget.CardView
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    app:cardCornerRadius="40dp"
+                    app:cardElevation="4dp"
+                    android:layout_marginBottom="16dp"
+                    app:cardBackgroundColor="@color/very_light_purple">
+
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_order_confirmed"
+                        android:contentDescription="@string/order_confirmed"
+                        app:tint="@color/purple" />
+                </androidx.cardview.widget.CardView>
+
+                <TextView
+                    android:id="@+id/tvStatusMessage"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="20sp"
+                    android:textColor="@color/black"
+                    android:textStyle="bold"
+                    android:gravity="center"
+                    android:layout_marginTop="8dp"
+                    tools:text="Your order has been placed successfully!"/>
+
+                <TextView
+                    android:id="@+id/tvOrderId"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="16sp"
+                    android:gravity="center"
+                    android:layout_marginTop="8dp"
+                    android:textColor="@color/purple"
+                    android:textStyle="bold"
+                    tools:text="Order #12345"/>
+            </LinearLayout>
+
+            <!-- Order details card -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:cardElevation="2dp"
+                app:cardCornerRadius="8dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/order_details"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/black"
+                        android:layout_marginBottom="16dp"/>
+
+                    <!-- Order Date -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="12dp"
+                        android:gravity="center_vertical">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_calendar"
+                            app:tint="@color/purple"
+                            android:layout_marginEnd="12dp"/>
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/order_date"
+                            android:textColor="@color/dark_gray"/>
+
+                        <TextView
+                            android:id="@+id/tvOrderDate"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textAlignment="textEnd"
+                            android:textColor="@color/black"
+                            android:textStyle="bold"
+                            tools:text="May 15, 2023"/>
+                    </LinearLayout>
+
+                    <!-- Payment Method -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="12dp"
+                        android:gravity="center_vertical">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_payment"
+                            app:tint="@color/purple"
+                            android:layout_marginEnd="12dp"/>
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/payment_method"
+                            android:textColor="@color/dark_gray"/>
+
+                        <TextView
+                            android:id="@+id/tvPaymentMethod"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textAlignment="textEnd"
+                            android:textColor="@color/black"
+                            android:textStyle="bold"
+                            tools:text="Cash on Delivery"/>
+                    </LinearLayout>
+
+                    <!-- Payment Status -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="12dp"
+                        android:gravity="center_vertical">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_status"
+                            app:tint="@color/purple"
+                            android:layout_marginEnd="12dp"/>
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/payment_status"
+                            android:textColor="@color/dark_gray"/>
+
+                        <TextView
+                            android:id="@+id/tvPaymentStatus"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textAlignment="textEnd"
+                            android:textColor="@color/white"
+                            android:textStyle="bold"
+                            android:background="@drawable/button_background"
+                            android:paddingHorizontal="12dp"
+                            android:paddingVertical="4dp"
+                            tools:text="PENDING"/>
+                    </LinearLayout>
+
+                    <!-- Order Status -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="16dp"
+                        android:gravity="center_vertical">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_order"
+                            app:tint="@color/purple"
+                            android:layout_marginEnd="12dp"/>
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/order_status"
+                            android:textColor="@color/dark_gray"/>
+
+                        <TextView
+                            android:id="@+id/tvOrderStatus"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textAlignment="textEnd"
+                            android:textColor="@color/white"
+                            android:textStyle="bold"
+                            android:background="@drawable/button_background"
+                            android:paddingHorizontal="12dp"
+                            android:paddingVertical="4dp"
+                            tools:text="PROCESSING"/>
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/light_gray"
+                        android:layout_marginVertical="12dp"/>
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/items_ordered"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/black"
+                        android:layout_marginBottom="12dp"/>
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvOrderItems"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        android:nestedScrollingEnabled="false"/>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/light_gray"
+                        android:layout_marginBottom="16dp"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Total Amount:"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/black"/>
+
+                        <TextView
+                            android:id="@+id/tvTotalAmount"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/purple"
+                            android:gravity="end"
+                            tools:text="₱1,230.00"/>
+                    </LinearLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Buttons container -->
+            <Button
+                android:id="@+id/btnBackToHome"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Back to Home"
+                android:textSize="16sp"
+                android:textAllCaps="false"
+                android:background="@drawable/button_background"
+                android:textColor="@color/white"
+                android:padding="12dp"
+                style="@style/Widget.Pawtopia.Button.Primary"/>
+
+            <!--            <Button-->
+            <!--                android:id="@+id/btnViewOrders"-->
+            <!--                android:layout_width="match_parent"-->
+            <!--                android:layout_height="wrap_content"-->
+            <!--                android:text="View My Orders"-->
+            <!--                android:textSize="16sp"-->
+            <!--                android:textAllCaps="false"-->
+            <!--                android:layout_marginTop="16dp"-->
+            <!--                android:background="@drawable/button_outline_background"-->
+            <!--                android:textColor="@color/purple"-->
+            <!--                android:padding="12dp"-->
+            <!--                style="@style/Widget.Pawtopia.Button.Primary"/>-->
+        </LinearLayout>
+
+        <!-- Footer -->
+        <LinearLayout
+            android:id="@+id/footer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:padding="12dp">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginEnd="8dp"
+                android:src="@drawable/ic_paw_small"
+                app:tint="@color/purple" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Pawtopia"
+                android:textColor="@color/purple"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/light_gray" />
+    </LinearLayout>
+</ScrollView>

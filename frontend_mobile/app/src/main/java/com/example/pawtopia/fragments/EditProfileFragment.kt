@@ -7,10 +7,11 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import com.example.pawtopia.R
 import com.example.pawtopia.databinding.FragmentEditProfileBinding
 import com.example.pawtopia.model.AddressRequest
+import com.example.pawtopia.model.AddressResponse
 import com.example.pawtopia.repository.UserRepository
+import com.example.pawtopia.util.Result
 import com.example.pawtopia.util.SessionManager
 import kotlinx.coroutines.launch
 
@@ -47,21 +48,29 @@ class EditProfileFragment : Fragment() {
     private fun fetchCurrentAddress() {
         lifecycleScope.launch {
             try {
+                binding.progressBar.visibility = View.VISIBLE
                 val userId = sessionManager.getUserId()
-                val response = userRepository.getUserAddress(userId)
+                val result = userRepository.getUserAddress(userId)
 
-                if (response.isSuccess) {
-                    response.getOrNull()?.let { address ->
-                        binding.etRegion.setText(address.region)
-                        binding.etProvince.setText(address.province)
-                        binding.etCity.setText(address.city)
-                        binding.etBarangay.setText(address.barangay)
-                        binding.etPostalCode.setText(address.postalCode)
-                        binding.etStreet.setText(address.streetBuildingHouseNo)
+                when (result) {
+                    is Result.Success -> {
+                        result.data.let { address ->
+                            binding.etRegion.setText(address.region)
+                            binding.etProvince.setText(address.province)
+                            binding.etCity.setText(address.city)
+                            binding.etBarangay.setText(address.barangay)
+                            binding.etPostalCode.setText(address.postalCode)
+                            binding.etStreet.setText(address.streetBuildingHouseNo)
+                        }
+                    }
+                    is Result.Error -> {
+                        Toast.makeText(requireContext(), "Enter your address", Toast.LENGTH_SHORT).show()
                     }
                 }
             } catch (e: Exception) {
-                Toast.makeText(requireContext(), "Failed to load address", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+            } finally {
+                binding.progressBar.visibility = View.GONE
             }
         }
     }
@@ -90,13 +99,16 @@ class EditProfileFragment : Fragment() {
             try {
                 binding.progressBar.visibility = View.VISIBLE
                 val userId = sessionManager.getUserId()
-                val response = userRepository.updateUserAddress(userId, address)
+                val result = userRepository.updateUserAddress(userId, address)
 
-                if (response.isSuccess) {
-                    Toast.makeText(requireContext(), "Address updated successfully", Toast.LENGTH_SHORT).show()
-                    parentFragmentManager.popBackStack()
-                } else {
-                    Toast.makeText(requireContext(), "Failed to update address", Toast.LENGTH_SHORT).show()
+                when (result) {
+                    is Result.Success -> {
+                        Toast.makeText(requireContext(), "Address updated successfully", Toast.LENGTH_SHORT).show()
+                        parentFragmentManager.popBackStack()
+                    }
+                    is Result.Error -> {
+                        Toast.makeText(requireContext(), "Failed to update address", Toast.LENGTH_SHORT).show()
+                    }
                 }
             } catch (e: Exception) {
                 Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()

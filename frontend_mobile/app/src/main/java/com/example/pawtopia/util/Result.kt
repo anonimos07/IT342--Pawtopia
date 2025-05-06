@@ -1,4 +1,3 @@
-
 package com.example.pawtopia.util
 
 sealed class Result<out T : Any> {

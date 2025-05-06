@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("kotlin-parcelize")
 }
 
 android {
@@ -10,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.pawtopia"
-        minSdk = 34
+        minSdk = 29
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -42,6 +43,9 @@ android {
 
 dependencies {
 
+    implementation ("androidx.browser:browser:1.4.0")
+    implementation ("com.google.android.gms:play-services-auth:20.7.0")
+    implementation ("androidx.cardview:cardview:1.0.0")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("com.github.bumptech.glide:glide:4.16.0")
     implementation("com.google.dagger:hilt-android:2.44")

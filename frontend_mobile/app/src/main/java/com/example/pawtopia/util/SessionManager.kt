@@ -12,14 +12,18 @@ class SessionManager(context: Context) {
         private const val KEY_EMAIL = "email"
         private const val KEY_USERNAME = "username"
         private const val KEY_IS_LOGGED_IN = "is_logged_in"
+        private const val KEY_AUTH_PROVIDER = "auth_provider" // New
+        private const val KEY_GOOGLE_ID = "google_id" // New
     }
 
-    // Save token & user data after login
+    // Enhanced save method
     fun saveAuthSession(
         token: String,
         userId: Long,
         email: String,
         username: String,
+        authProvider: String? = null,
+        googleId: String? = null
     ) {
         prefs.edit().apply {
             putString(KEY_TOKEN, token)
@@ -27,9 +31,15 @@ class SessionManager(context: Context) {
             putString(KEY_EMAIL, email)
             putString(KEY_USERNAME, username)
             putBoolean(KEY_IS_LOGGED_IN, true)
+            authProvider?.let { putString(KEY_AUTH_PROVIDER, it) }
+            googleId?.let { putString(KEY_GOOGLE_ID, it) }
             apply()
         }
     }
+
+    // Add these new getters
+    fun getAuthProvider(): String? = prefs.getString(KEY_AUTH_PROVIDER, null)
+    fun getGoogleId(): String? = prefs.getString(KEY_GOOGLE_ID, null)
 
     // Check if user is logged in
     fun isLoggedIn(): Boolean {

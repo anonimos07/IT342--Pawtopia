@@ -7,7 +7,14 @@
         <item name="colorAccent">@color/teal_200</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor">@color/purple_700</item>
-        <!-- Customize your theme here. -->
+
+        <!-- Bottom Navigation styling -->
+        <item name="bottomNavigationStyle">@style/BottomNavigation.Pawtopia</item>
+    </style>
+
+    <style name="BottomNavigation.Pawtopia" parent="Widget.Design.BottomNavigationView">
+        <item name="itemIconTint">@drawable/bottom_nav_color_selector</item>
+        <item name="itemTextColor">@drawable/bottom_nav_color_selector</item>
+        <item name="itemBackground">@color/white</item>
     </style>
 </resources>
-

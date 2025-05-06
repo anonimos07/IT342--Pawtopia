@@ -1,87 +1,97 @@
 package com.example.pawtopia.repository
 
-import com.example.pawtopia.api.ApiClient
+import android.util.Log
 import com.example.pawtopia.model.AddressRequest
 import com.example.pawtopia.model.AddressResponse
-import com.example.pawtopia.model.LoginRequest
-import com.example.pawtopia.model.LoginResponse
-import com.example.pawtopia.model.SignupRequest
+import com.example.pawtopia.util.Result
 import com.example.pawtopia.util.SessionManager
-import retrofit2.Response
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONObject
+import java.util.concurrent.TimeUnit
 
 class UserRepository(private val sessionManager: SessionManager) {
-    // Initialize ApiService through ApiClient
-    private val apiService: ApiClient.ApiService by lazy {
-        ApiClient.createApiService(sessionManager)
-    }
-
-    suspend fun login(loginRequest: LoginRequest): Result<LoginResponse> {
-        return try {
-            val response = apiService.login(loginRequest)
-            if (response.isSuccessful) {
-                response.body()?.let {
-                    Result.success(it)
-                } ?: Result.failure(Exception("Empty response body"))
-            } else {
-                Result.failure(Exception("Login failed: ${response.code()}"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    suspend fun signup(
-        username: String,
-        password: String,
-        firstName: String,
-        lastName: String,
-        email: String
-    ): Result<Unit> {
-        return try {
-            val response = apiService.signup(
-                SignupRequest(
-                    username = username,
-                    password = password,
-                    firstName = firstName,
-                    lastName = lastName,
-                    email = email
-                )
-            )
-            if (response.isSuccessful) {
-                Result.success(Unit)
-            } else {
-                Result.failure(Exception("Signup failed: ${response.code()}"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
+    private val client = OkHttpClient.Builder()
+        .connectTimeout(3600, TimeUnit.SECONDS)
+        .readTimeout(3600, TimeUnit.SECONDS)
+        .writeTimeout(3600, TimeUnit.SECONDS)
+        .build()
+    private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaTypeOrNull()
 
     suspend fun getUserAddress(userId: Long): Result<AddressResponse> {
         return try {
-            val response = apiService.getUserAddress(userId)
+            val request = Request.Builder()
+                .url("https://it342-pawtopia-10.onrender.com/adresses/get-users/$userId")
+                .get()
+                .addHeader("Authorization", "Bearer ${sessionManager.getToken()}")
+                .build()
+
+            val response = withContext(Dispatchers.IO) {
+                client.newCall(request).execute()
+            }
+
             if (response.isSuccessful) {
-                response.body()?.let {
-                    Result.success(it)
-                } ?: Result.failure(Exception("Empty response body"))
+                val responseBody = response.body?.string()
+                if (!responseBody.isNullOrEmpty()) {
+                    val jsonResponse = JSONObject(responseBody)
+                    val addressResponse = AddressResponse(
+                        addressId = jsonResponse.getLong("addressId"),
+                        region = jsonResponse.getString("region"),
+                        province = jsonResponse.getString("province"),
+                        city = jsonResponse.getString("city"),
+                        barangay = jsonResponse.getString("barangay"),
+                        postalCode = jsonResponse.getString("postalCode"),
+                        streetBuildingHouseNo = jsonResponse.optString("streetBuildingHouseNo")
+                    )
+                    Result.Success(addressResponse)
+                } else {
+                    Result.Error(Exception("Empty response body"))
+                }
             } else {
-                Result.failure(Exception("Failed to get address: ${response.code()}"))
+                Result.Error(Exception("Failed to get address: ${response.code}"))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Log.e("UserRepository", "Error getting address", e)
+            Result.Error(e)
         }
     }
 
     suspend fun updateUserAddress(userId: Long, address: AddressRequest): Result<Unit> {
         return try {
-            val response = apiService.updateUserAddress(userId, address)
+            val jsonObject = JSONObject().apply {
+                put("region", address.region)
+                put("province", address.province)
+                put("city", address.city)
+                put("barangay", address.barangay)
+                put("postalCode", address.postalCode)
+                put("streetBuildingHouseNo", address.streetBuildingHouseNo)
+            }
+
+            val requestBody = jsonObject.toString().toRequestBody(JSON_MEDIA_TYPE)
+
+            val request = Request.Builder()
+                .url("https://it342-pawtopia-10.onrender.com/adresses/users/$userId")
+                .put(requestBody)
+                .addHeader("Content-Type", "application/json")
+                .addHeader("Authorization", "Bearer ${sessionManager.getToken()}")
+                .build()
+
+            val response = withContext(Dispatchers.IO) {
+                client.newCall(request).execute()
+            }
+
             if (response.isSuccessful) {
-                Result.success(Unit)
+                Result.Success(Unit)
             } else {
-                Result.failure(Exception("Failed to update address: ${response.code()}"))
+                Result.Error(Exception("Failed to update address: ${response.code}"))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Log.e("UserRepository", "Error updating address", e)
+            Result.Error(e)
         }
     }
 }
