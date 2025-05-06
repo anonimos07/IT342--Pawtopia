@@ -5,12 +5,14 @@ import android.app.TimePickerDialog
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.text.InputFilter
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.pawtopia.databinding.ActivityBookAppointmentBinding
 import com.example.pawtopia.model.AppointmentRequest
+import com.example.pawtopia.model.UserReference
 import com.example.pawtopia.repository.AppointmentRepository
 import com.example.pawtopia.util.SessionManager
 import kotlinx.coroutines.launch
@@ -18,6 +20,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 import com.example.pawtopia.util.Result
+
 
 class BookAppointmentActivity : AppCompatActivity() {
     private lateinit var binding: ActivityBookAppointmentBinding
@@ -39,6 +42,17 @@ class BookAppointmentActivity : AppCompatActivity() {
         binding = ActivityBookAppointmentBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Add input filter to limit contact number to 11 digits
+        binding.etContactNumber.filters = arrayOf<InputFilter>(InputFilter.LengthFilter(11))
+
+        binding.btnBack.setOnClickListener {
+            if (supportFragmentManager.backStackEntryCount > 0) {
+                supportFragmentManager.popBackStack()
+            } else {
+                finish()
+            }
+        }
+
         sessionManager = SessionManager(this)
         appointmentRepository = AppointmentRepository(sessionManager)
 
@@ -48,33 +62,6 @@ class BookAppointmentActivity : AppCompatActivity() {
             startActivity(Intent(this, LoginActivity::class.java))
             finish()
             return
-        }
-
-        // Set up navigation icons
-        binding.tvLogo.setOnClickListener {
-            finish()
-        }
-
-        binding.ivHome.setOnClickListener {
-            finish()
-        }
-
-        binding.ivCart.setOnClickListener {
-            if (sessionManager.isLoggedIn()) {
-                // TODO: Navigate to cart
-                Toast.makeText(this, "Cart functionality coming soon", Toast.LENGTH_SHORT).show()
-            } else {
-                LoginRequiredActivity.startForCart(this)
-            }
-        }
-
-        binding.ivPerson.setOnClickListener {
-            if (!sessionManager.isLoggedIn()) {
-                startActivity(Intent(this, LoginActivity::class.java))
-            } else {
-                // TODO: Navigate to profile
-                Toast.makeText(this, "Profile functionality coming soon", Toast.LENGTH_SHORT).show()
-            }
         }
 
         // Set up date picker
@@ -217,22 +204,22 @@ class BookAppointmentActivity : AppCompatActivity() {
         val time = SimpleDateFormat("hh:mm a", Locale.US).parse(binding.tvTime.text.toString())
 
         val appointmentRequest = AppointmentRequest(
-            userId = userId,  // Make sure this is included
             email = userEmail,
             contactNo = contactNumber,
             date = date?.time,
             time = SimpleDateFormat("HH:mm", Locale.US).format(time!!),
             groomService = selectedService,
-            price = selectedPrice
+            price = selectedPrice,
+            user = UserReference(userId)  // This creates the nested user object with userId
         )
 
         lifecycleScope.launch {
+            binding.progressBar.visibility = View.VISIBLE
             when (val result = appointmentRepository.bookAppointment(appointmentRequest)) {
                 is Result.Success -> {
-                    val appointment = result.data
                     Toast.makeText(
                         this@BookAppointmentActivity,
-                        "Appointment booked! ID: ${appointment.appointmentId}",
+                        "Appointment booked! ${result.data.message}",
                         Toast.LENGTH_SHORT
                     ).show()
                     finish()
@@ -245,6 +232,7 @@ class BookAppointmentActivity : AppCompatActivity() {
                     ).show()
                 }
             }
+            binding.progressBar.visibility = View.GONE
         }
     }
 }

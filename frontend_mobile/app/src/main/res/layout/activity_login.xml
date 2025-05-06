@@ -13,6 +13,20 @@
         android:padding="24dp"
         tools:ignore="MissingClass">
 
+        <!-- Back Button - Add this before the ivPawIcon -->
+        <ImageView
+            android:id="@+id/ivBackButton"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginStart="16dp"
+            android:src="@drawable/ic_back"
+            android:contentDescription="Back button"
+            app:layout_constraintBottom_toBottomOf="@id/ivPawIcon"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@id/ivPawIcon"
+            app:tint="@color/purple" />
+
+        <!-- Keep the existing ivPawIcon exactly as is -->
         <ImageView
             android:id="@+id/ivPawIcon"
             android:layout_width="48dp"
@@ -91,7 +105,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:text="Email:"
+            android:text="Username:"
             android:textColor="@color/black"
             android:textSize="16sp"
             app:layout_constraintStart_toStartOf="parent"
@@ -103,7 +117,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:background="@drawable/edit_text_background"
-            android:hint="Enter your email"
+            android:hint="Enter your username"
             android:inputType="textEmailAddress"
             android:padding="12dp"
             app:layout_constraintEnd_toEndOf="parent"

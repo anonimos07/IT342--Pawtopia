@@ -95,5 +95,4 @@ public class AppointmentController {
     public List<Appointment> getAppointmentsByUserEmail(@PathVariable String email) {
         return appointmentService.getAppointmentsByUserEmail(email);
     }
-
 }

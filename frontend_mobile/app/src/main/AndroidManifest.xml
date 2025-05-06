@@ -8,9 +8,9 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/ic_paw"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@drawable/ic_paw"
         android:supportsRtl="true"
         android:theme="@style/Theme.Pawtopia"
         android:networkSecurityConfig="@xml/network_security_config"
@@ -43,12 +43,46 @@
         <activity
             android:name=".BookAppointmentActivity"
             android:exported="false"
-            android:theme="@style/Theme.Pawtopia" />
+            android:theme="@style/ActivityAnimation"/>
 
         <activity
             android:name=".LoginRequiredActivity"
             android:exported="false"
             android:theme="@style/Theme.Pawtopia" />
+
+        <activity
+            android:name=".ProductDetailActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Pawtopia" />
+
+        <activity
+            android:name=".CartActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Pawtopia" />
+
+        <activity
+            android:name=".CheckoutActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Pawtopia" />
+
+        <activity
+            android:name=".OrderConfirmationActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Pawtopia" />
+
+        <activity
+            android:name=".OrdersActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Pawtopia" />
+
+        <activity
+            android:name=".AppointmentActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Pawtopia" />
+
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
 
     </application>
 
