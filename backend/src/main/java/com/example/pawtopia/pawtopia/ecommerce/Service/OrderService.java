@@ -7,8 +7,6 @@ import com.example.pawtopia.pawtopia.ecommerce.Entity.User;
 import com.example.pawtopia.pawtopia.ecommerce.Repository.OrderRepo;
 import com.example.pawtopia.pawtopia.ecommerce.Repository.ProductRepo;
 import com.example.pawtopia.pawtopia.ecommerce.Repository.UserRepo;
-import jakarta.transaction.Transactional;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -28,18 +26,22 @@ public class OrderService {
 
     @Autowired
     UserRepo userRepo;
+
     public OrderService() {
         super();
     }
 
     public Order postOrderRecord(Order order) {
-        // First, make sure the user is loaded from DB to avoid detached entity issues
         Long userId = order.getUser().getUserId();
         User user = userRepo.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         order.setUser(user);
 
-        // Process order items
+        // Set default orderStatus to PENDING if not provided
+        if (order.getOrderStatus() == null || order.getOrderStatus().trim().isEmpty()) {
+            order.setOrderStatus("PENDING");
+        }
+
         if (order.getOrderItems() != null) {
             for (OrderItem orderItem : order.getOrderItems()) {
                 Optional<Product> optionalProduct = productRepository.findById(Integer.parseInt(orderItem.getProductId()));
@@ -51,16 +53,11 @@ public class OrderService {
                 } else {
                     throw new RuntimeException("Product not found with ID: " + orderItem.getProductId());
                 }
-
-                // Set the parent order for the order item to persist relationship
                 orderItem.setOrder(order);
             }
         }
-
-        // Save the order
         return orepo.save(order);
     }
-
 
     public OrderService(OrderRepo orderRepository) {
         this.orepo = orderRepository;
@@ -99,6 +96,18 @@ public class OrderService {
         }
     }
 
+    public Order updateOrderStatus(int id, String status) {
+        Order order = orepo.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Order " + id + " not found"));
+        order.setOrderStatus(status);
+        if (status.equals("APPROVED")) {
+            order.setPaymentStatus("PAID");
+        } else if (status.equals("DECLINED")) {
+            order.setPaymentStatus("CANCELLED");
+        }
+        return orepo.save(order);
+    }
+
     public String deleteOrder(int id) {
         String msg = "";
         if(orepo.findById(id).isPresent()) {
@@ -111,14 +120,11 @@ public class OrderService {
     }
 
     public Double getTotalIncome() {
-        // Call the repository method to get the sum of all totalPrice values
         return orepo.calculateTotalIncome();
     }
 
     public Order findById(Integer orderId) {
         return orepo.findById(orderId)
-                .orElse(null); // Returns null if order is not found
+                .orElse(null);
     }
-
-
 }

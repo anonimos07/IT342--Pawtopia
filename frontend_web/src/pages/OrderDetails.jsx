@@ -11,16 +11,16 @@ const API_BASE_URL_REVIEW = import.meta.env.VITE_API_BASE_URL_PRODUCT_REVIEW;
 const API_BASE_URL_ORDER_ITEM = import.meta.env.VITE_API_BASE_URL_ORDER_ITEM;
 
 export default function OrderDetails() {
-  const { OrderID } = useParams(); // Get orderID from URL
+  const { OrderID } = useParams();
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [ratings, setRatings] = useState({}); // Track ratings for each order item
-  const [hoverRatings, setHoverRatings] = useState({}); // Track hover state for ratings
-  const [comments, setComments] = useState({}); // Track comments for each order item
-  const [reviewErrors, setReviewErrors] = useState({}); // Track errors for each review
-  const [reviewSuccesses, setReviewSuccesses] = useState({}); // Track success messages
+  const [ratings, setRatings] = useState({});
+  const [hoverRatings, setHoverRatings] = useState({});
+  const [comments, setComments] = useState({});
+  const [reviewErrors, setReviewErrors] = useState({});
+  const [reviewSuccesses, setReviewSuccesses] = useState({});
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
@@ -84,7 +84,6 @@ export default function OrderDetails() {
     }
 
     try {
-      // Submit the review
       const reviewData = {
         ratings: rating,
         comment: comment.trim() || null,
@@ -97,7 +96,6 @@ export default function OrderDetails() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // Update the isRated flag for the OrderItem
       const updatedOrderItem = { ...orderItem, isRated: true };
       await axios.put(
         `${API_BASE_URL_ORDER_ITEM}/updateIsRated/${orderItem.orderItemID}`,
@@ -105,7 +103,6 @@ export default function OrderDetails() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // Update local state to reflect the change
       setOrder((prev) => ({
         ...prev,
         orderItems: prev.orderItems.map((item) =>
@@ -197,9 +194,11 @@ export default function OrderDetails() {
                 <span className="font-medium">Status: {order.orderStatus}</span>
               </div>
               <p className="text-sm text-gray-600 mb-4">
-                {order.orderStatus === 'DELIVERED'
-                  ? 'Your order has been delivered.'
-                  : 'Your order is being processed. We’ll notify you when it’s ready.'}
+                {order.orderStatus === 'APPROVED'
+                  ? 'Your order has been approved and delivered.'
+                  : order.orderStatus === 'DECLINED'
+                  ? 'Your order has been declined.'
+                  : 'Your order is being processed. We’ll notify you when it’s approved.'}
               </p>
             </div>
 
@@ -229,8 +228,7 @@ export default function OrderDetails() {
                         </div>
                       </div>
 
-                      {/* Review Submission Form */}
-                      {order.orderStatus === 'DELIVERED' && !item.isRated ? (
+                      {order.orderStatus === 'APPROVED' && !item.isRated ? (
                         <div className="mb-6 p-4 border rounded-lg">
                           <h3 className="text-lg font-semibold mb-2">Write a Review</h3>
                           {reviewErrors[item.orderItemID] && (
@@ -294,11 +292,11 @@ export default function OrderDetails() {
                             Submit Review
                           </Button>
                         </div>
-                      ) : order.orderStatus === 'DELIVERED' && item.isRated ? (
+                      ) : order.orderStatus === 'APPROVED' && item.isRated ? (
                         <p className="text-green-600 text-sm">You have already reviewed this product.</p>
                       ) : (
                         <p className="text-gray-600 text-sm">
-                          Reviews can be submitted once the order is delivered.
+                          Reviews can be submitted once the order is approved.
                         </p>
                       )}
                     </div>

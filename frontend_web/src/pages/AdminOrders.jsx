@@ -26,10 +26,10 @@ export default function AdminOrders() {
           headers: { Authorization: `Bearer ${token}` },
         });
 
+        console.log('Fetched orders:', response.data); // Debug: Log the fetched orders
         setOrders(response.data);
         setLoading(false);
 
-        // Set username from localStorage
         const userData = JSON.parse(localStorage.getItem('user') || '{}');
         if (userData.username) {
           setUsername(userData.username);
@@ -54,25 +54,16 @@ export default function AdminOrders() {
   const handleStatusUpdate = async (orderId, newStatus) => {
     try {
       const token = localStorage.getItem('token');
-      console.log('Token being sent:', token); // Debug log
-      const order = orders.find((o) => o.orderID === orderId);
-
-      const updatedOrder = {
-        ...order,
-        orderStatus: newStatus,
-        user: { userId: order.user.userId }, // Ensure user object is included
-      };
-
       await axios.put(
-        `${API_BASE_URL_ORDER}/putOrderDetails?id=${orderId}`,
-        updatedOrder,
+        `${API_BASE_URL_ORDER}/updateStatus/${orderId}?status=${newStatus}`,
+        {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       setOrders((prev) =>
         prev.map((o) => (o.orderID === orderId ? { ...o, orderStatus: newStatus } : o))
       );
-      toast.success(`Order #${orderId} updated to ${newStatus}.`);
+      toast.success(`Order #${orderId} ${newStatus.toLowerCase()}.`);
     } catch (err) {
       console.error('Error updating order status:', err);
       toast.error('Failed to update order status.');
@@ -116,26 +107,40 @@ export default function AdminOrders() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {orders.map((order) => (
-                  <tr key={order.orderID} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{order.orderID}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{order.user?.username || 'N/A'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{new Date(order.orderDate).toLocaleDateString()}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{order.orderStatus}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₱{order.totalPrice.toFixed(2)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <select
-                        value={order.orderStatus}
-                        onChange={(e) => handleStatusUpdate(order.orderID, e.target.value)}
-                        className="border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        <option value="PENDING">Pending</option>
-                        <option value="SHIPPED">Shipped</option>
-                        <option value="DELIVERED">Delivered</option>
-                      </select>
-                    </td>
-                  </tr>
-                ))}
+                {orders.map((order) => {
+                  console.log(`Order ID ${order.orderID} status: "${order.orderStatus}"`); // Debug: Log each order's status
+                  const normalizedStatus = order.orderStatus ? order.orderStatus.trim().toUpperCase() : 'UNKNOWN';
+                  const isPending = normalizedStatus === 'PENDING';
+                  return (
+                    <tr key={order.orderID} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{order.orderID}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{order.user?.username || 'N/A'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{new Date(order.orderDate).toLocaleDateString()}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{normalizedStatus}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₱{order.totalPrice.toFixed(2)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {isPending ? (
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => handleStatusUpdate(order.orderID, 'APPROVED')}
+                              className="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleStatusUpdate(order.orderID, 'DECLINED')}
+                              className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                            >
+                              Decline
+                            </button>
+                          </div>
+                        ) : (
+                          <span>{normalizedStatus}</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}
