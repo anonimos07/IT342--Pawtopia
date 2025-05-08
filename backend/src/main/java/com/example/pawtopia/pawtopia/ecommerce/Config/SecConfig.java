@@ -70,7 +70,7 @@ public class SecConfig {
                         .requestMatchers(
                                 "/users/user/{id}",  // Keep this for admin use
                                 "/appointments/postAppointment",
-                                "/appointments/byUserEmail{email}",
+                                "/appointments/byUserEmail/{email}",
                                 "/adresses/get-users/{userId}",
                                 "/adresses/del-users/{userId}",
                                 "/api/cartItem/**",

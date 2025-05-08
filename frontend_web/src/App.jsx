@@ -20,6 +20,7 @@ import AdminAppointments from "./pages/AdminAppointments";
 import OrderDetails from "./pages/OrderDetails";
 import CheckoutPage from "./pages/CheckoutPage";
 import Orders from "./pages/Orders";
+import Appointments from "./pages/Appointments";
 import OAuthSuccess from "./pages/OAuthSuccess";
 import PaymentSuccess from "./pages/PaymentSuccess";
 
@@ -201,7 +202,7 @@ function App() {
             ) : (
               <Layout>
                 <ProfilePage />
-              </Layout>
+            </Layout>
             )}
           </ProtectedRoute>
         }
@@ -246,6 +247,21 @@ function App() {
             ) : (
               <Layout>
                 <OrderDetails />
+              </Layout>
+            )}
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/MyAppointments"
+        element={
+          <ProtectedRoute>
+            {shouldHideHeader ? (
+              <Appointments />
+            ) : (
+              <Layout>
+                <Appointments />
               </Layout>
             )}
           </ProtectedRoute>
