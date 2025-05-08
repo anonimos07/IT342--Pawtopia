@@ -40,14 +40,18 @@ public class ProductReviewService {
             if (!canReview) {
                 throw new IllegalStateException("User can only review products from approved orders");
             }
-            boolean alreadyReviewed = productReviewRepo.findReviewsByProductId(review.getProduct().getProductID())
-                    .stream()
-                    .anyMatch(r -> r.getUser().getUserId().equals(review.getUser().getUserId()));
+
+            // Check for existing review for the same product, user, and order
+            boolean alreadyReviewed = productReviewRepo.findAll().stream()
+                    .anyMatch(r -> r.getProduct().getProductID() == review.getProduct().getProductID() &&
+                            r.getUser().getUserId().equals(review.getUser().getUserId()) &&
+                            r.getOrderID() == review.getOrderID());
             if (alreadyReviewed) {
-                throw new IllegalStateException("User has already reviewed this product");
+                throw new IllegalStateException("User has already reviewed this product for this order");
             }
+
             ProductReview savedReview = productReviewRepo.save(review);
-            logger.info("Review saved successfully: {}", savedReview);
+            logger.info("Review saved successfully: {}, username: {}", savedReview, savedReview.getUsername());
             return savedReview;
         } catch (Exception e) {
             logger.error("Failed to save review: {}", e.getMessage(), e);
@@ -72,6 +76,7 @@ public class ProductReviewService {
                 .orElseThrow(() -> new NoSuchElementException("Review with id " + id + " not found."));
         existingReview.setRatings(productReviewRecord.getRatings());
         existingReview.setComment(productReviewRecord.getComment());
+        existingReview.setOrderID(productReviewRecord.getOrderID());
         return productReviewRepo.save(existingReview);
     }
 

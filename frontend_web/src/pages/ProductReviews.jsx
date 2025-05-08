@@ -14,10 +14,8 @@ const ProductReviews = ({ productId }) => {
       try {
         setLoading(true);
         const response = await axios.get(`${API_BASE_URL_REVIEW}/getReviewsByProductId/${productId}`);
-        console.log("API Response:", response.data); // Debug: Check what data we're receiving
         setReviews(response.data);
       } catch (err) {
-        console.error("Error fetching reviews:", err);
         setReviewError('Failed to load reviews');
       } finally {
         setLoading(false);
@@ -26,114 +24,69 @@ const ProductReviews = ({ productId }) => {
     fetchReviews();
   }, [productId]);
 
-  // Debug: Log the reviews state to verify what we have
-  useEffect(() => {
-    console.log("Current reviews state:", reviews);
-    if (reviews.length > 0) {
-      console.log("First review example:", reviews[0]);
-      console.log("Rating type:", typeof reviews[0].ratings);
-      console.log("Username example:", reviews[0].username);
-    }
-  }, [reviews]);
-
-  // Calculate average rating safely with fallback for string ratings
-  const calculateAverage = () => {
-    if (reviews.length === 0) return 0;
-    
-    let total = 0;
-    let count = 0;
-    
-    reviews.forEach(review => {
-      // Convert to number if it's a string, or use 0 if conversion fails
-      const rating = Number(review.ratings);
-      if (!isNaN(rating)) {
-        total += rating;
-        count++;
-      }
-    });
-    
-    return count > 0 ? total / count : 0;
-  };
-
-  const averageRating = calculateAverage();
-  console.log("Calculated average rating:", averageRating); // Debug: Check our calculation
+  const averageRating = reviews.length > 0 
+    ? reviews.reduce((acc, review) => acc + review.ratings, 0) / reviews.length
+    : 0;
 
   if (loading) {
     return (
-      <div>
-        <h2>Product Reviews</h2>
-        <p>Loading reviews...</p>
+      <div className="py-12 bg-gray-50">
+        <div className="container mx-auto px-4 max-w-5xl">
+          <h2 className="text-2xl font-bold mb-6">Product Reviews</h2>
+          <div className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div>
-      <h2>Product Reviews</h2>
-      
-      <div className="mb-4">
-        <div className="flex items-center">
-          <p className="mr-2">
-            {!isNaN(averageRating) ? averageRating.toFixed(1) : "0"} out of 5
-          </p>
-          <div className="flex">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <Star
-                key={star}
-                size={20}
-                fill={star <= Math.round(averageRating) ? "gold" : "none"}
-                color={star <= Math.round(averageRating) ? "gold" : "gray"}
-              />
-            ))}
-          </div>
-          <span className="ml-2">({reviews.length} reviews)</span>
-        </div>
-      </div>
+    <div className="py-12 bg-gray-50">
+      <div className="container mx-auto px-4 max-w-5xl">
+        <h2 className="text-2xl font-bold mb-6">Product Reviews</h2>
 
-      {reviews.length > 0 ? (
-        <div className="space-y-4">
-          {reviews.map((review, index) => {
-            // Ensure rating is a number
-            const rating = Number(review.ratings);
-            console.log(`Review ${index} rating:`, rating); // Debug: Check each review's rating
-            
-            return (
-              <div key={index} className="border p-4 rounded">
-                <div className="flex items-center">
-                  <div className="flex">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Star
-                        key={star}
-                        size={20}
-                        fill={star <= rating ? "gold" : "none"}
-                        color={star <= rating ? "gold" : "gray"}
-                      />
+        <div className="bg-white rounded-xl p-6 shadow-sm mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <h3 className="font-bold text-lg">{averageRating.toFixed(1)} out of 5</h3>
+            <div className="flex items-center">
+              {[...Array(5)].map((_, i) => (
+                <Star 
+                  key={i} 
+                  className={`w-5 h-5 ${i < Math.round(averageRating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} 
+                />
+              ))}
+            </div>
+            <span className="text-sm text-gray-500">
+              ({reviews.length} reviews)
+            </span>
+          </div>
+        </div>
+
+        {reviews.length > 0 ? (
+          <div className="space-y-6">
+            {reviews.map((review) => (
+              <div key={review.reviewID} className="bg-white rounded-xl p-6 shadow-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center">
+                    {[...Array(review.ratings)].map((_, i) => (
+                      <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                    ))}
+                    {[...Array(5 - review.ratings)].map((_, i) => (
+                      <Star key={i + review.ratings} className="w-4 h-4 text-gray-300" />
                     ))}
                   </div>
                 </div>
-                {review.comment && (
-                  <p className="mt-2">{review.comment}</p>
-                )}
-                <p className="text-sm text-gray-500 mt-1">
-                  — {review.username || 'Anonymous'}
-                </p>
+                {review.comment && <p className="text-gray-600 mb-2">{review.comment}</p>}
+                <p className="text-sm text-gray-500">— {review.username || 'Anonymous'}</p>
               </div>
-            );
-          })}
-        </div>
-      ) : (
-        <p>No reviews yet for this product.</p>
-      )}
-      
-      {/* Debug section - remove in production */}
-      <div style={{ margin: '20px 0', padding: '10px', border: '1px solid #ccc', backgroundColor: '#f5f5f5' }}>
-        <h3>Debug Info:</h3>
-        <p>Number of reviews: {reviews.length}</p>
-        <p>Average Rating: {averageRating}</p>
-        <p>Raw reviews data:</p>
-        <pre style={{ maxHeight: '200px', overflow: 'auto' }}>
-          {JSON.stringify(reviews, null, 2)}
-        </pre>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl p-6 shadow-sm text-center text-gray-500">
+            No reviews yet for this product.
+          </div>
+        )}
       </div>
     </div>
   );

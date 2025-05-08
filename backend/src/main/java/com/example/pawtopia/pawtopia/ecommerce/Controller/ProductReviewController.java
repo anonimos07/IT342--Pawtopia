@@ -46,7 +46,7 @@ public class ProductReviewController {
                 logger.error("User not found for username: {}", username);
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
-            if (review.getRatings() == 0 || review.getProduct() == null) {
+            if (review.getRatings() == 0 || review.getProduct() == null || review.getOrderID() == 0) {
                 logger.error("Invalid request data: {}", review);
                 return ResponseEntity.badRequest().body(null);
             }

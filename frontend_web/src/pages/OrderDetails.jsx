@@ -86,10 +86,14 @@ export default function OrderDetails() {
     try {
       const reviewData = {
         ratings: rating,
-        comment: comment.trim() || null,
+        comment: comment.trim() || '',
         product: { productID: parseInt(orderItem.productId) },
         user: { userId: userId },
+        orderID: parseInt(OrderID), // Added orderID from useParams
       };
+
+      console.log('Submitting review with data:', reviewData);
+
       await axios.post(
         `${API_BASE_URL_REVIEW}/postReview`,
         reviewData,
@@ -120,6 +124,7 @@ export default function OrderDetails() {
       setReviewErrors((prev) => ({ ...prev, [orderItem.orderItemID]: '' }));
       toast.success('Review submitted successfully!');
     } catch (err) {
+      console.error('Error submitting review:', err);
       setReviewErrors((prev) => ({
         ...prev,
         [orderItem.orderItemID]:
@@ -228,7 +233,7 @@ export default function OrderDetails() {
                         </div>
                       </div>
 
-                      {order.orderStatus === 'APPROVED' && !item.isRated ? (
+                      {order.orderStatus === 'APPROVED' ? (
                         <div className="mb-6 p-4 border rounded-lg">
                           <h3 className="text-lg font-semibold mb-2">Write a Review</h3>
                           {reviewErrors[item.orderItemID] && (
@@ -292,8 +297,6 @@ export default function OrderDetails() {
                             Submit Review
                           </Button>
                         </div>
-                      ) : order.orderStatus === 'APPROVED' && item.isRated ? (
-                        <p className="text-green-600 text-sm">You have already reviewed this product.</p>
                       ) : (
                         <p className="text-gray-600 text-sm">
                           Reviews can be submitted once the order is approved.
