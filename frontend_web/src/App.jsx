@@ -23,6 +23,7 @@ import Orders from "./pages/Orders";
 import Appointments from "./pages/Appointments";
 import OAuthSuccess from "./pages/OAuthSuccess";
 import PaymentSuccess from "./pages/PaymentSuccess";
+import MyAppointments from "./pages/MyAppointments";
 
 // Protected route component to handle authentication
 function ProtectedRoute({ children }) {
@@ -258,10 +259,10 @@ function App() {
         element={
           <ProtectedRoute>
             {shouldHideHeader ? (
-              <Appointments />
+              <MyAppointments />
             ) : (
               <Layout>
-                <Appointments />
+                <MyAppointments />
               </Layout>
             )}
           </ProtectedRoute>
