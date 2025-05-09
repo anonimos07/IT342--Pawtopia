@@ -68,7 +68,7 @@ public class SecConfig {
                         .requestMatchers("/users/me").authenticated()
                         // Customer-specific endpoints
                         .requestMatchers(
-                                "/users/user/{id}",  // Keep this for admin use
+                                "/users/user/{id}",
                                 "/appointments/postAppointment",
                                 "/appointments/byUserEmail/{email}",
                                 "/adresses/get-users/{userId}",
@@ -89,7 +89,7 @@ public class SecConfig {
                                 "/api/review/**"
 
                         ).hasRole("CUSTOMER")
-                        // Admin-specific endpoints
+
                         .requestMatchers(
                                 "/admin/**",
                                 "/adresses/getAllAddress",
@@ -105,8 +105,8 @@ public class SecConfig {
                                 "/api/order/get-total-income",
                                 "/api/orderItem/getAllOrdersItem",
                                 "/api/orderItem/putOrderItemDetails",
-                                "/api/orderItem/deleteOrderItemDetails/{id}",
-                                "/admin/all"
+                                "/api/orderItem/deleteOrderItemDetails/{id}"
+
                         ).hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
