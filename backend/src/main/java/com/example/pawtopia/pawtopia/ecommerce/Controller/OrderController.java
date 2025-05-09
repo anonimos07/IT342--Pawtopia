@@ -29,7 +29,6 @@ public class OrderController {
             return ResponseEntity.status(401).build();
         }
         String username = authentication.getName();
-        // Ensure the order's user matches the authenticated user
         if (!order.getUser().getUsername().equals(username)) {
             return ResponseEntity.status(403).build();
         }
@@ -61,6 +60,15 @@ public class OrderController {
     @PutMapping("/putOrderDetails")
     public Order putOrderDetails(@RequestParam int id, @RequestBody Order newOrderDetails) {
         return oserv.putOrderDetails(id, newOrderDetails);
+    }
+
+    @PutMapping("/updateStatus/{id}")
+    public ResponseEntity<Order> updateOrderStatus(@PathVariable int id, @RequestParam String status) {
+        if (!status.equals("APPROVED") && !status.equals("DECLINED")) {
+            return ResponseEntity.badRequest().build();
+        }
+        Order updatedOrder = oserv.updateOrderStatus(id, status);
+        return ResponseEntity.ok(updatedOrder);
     }
 
     @DeleteMapping("/deleteOrderDetails/{id}")

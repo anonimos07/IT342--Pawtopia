@@ -26,6 +26,9 @@ public class ProductReview {
     @JsonBackReference("user-productreview")
     private User user;
 
+    @Column(name = "orderid", nullable = false)
+    private int orderID; // Add this field
+
     @JsonProperty("username")
     public String getUsername() {
         return user != null ? user.getUsername() : null;
@@ -33,12 +36,13 @@ public class ProductReview {
 
     public ProductReview() {}
 
-    public ProductReview(int reviewID, int ratings, String comment, Product product, User user) {
+    public ProductReview(int reviewID, int ratings, String comment, Product product, User user, int orderID) {
         this.ReviewID = reviewID;
         this.ratings = ratings;
         this.comment = comment;
         this.product = product;
         this.user = user;
+        this.orderID = orderID; // Initialize orderID
     }
 
     public int getReviewID() {
@@ -79,5 +83,13 @@ public class ProductReview {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public int getOrderID() {
+        return orderID;
+    }
+
+    public void setOrderID(int orderID) {
+        this.orderID = orderID;
     }
 }

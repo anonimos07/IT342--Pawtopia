@@ -37,7 +37,7 @@ public class OrderItem {
     }
 
     public OrderItem(int orderItemID, String orderItemName, String orderItemImage, double price, int quantity,
-                           String productId, boolean isRated, Order order) {
+                     String productId, boolean isRated, Order order) {
         super();
         this.orderItemID = orderItemID;
         this.orderItemName = orderItemName;
@@ -49,5 +49,12 @@ public class OrderItem {
         this.order = order;
     }
 
+    // Explicit getter and setter for isRated to bypass Lombok issue
+    public boolean isRated() {
+        return isRated;
+    }
 
+    public void setIsRated(boolean isRated) {
+        this.isRated = isRated;
+    }
 }

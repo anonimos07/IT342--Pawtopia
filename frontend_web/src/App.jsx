@@ -14,13 +14,16 @@ import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsers from './pages/AdminUsers';
 import AdminProducts from "./pages/AdminProducts";
+import AdminOrders from "./pages/AdminOrders";
 import CartPage from "./pages/CartPage";
-import AdminAppointments from "./pages/AdminAppoinments";
+import AdminAppointments from "./pages/AdminAppointments";
 import OrderDetails from "./pages/OrderDetails";
 import CheckoutPage from "./pages/CheckoutPage";
 import Orders from "./pages/Orders";
+import Appointments from "./pages/Appointments";
 import OAuthSuccess from "./pages/OAuthSuccess";
 import PaymentSuccess from "./pages/PaymentSuccess";
+import MyAppointments from "./pages/MyAppointments";
 
 // Protected route component to handle authentication
 function ProtectedRoute({ children }) {
@@ -33,6 +36,7 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
+// Admin route component to handle admin authentication
 function AdminRoute({ children }) {
   const isAuthenticated = localStorage.getItem('token') !== null;
   const userData = JSON.parse(localStorage.getItem('user') || '{}');
@@ -45,6 +49,7 @@ function AdminRoute({ children }) {
   return children;
 }
 
+// Layout component to handle header and user state
 function Layout({ children }) {
   const [user, setUser] = useState(null);
   
@@ -113,12 +118,12 @@ function App() {
       <Route path="/oauth-success" element={<OAuthSuccess />} />
       <Route path="/admin" element={<AdminLogin />} />
       
-      <Route path="/adminDashboard" element={<AdminDashboard />} />
-      <Route path="/adminUsers" element={<AdminUsers />} />
-      <Route path="/adminProducts" element={<AdminProducts />} />
-      <Route path="/adminAppointments" element={<AdminAppointments />} />
-    
-
+      {/* Admin routes */}
+      <Route path="/adminDashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+      <Route path="/adminUsers" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+      <Route path="/adminProducts" element={<AdminRoute><AdminProducts /></AdminRoute>} />
+      <Route path="/adminOrders" element={<AdminRoute><AdminOrders /></AdminRoute>} />
+      <Route path="/adminAppointments" element={<AdminRoute><AdminAppointments /></AdminRoute>} />
 
       {/* Public or authenticated routes with layout */}
       <Route 
@@ -198,25 +203,26 @@ function App() {
             ) : (
               <Layout>
                 <ProfilePage />
-              </Layout>
+            </Layout>
             )}
           </ProtectedRoute>
         }
       />
 
-      <Route path="/payment-success"
-              element={
-                <ProtectedRoute>
-                  {shouldHideHeader ? (
-                    <PaymentSuccess />
-                  ) : (
-                    <Layout>
-                      <PaymentSuccess />
-                    </Layout>
-                  )}
-                </ProtectedRoute>
-              }
-            />
+      <Route
+        path="/payment-success"
+        element={
+          <ProtectedRoute>
+            {shouldHideHeader ? (
+              <PaymentSuccess />
+            ) : (
+              <Layout>
+                <PaymentSuccess />
+              </Layout>
+            )}
+          </ProtectedRoute>
+        }
+      />
 
       <Route
         path="/Mypurchases"
@@ -238,10 +244,25 @@ function App() {
         element={
           <ProtectedRoute>
             {shouldHideHeader ? (
-              <Orders />
+              <OrderDetails />
             ) : (
               <Layout>
-                <Orders />
+                <OrderDetails />
+              </Layout>
+            )}
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/MyAppointments"
+        element={
+          <ProtectedRoute>
+            {shouldHideHeader ? (
+              <MyAppointments />
+            ) : (
+              <Layout>
+                <MyAppointments />
               </Layout>
             )}
           </ProtectedRoute>
@@ -265,7 +286,7 @@ function App() {
         path="/cart"
         element={
           shouldHideHeader ? (
-            <CartPage/>
+            <CartPage />
           ) : (
             <Layout>
               <CartPage />
@@ -273,8 +294,8 @@ function App() {
           )
         }
       />
-  
-    <Route
+
+      <Route
         path="/orderDetails"
         element={
           shouldHideHeader ? (
@@ -298,7 +319,7 @@ function App() {
             </Layout>
           )
         }
-      />  
+      />
     </Routes>
   );
 }

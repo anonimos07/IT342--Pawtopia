@@ -33,7 +33,6 @@ public class OrderItemService {
 //    return oirepo.save(orderItem);
 //}
 
-
     public List<OrderItem> getAllOrderItem() {
         return oirepo.findAll();
     }
@@ -49,6 +48,7 @@ public class OrderItemService {
             orderItem.setOrderItemImage(newOrderItemDetails.getOrderItemImage());
             orderItem.setPrice(newOrderItemDetails.getPrice());
             orderItem.setQuantity(newOrderItemDetails.getQuantity());
+            orderItem.setIsRated(newOrderItemDetails.isRated());
         } catch(NoSuchElementException nex) {
             throw new NameNotFoundException("Order " + id + " not found");
         } finally {
@@ -67,21 +67,14 @@ public class OrderItemService {
         return msg;
     }
 
-
     public OrderItem updateIsRated(int id, OrderItem newOrderItemDetails) {
         try {
-            // Search for the orderItem by ID
             OrderItem orderItem = oirepo.findById(id).orElseThrow(() ->
                     new NoSuchElementException("OrderItem " + id + " not found"));
-
-            // If ID found, set new values
-            orderItem.setQuantity(newOrderItemDetails.getQuantity());
-
-            // Save the updated orderItem
+            orderItem.setIsRated(newOrderItemDetails.isRated());
             return oirepo.save(orderItem);
         } catch (NoSuchElementException nex) {
-            throw nex; // Re-throw the exception
-
+            throw nex;
         }
     }
 }

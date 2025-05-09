@@ -36,6 +36,7 @@ export default function ProductDetailPage() {
         const productResponse = await axios.get(
           `${API_BASE_URL_PRODUCT}/getProduct/${id}`
         );
+        console.log('Product API Response:', productResponse.data); // Log the API response
         
         const allProductsResponse = await axios.get(
           `${API_BASE_URL_PRODUCT}/getProduct`
@@ -121,6 +122,10 @@ export default function ProductDetailPage() {
         );
         cart = cartResponse.data;
       } catch (error) {
+        if (error.response?.status === 401) {
+          navigate('/login');
+          return;
+        }
         if (error.response?.status === 404) {
           const createResponse = await axios.post(
             `${API_BASE_URL_USER_CART}/postCartRecord`,
@@ -305,8 +310,20 @@ export default function ProductDetailPage() {
     );
   }
 
+  // Helper function to safely get the rating
+  const getRating = (review) => {
+    const rating = review.rating || review.ratings || 0;
+    return Number(rating) || 0;
+  };
+
+  // Helper function to safely get the username
+  const getUsername = (review) => {
+    console.log('Review object:', review); // Log the review object to inspect user data
+    return review.username || 'Unknown User'; // Use review.username directly
+  };
+
   const averageRating = product.productreview && product.productreview.length > 0 
-    ? product.productreview.reduce((acc, review) => acc + review.rating, 0) / product.productreview.length
+    ? product.productreview.reduce((acc, review) => acc + getRating(review), 0) / product.productreview.length
     : 0;
 
   const isIncrementDisabled = quantity >= product.quantity;
@@ -428,7 +445,7 @@ export default function ProductDetailPage() {
                   {[...Array(5)].map((_, i) => (
                     <Star 
                       key={i} 
-                      className={`w-5 h-5 ${i < Math.round(averageRating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} 
+                      className={`w-5 h-5 ${i < Math.floor(averageRating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} 
                     />
                   ))}
                   <span className="text-sm text-gray-500 ml-2">
@@ -512,12 +529,12 @@ export default function ProductDetailPage() {
 
             <div className="bg-white rounded-xl p-6 shadow-sm mb-6">
               <div className="flex items-center gap-2 mb-4">
-                <h3 className="font-bold text-lg">{averageRating.toFixed(1)} out of 5</h3>
+                <h3 className="font-bold text-lg">{isNaN(averageRating) ? '0.0' : averageRating.toFixed(1)} out of 5</h3>
                 <div className="flex items-center">
                   {[...Array(5)].map((_, i) => (
                     <Star 
                       key={i} 
-                      className={`w-5 h-5 ${i < Math.round(averageRating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} 
+                      className={`w-5 h-5 ${i < Math.floor(averageRating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} 
                     />
                   ))}
                 </div>
@@ -530,16 +547,19 @@ export default function ProductDetailPage() {
             {product.productreview && product.productreview.length > 0 ? (
               <div className="space-y-6">
                 {product.productreview.map((review) => (
-                  <div key={review.reviewID} className="bg-white rounded-xl p-6 shadow-sm">
+                  <div key={review.reviewID || review.id} className="bg-white rounded-xl p-6 shadow-sm">
                     <div className="flex items-center gap-2 mb-2">
                       <div className="flex items-center">
-                        {[...Array(review.rating)].map((_, i) => (
-                          <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                        {[...Array(5)].map((_, i) => (
+                          <Star 
+                            key={i} 
+                            className={`w-4 h-4 ${i < getRating(review) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} 
+                          />
                         ))}
                       </div>
                     </div>
-                    <p className="text-gray-600 mb-2">{review.comment}</p>
-                    <p className="text-sm text-gray-500">— {review.user ? review.user.username : 'Anonymous'}</p>
+                    {review.comment && <p className="text-gray-600 mb-2">{review.comment}</p>}
+                    <p className="text-sm text-gray-500">— {getUsername(review)}</p>
                   </div>
                 ))}
               </div>
