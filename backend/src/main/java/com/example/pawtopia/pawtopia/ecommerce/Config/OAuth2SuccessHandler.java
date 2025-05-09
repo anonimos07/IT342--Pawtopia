@@ -65,8 +65,8 @@ public class OAuth2SuccessHandler extends SavedRequestAwareAuthenticationSuccess
 
         // Option 2: Also provide token in URL (as backup)
         getRedirectStrategy().sendRedirect(request, response,
-                "http://localhost:5173/oauth-success?token=" + token + "&googleId=" + googleId);
-//                "https://it-342-pawtopia-snct.vercel.app/oauth-success?token=" + token + "&googleId=" + googleId);
+//                "http://localhost:5173/oauth-success?token=" + token + "&googleId=" + googleId);
+                "https://it-342-pawtopia-snct.vercel.app/oauth-success?token=" + token + "&googleId=" + googleId);
 
     }
 }
