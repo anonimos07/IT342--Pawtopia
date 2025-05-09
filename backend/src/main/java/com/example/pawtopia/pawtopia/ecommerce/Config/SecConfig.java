@@ -106,7 +106,7 @@ public class SecConfig {
                                 "/api/orderItem/getAllOrdersItem",
                                 "/api/orderItem/putOrderItemDetails",
                                 "/api/orderItem/deleteOrderItemDetails/{id}",
-                                "/users/all"
+                                "/admin/all"
                         ).hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
